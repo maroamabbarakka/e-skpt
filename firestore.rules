@@ -365,7 +365,21 @@ service cloud.firestore {
     match /skpt_applications/{id} {
       allow read: if adminStaff() || kadis() || (signedIn() && profile().role == 'MARKET_HEAD');
       allow create: if adminStaff();
-      allow update: if adminStaff() || kadis()
+      allow update: if (adminStaff() && resource.data.status != 'ISSUED' && request.resource.data.status != 'ISSUED')
+        || (kadis()
+          && resource.data.status == 'KADIS_REVIEW'
+          && request.resource.data.status == 'TTE_PENDING'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approval','statusHistory','updatedAt'])
+          && request.resource.data.approval.decision == 'APPROVED'
+          && request.resource.data.approval.actorUid == request.auth.uid
+          && request.resource.data.approval.actorRole in ['KADIS','SUPER_ADMIN'])
+        || (kadis()
+          && resource.data.status == 'TTE_PENDING'
+          && request.resource.data.status == 'ISSUED'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','skptDocumentId','statusHistory','updatedAt'])
+          && request.resource.data.skptDocumentId is string
+          && existsAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptDocumentId))
+          && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptDocumentId)).data.applicationId == id)
         || (assignedMarket(resource.data.marketId)
           && request.resource.data.marketId == resource.data.marketId
           && request.resource.data.status in ['KADIS_REVIEW','CONFLICT','NOT_FOUND','CORRECTION_REQUIRED']
@@ -374,8 +388,28 @@ service cloud.firestore {
     }
     match /skpt_documents/{id} {
       allow read: if adminStaff() || kadis() || assignedMarket(resource.data.documentSnapshot.marketId);
-      allow create: if adminStaff() || kadis();
-      allow update: if adminStaff() || kadis();
+      allow create: if kadis()
+        && request.resource.data.skptId == id
+        && request.resource.data.applicationId is string
+        && request.resource.data.status == 'ISSUED'
+        && request.resource.data.environment == 'UAT'
+        && request.resource.data.isDemo == true
+        && request.resource.data.tteStatus == 'UAT_SIMULATED'
+        && request.resource.data.documentHash is string && request.resource.data.documentHash.size() == 64
+        && request.resource.data.verificationToken is string && request.resource.data.verificationToken.size() >= 20
+        && request.resource.data.issuedBy == request.auth.uid
+        && request.resource.data.issuedAt == request.time
+        && exists(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId))
+        && get(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.status == 'TTE_PENDING'
+        && existsAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId))
+        && getAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.status == 'ISSUED'
+        && getAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.skptDocumentId == id;
+      allow update: if annualReviewer()
+        && resource.data.status == 'ISSUED'
+        && request.resource.data.status == 'ISSUED'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annualValidations'])
+        && request.resource.data.annualValidations is list
+        && request.resource.data.annualValidations.size() <= 3;
       allow delete: if false;
     }
     match /skpt_annual_validations/{id} {
@@ -484,10 +518,19 @@ service cloud.firestore {
     }
     match /public_skpt_verification/{token} {
       allow get: if resource.data.verificationToken == token && resource.data.status == 'ISSUED';
-      allow create, update: if (adminStaff() || kadis())
-        && request.resource.data.keys().hasOnly(['verificationToken','number','displayName','status','traderId','marketUnitId','issueDate','validUntil','documentHash','hashAlgorithm','hashScope','tteStatus','officialReference','documentSnapshot','signatory','annualValidations','photoMediaToken','legalBasisVersion','environment','isDemo','schemaVersion'])
+      allow create: if kadis()
+        && request.resource.data.keys().hasOnly(['verificationToken','documentId','applicationId','number','displayName','status','traderId','marketUnitId','issueDate','validUntil','documentHash','hashAlgorithm','hashScope','tteStatus','officialReference','documentSnapshot','signatory','annualValidations','photoMediaToken','legalBasisVersion','environment','isDemo','schemaVersion'])
         && request.resource.data.verificationToken == token
         && request.resource.data.status == 'ISSUED'
+        && request.resource.data.environment == 'UAT'
+        && request.resource.data.isDemo == true
+        && request.resource.data.tteStatus == 'UAT_SIMULATED'
+        && request.resource.data.documentId is string
+        && request.resource.data.applicationId is string
+        && existsAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId))
+        && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId)).data.verificationToken == token
+        && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId)).data.applicationId == request.resource.data.applicationId
+        && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId)).data.documentHash == request.resource.data.documentHash
         && request.resource.data.number is string
         && request.resource.data.displayName is string
         && request.resource.data.traderId is string
@@ -499,7 +542,14 @@ service cloud.firestore {
         && request.resource.data.signatory.keys().hasOnly(['name','nip','rank','position','authority'])
         && request.resource.data.annualValidations is list
         && request.resource.data.annualValidations.size() <= 3
-        && request.resource.data.schemaVersion == 2;
+        && request.resource.data.documentHash is string && request.resource.data.documentHash.size() == 64
+        && request.resource.data.schemaVersion == 3;
+      allow update: if annualReviewer()
+        && resource.data.status == 'ISSUED'
+        && request.resource.data.status == 'ISSUED'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annualValidations'])
+        && request.resource.data.annualValidations is list
+        && request.resource.data.annualValidations.size() <= 3;
       allow list, delete: if false;
     }
     match /public_market_units/{token} {

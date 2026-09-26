@@ -37,3 +37,11 @@
 @media print {
   .dummy-tte { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
+
+.uat-document-banner { position:absolute; z-index:4; top:7mm; right:17mm; display:grid; padding:1.2mm 2.5mm; border:1px solid #a52626; border-radius:1.5mm; background:#fff4f4; color:#8e1f1f; text-align:center; font:700 6.5pt/1.15 Arial,sans-serif; letter-spacing:.06em; transform:rotate(1deg); }
+.uat-document-banner span { margin-top:.4mm; font-size:5.2pt; font-weight:600; letter-spacing:0; }
+.card-uat-mark { position:absolute; z-index:5; left:0; right:0; top:0; padding:1mm; background:#8f1f24; color:#fff; text-align:center; font:800 5.5pt/1 Arial,sans-serif; letter-spacing:.08em; }
+.trader-id-card:has(.card-uat-mark) .card-brand { margin-top:3mm; }
+.public-uat-warning { display:grid; gap:4px; margin:0 0 18px; padding:14px 16px; border:1px solid #df9b9b; border-left:5px solid #ad2727; border-radius:12px; background:#fff3f3; color:#811f24; }
+.public-uat-warning strong { letter-spacing:.05em; }
+.verification-hash { overflow-wrap:anywhere; font-family:ui-monospace,Consolas,monospace; font-size:.85em; }

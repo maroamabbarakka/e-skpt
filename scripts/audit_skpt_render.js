@@ -24,6 +24,11 @@ const { related } = require('./uat-data');
   for (const [name, url] of pages) {
     await page.goto(`http://127.0.0.1:8765/${url}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(1200);
+    if (name === 'skpt') {
+      if (await page.locator('.uat-document-banner').count() !== 1) throw new Error('Watermark UAT SKPT tidak tampil.');
+      if (await page.locator('.dummy-tte-qr').count() !== 1 || await page.locator('.dummy-tte-qr > *').count() < 1) throw new Error('QR TTE simulasi tidak tampil.');
+    }
+    if (name === 'card' && await page.locator('.card-uat-mark').count() !== 1) throw new Error('Penanda UAT kartu tidak tampil.');
     await page.screenshot({ path: path.join(output, `${name}.png`), fullPage: true });
     if (name !== 'card') await page.pdf({ path: path.join(output, `${name}.pdf`), format: 'A4', printBackground: true, preferCSSPageSize: true });
     console.log(`PASS ${name}: ${JSON.stringify(await page.locator(name === 'card' ? '#card' : name === 'statement' ? '#statement' : '#document').boundingBox())}`);

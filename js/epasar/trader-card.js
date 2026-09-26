@@ -29,10 +29,11 @@
       const snap = await db.collection('public_status').doc(token).get();
       if (!snap.exists) { message.textContent = 'Kartu tidak ditemukan.'; return; }
       const d = snap.data();
+      const isTraining = d.isDemo === true || ['UAT','INTERNAL_UAT','TEST','TRAINING','DEMO'].includes(String(d.environment || '').toUpperCase()) || token.startsWith('uat-');
       message.hidden = true; card.hidden = false;
-      const photoUrl = await publicPhoto(d.photoMediaToken, d.photoUrl || ((d.isDemo || token.startsWith('uat-')) ? 'assets/uat/pedagang-contoh-transparan.png' : ''));
+      const photoUrl = await publicPhoto(d.photoMediaToken, d.photoUrl || (isTraining ? 'assets/uat/pedagang-contoh-transparan.png' : ''));
       card.classList.toggle('has-photo',Boolean(photoUrl));
-      card.innerHTML = `<div class="card-brand"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div><b>KARTU PEDAGANG e-PASAR</b><small>Pemerintah Kabupaten Pinrang</small></div></div>${photoUrl?`<img class="card-photo" src="${esc(photoUrl)}" alt="Foto pedagang">`:''}<div class="card-person"><h1>${esc(d.displayName || 'Pedagang')}</h1><p>${esc(d.businessType || 'Pelaku usaha')}${d.marketName ? ` · ${esc(d.marketName)}` : ''}</p><p class="card-code">${esc(publicNumber(d))}</p></div><div id="cardQr" class="card-qr branded-qr"></div>`;
+      card.innerHTML = `${isTraining ? '<div class="card-uat-mark">UJI COBA · BUKAN KARTU RESMI</div>' : ''}<div class="card-brand"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div><b>KARTU PEDAGANG e-PASAR</b><small>Pemerintah Kabupaten Pinrang</small></div></div>${photoUrl?`<img class="card-photo" src="${esc(photoUrl)}" alt="Foto pedagang">`:''}<div class="card-person"><h1>${esc(d.displayName || 'Pedagang')}</h1><p>${esc(d.businessType || 'Pelaku usaha')}${d.marketName ? ` · ${esc(d.marketName)}` : ''}</p><p class="card-code">${esc(publicNumber(d))}</p></div><div id="cardQr" class="card-qr branded-qr"></div>`;
       if (window.QRCode) new QRCode(document.getElementById('cardQr'), { text: `${location.origin}/epasar-status.html?token=${encodeURIComponent(token)}&code=${encodeURIComponent(d.registrationCode || '')}`, width:128, height:128, colorDark:'#123f7c', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H });
     } catch (error) { console.error(error); message.textContent = 'Kartu belum dapat dimuat. Silakan coba kembali.'; }
   }

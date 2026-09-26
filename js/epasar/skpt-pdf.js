@@ -29,14 +29,14 @@
       const issueYear = new Date(d.issueDate).getFullYear();
       const number = String(d.number || '-');
       const verificationUrl = `${location.origin}/verifikasi-skpt.html?token=${encodeURIComponent(token)}`;
-      const tteLabel = d.tteStatus === 'SIGNED' ? 'DITANDATANGANI ELEKTRONIK' : d.tteStatus === 'NOT_INTEGRATED' ? 'PERSETUJUAN KADIS TERCATAT · TTE BELUM TERINTEGRASI' : d.tteStatus === 'REGISTERED_MANUAL' ? 'TERDAFTAR · PENGESAHAN MANUAL' : 'MENUNGGU PENGESAHAN';
+      const tteLabel = d.tteStatus === 'SIGNED' ? 'DITANDATANGANI ELEKTRONIK' : d.tteStatus === 'UAT_SIMULATED' ? 'UJI COBA · TTE SIMULASI' : d.tteStatus === 'NOT_INTEGRATED' ? 'PERSETUJUAN KADIS TERCATAT · TTE BELUM TERINTEGRASI' : d.tteStatus === 'REGISTERED_MANUAL' ? 'TERDAFTAR · PENGESAHAN MANUAL' : 'MENUNGGU PENGESAHAN';
       const isTrainingDocument = d.isDemo === true || ['TEST','INTERNAL_UAT','TRAINING','DEMO'].includes(String(d.environment || '').toUpperCase());
       const dummyTte = isTrainingDocument ? `<div class="dummy-tte" aria-label="QR simulasi tanda tangan elektronik Kepala Dinas"><div id="dummyTteQr" class="dummy-tte-qr branded-qr"></div><div class="dummy-tte-copy"><strong>SIMULASI TTE</strong><span>${esc(signer.name || 'MUHAMMAD YUSUF NUR, S.STP')}</span><small>Kepala Dinas · Dokumen latihan</small><small>Ref. ${esc(d.officialReference || token.slice(0,16))}</small></div></div>` : '';
       const annual = Array.isArray(d.annualValidations) ? d.annualValidations : [{year:issueYear,status:'INITIAL_ISSUE'},{year:issueYear+1,status:'DUE'}];
       const annualCell = (item, fallbackYear) => { const labels = {VALIDATED:'DISAHKAN',INITIAL_ISSUE:'PENERBITAN AWAL',DUE:'MENUNGGU PEMERIKSAAN',RETURNED:'DIKEMBALIKAN'}; const status = labels[item?.status] || 'BELUM TERCATAT'; return `<span>Tahun ${esc(item?.year || fallbackYear)}<small class="annual-status ${item?.status === 'DUE' || item?.status === 'RETURNED' ? 'due' : ''}">${status}</small></span>`; };
       const photoUrl = await publicPhoto(d.photoMediaToken, s.photoUrl || (d.isDemo ? 'assets/uat/pedagang-contoh-3x4.jpg' : ''));
       const photoBlock = photoUrl ? `<div class="document-verification-photo"><img class="document-photo" src="${esc(photoUrl)}" alt="Foto pedagang"></div>` : '<div class="document-verification-photo document-photo document-photo-empty">Foto belum tersedia</div>';
-      root.innerHTML = `
+      root.innerHTML = `${isTrainingDocument ? '<div class="uat-document-banner"><strong>DOKUMEN UJI COBA</strong><span>Tidak berlaku sebagai dokumen resmi</span></div>' : ''}
         <header class="official-letterhead"><img class="document-crest" src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div class="document-agency">PEMERINTAH KABUPATEN PINRANG</div><div class="document-agency document-agency-dept">DINAS PERINDUSTRIAN, PERDAGANGAN,<br>ENERGI DAN SUMBER DAYA MINERAL</div><div class="document-address">Jalan Bintang No. 1 · Telp/Faks. (0421) 921215 · Pinrang 91212</div></header>
         <section class="document-title-block"><h1>SURAT KETERANGAN PEMAKAIAN TEMPAT</h1><p>Nomor: ${esc(number)}</p></section>
         <section class="document-body">

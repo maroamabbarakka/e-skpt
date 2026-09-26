@@ -134,6 +134,24 @@ verificationBatch.set(doc(marketHead, 'market_occupancies', 'OCC-E2E'), { occupa
 verificationBatch.set(doc(marketHead, 'verification_records', 'VER-E2E'), { claimId: 'claim-e2e', marketId: 'M1', marketUnitId: 'UNT-E2E', before: {}, after: {}, reason: 'Uji', actorUid: 'market-head-1', actorRole: 'MARKET_HEAD', status: 'MARKET_VERIFIED', createdAt: serverTimestamp() });
 verificationBatch.update(doc(marketHead, 'skpt_applications', 'app-e2e'), { status: 'KADIS_REVIEW', marketUnitId: 'UNT-E2E', verificationRecordId: 'VER-E2E', statusHistory: [], updatedAt: serverTimestamp() });
 await assertSucceeds(verificationBatch.commit());
+await assertSucceeds(setDoc(doc(kadis, 'skpt_applications', 'app-e2e'), {
+  status: 'TTE_PENDING',
+  approval: { decision: 'APPROVED', note: 'Disetujui untuk UAT.', actorUid: 'kadis-1', actorRole: 'KADIS', approvedAt: serverTimestamp() },
+  statusHistory: [{ from: 'KADIS_REVIEW', to: 'APPROVED' }, { from: 'APPROVED', to: 'TTE_PENDING' }],
+  updatedAt: serverTimestamp()
+}, { merge: true }));
+await assertFails(setDoc(doc(admin, 'skpt_applications', 'app-e2e'), { status: 'ISSUED', skptDocumentId: 'forged-doc', statusHistory: [], updatedAt: serverTimestamp() }, { merge: true }));
+const issuedSnapshot = { displayName: 'Pedagang Uji', address: 'Pinrang', businessType: 'Perdagangan', marketName: 'Pasar Uji', marketId: 'M1', unitType: 'KIOS', unitNumber: 'UAT-1', block: 'UAT', floor: '1', areaM2: 6 };
+const issuedSignatory = { name: 'Pejabat Uji', nip: '1', rank: 'Pembina', position: 'Kepala Dinas', authority: 'a.n. BUPATI PINRANG' };
+const issuedAnnual = [{ year: 2026, status: 'INITIAL_ISSUE' }, { year: 2027, status: 'DUE' }];
+const issuedHash = 'a'.repeat(64), issuedToken = 'uat-issued-verification-token-001';
+const issuanceBatch = writeBatch(kadis);
+issuanceBatch.set(doc(kadis, 'skpt_documents', 'uat-issued-doc-1'), { skptId: 'uat-issued-doc-1', applicationId: 'app-e2e', number: 'SKPT-UAT-001', traderId: 'TRD-E2E', marketUnitId: 'UNT-E2E', issueDate: '2026-09-26T00:00:00.000Z', validUntil: '2028-09-26T00:00:00.000Z', status: 'ISSUED', tteStatus: 'UAT_SIMULATED', documentHash: issuedHash, verificationToken: issuedToken, documentSnapshot: issuedSnapshot, signatory: issuedSignatory, annualValidations: issuedAnnual, environment: 'UAT', isDemo: true, issuedBy: 'kadis-1', issuedAt: serverTimestamp() });
+issuanceBatch.update(doc(kadis, 'skpt_applications', 'app-e2e'), { status: 'ISSUED', skptDocumentId: 'uat-issued-doc-1', statusHistory: [{ from: 'TTE_PENDING', to: 'ISSUED' }], updatedAt: serverTimestamp() });
+issuanceBatch.set(doc(kadis, 'public_skpt_verification', issuedToken), { verificationToken: issuedToken, documentId: 'uat-issued-doc-1', applicationId: 'app-e2e', number: 'SKPT-UAT-001', displayName: 'Pedagang Uji', status: 'ISSUED', traderId: 'TRD-E2E', marketUnitId: 'UNT-E2E', issueDate: '2026-09-26T00:00:00.000Z', validUntil: '2028-09-26T00:00:00.000Z', documentHash: issuedHash, hashAlgorithm: 'SHA-256', hashScope: 'CANONICAL_DOCUMENT_SNAPSHOT', tteStatus: 'UAT_SIMULATED', officialReference: 'UAT-REF-001', documentSnapshot: issuedSnapshot, signatory: issuedSignatory, annualValidations: issuedAnnual, photoMediaToken: '', legalBasisVersion: 'TEST', environment: 'UAT', isDemo: true, schemaVersion: 3 });
+await assertSucceeds(issuanceBatch.commit());
+await assertFails(setDoc(doc(kadis, 'skpt_documents', 'uat-issued-doc-1'), { number: 'DIUBAH' }, { merge: true }));
+await assertSucceeds(setDoc(doc(kadis, 'skpt_documents', 'uat-issued-doc-1'), { annualValidations: [{ year: 2026, status: 'INITIAL_ISSUE' }, { year: 2027, status: 'VALIDATED' }] }, { merge: true }));
 const changeRequest = { requestType: 'OCCUPANCY_CHANGE', action: 'TRANSFER', marketUnitId: 'UNT-ATOMIC-1', marketId: 'M1', currentOccupancyId: 'OCC-ATOMIC-1', currentTraderId: 'TRD-ATOMIC-1', newTraderId: 'TRD-ATOMIC-2', reason: 'Pengalihan telah diperiksa.', status: 'PENDING_REVIEW', submittedBy: 'market-head-1', submittedRole: 'MARKET_HEAD', submittedAt: serverTimestamp(), decidedBy: null, decidedAt: null, decisionNote: '', source: 'MARKET_HEAD_VERIFICATION', schemaVersion: 2 };
 await assertSucceeds(setDoc(doc(marketHead, 'correction_requests', 'OCC-CHANGE-1'), changeRequest));
 await assertFails(setDoc(doc(otherMarketHead, 'correction_requests', 'OCC-CHANGE-CROSS'), { ...changeRequest, submittedBy: 'market-head-2' }));

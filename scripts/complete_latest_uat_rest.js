@@ -1,6 +1,10 @@
 const fs = require('fs');
 const crypto = require('crypto');
 
+throw new Error(
+  'Skrip REST lama ini dinonaktifkan. Penerbitan dokumen UAT wajib dilakukan melalui dashboard Kadis agar perubahan status, dokumen privat, dan data verifikasi publik ditulis dalam satu batch atomik.'
+);
+
 const password = process.env.EPASAR_UAT_PASSWORD;
 if (!password) throw new Error('EPASAR_UAT_PASSWORD wajib tersedia di environment lokal.');
 const configText = fs.readFileSync('js/epasar/firebase-config.local.js', 'utf8');

@@ -1,5 +1,9 @@
 'use strict';
 
+throw new Error(
+  'Seed live lama ini dinonaktifkan karena tidak memenuhi transaksi atomik penerbitan yang diwajibkan Firestore Rules. Gunakan alur UAT melalui dashboard dan jangan menurunkan perlindungan Rules.'
+);
+
 const fs = require('fs');
 const path = require('path');
 const { UAT_TAG, traders, documents, related } = require('./uat-data');
