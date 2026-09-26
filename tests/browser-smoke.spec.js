@@ -21,6 +21,14 @@ test('e-PASAR form and browser image pipeline', async ({ page }) => {
   expect(output).not.toContain('FAIL');
 });
 
+test('super admin account editor supports Auth provisioning and safe deactivation', async ({ page }) => {
+  await page.goto('http://127.0.0.1:8090/admin-akun.html');
+  await expect(page.locator('#email')).toHaveAttribute('type', 'email');
+  await expect(page.locator('#initialPassword')).toHaveAttribute('minlength', '8');
+  await expect(page.locator('#status')).toContainText('INACTIVE');
+  await expect(page.locator('#marketIdOptions option')).toHaveCount(11);
+});
+
 test('image pipeline menyediakan konfigurasi untuk seluruh tipe unggahan form', async ({ page }) => {
   await page.goto('http://127.0.0.1:8090/epasar.html');
   const limits = await page.evaluate(() => window.EPASAR_IMAGE.limits);

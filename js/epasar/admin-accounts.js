@@ -15,9 +15,9 @@
   if (marketOptions && window.EPASAR?.MARKETS) marketOptions.innerHTML = window.EPASAR.MARKETS.map(market => `<option value="${market.id}">${esc(market.name)}</option>`).join('');
 
   function setMessage(text, error) { message.textContent = text; message.className = error ? 'admin-error' : 'admin-message'; }
-  function clear() { form.reset(); $('uid').disabled = false; $('formTitle').textContent = 'Profil Baru'; }
+  function clear() { form.reset(); $('uid').value = ''; $('newAccountFields').hidden = false; $('formTitle').textContent = 'Akun Baru'; }
   function fill(data) {
-    $('uid').value = data.uid; $('uid').disabled = true; $('username').value = data.username || '';
+    $('uid').value = data.uid; $('newAccountFields').hidden = true; $('username').value = data.username || '';
     $('displayName').value = data.displayName || ''; $('position').value = data.position || '';
     $('role').value = data.role || 'DISPERINDAG_ADMIN'; $('marketIds').value = (data.marketIds || []).join(',');
     $('status').value = data.status || 'ACTIVE'; $('phone').value = data.phone || ''; $('formTitle').textContent = 'Edit Profil';
@@ -36,9 +36,10 @@
     event.preventDefault(); $('accountError').textContent = '';
     try {
       const uid = $('uid').value.trim();
-      const input = { uid, username: $('username').value, displayName: $('displayName').value, position: $('position').value, role: $('role').value, marketIds: $('marketIds').value.split(',').map(value => value.trim()).filter(Boolean), status: $('status').value, phone: $('phone').value };
-      await window.EPASAR_ACCOUNT.save(uid, input); setMessage('Profil berhasil disimpan.', false); clear(); closeEditor(); await load();
-    } catch (error) { $('accountError').textContent = error.message; }
+      const input = { uid, username: $('username').value, email: $('email').value, password: $('initialPassword').value, displayName: $('displayName').value, position: $('position').value, role: $('role').value, marketIds: $('marketIds').value.split(',').map(value => value.trim()).filter(Boolean), status: $('status').value, phone: $('phone').value };
+      if (uid) await window.EPASAR_ACCOUNT.save(uid, input); else await window.EPASAR_ACCOUNT.provision(input);
+      setMessage(uid ? 'Profil dan kewenangan berhasil diperbarui.' : 'Akun Auth dan profil petugas berhasil dibuat.', false); clear(); closeEditor(); await load();
+    } catch (error) { $('accountError').textContent = error.message || 'Akun belum berhasil disimpan.'; }
   });
   $('clearForm').addEventListener('click', clear);
   (async () => {

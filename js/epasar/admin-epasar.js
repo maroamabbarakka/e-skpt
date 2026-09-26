@@ -41,9 +41,6 @@
   }
 
   function render(list) {
-    document.getElementById('kpiSubmitted').textContent = list.length;
-    document.getElementById('kpiMarket').textContent = list.filter(item => item.hasMarketUnit === true).length;
-    document.getElementById('kpiSkpt').textContent = list.filter(item => item.applySkpt === true).length;
     document.getElementById('kpiPage').textContent = currentPage;
     rows.innerHTML = list.map(item => {
       const submittedAt = item.submittedAt?.toDate
@@ -62,6 +59,33 @@
     previousButton.disabled = currentPage === 1;
   }
 
+  async function count(collectionName, field, operator, value) {
+    let query = window.db.collection(collectionName);
+    if (field) query = query.where(field, operator, value);
+    if (typeof query.count === 'function') {
+      const aggregate = await query.count().get();
+      return aggregate.data().count;
+    }
+    const snapshot = await query.get();
+    return snapshot.size;
+  }
+
+  async function loadMetrics() {
+    const targets = {
+      kpiTotalTraders: count('traders', 'status', '==', 'ACTIVE'),
+      kpiSubmitted: count('trader_intake', 'status', '==', 'SUBMITTED'),
+      kpiMarket: count('market_claims', 'verificationStatus', '==', 'UNVERIFIED'),
+      kpiConflict: count('market_claims', 'verificationStatus', '==', 'CONFLICT'),
+      kpiKadis: count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
+      kpiIssued: count('skpt_documents', 'status', '==', 'ISSUED'),
+      kpiAnnual: count('skpt_annual_validations', 'status', '==', 'PENDING_REVIEW')
+    };
+    await Promise.all(Object.entries(targets).map(async ([id, promise]) => {
+      try { document.getElementById(id).textContent = await promise; }
+      catch (error) { console.warn(`[e-PASAR] KPI ${id} belum tersedia`, error); document.getElementById(id).textContent = '—'; }
+    }));
+  }
+
   async function load(cursor) {
     setMessage('Memuat antrean…', false);
     try {
@@ -72,6 +96,7 @@
       currentCursor = result.last || null;
       currentHasMore = result.hasMore;
       render(result.rows);
+      if (currentPage === 1) loadMetrics();
       workspace.hidden = false;
       message.hidden = true;
     } catch (error) {

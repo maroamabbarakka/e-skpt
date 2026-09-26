@@ -7,7 +7,14 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 EXCLUDED_DIRS = {".git", ".firebase", "dist", "node_modules", "scripts", "tests", "artifacts", "EPASAR_SATU_DATA_DEVELOPER_PACK_V1"}
 EXCLUDED_SUFFIXES = {".md", ".py", ".log"}
-EXCLUDED_FILES = {"firebase.json", "firestore.rules", "firestore.indexes.json", "playwright.config.js"}
+EXCLUDED_FILES = {"firebase.json", "firestore.rules", "firestore.indexes.json", "playwright.config.js", "Perda 2024 - Pengelolaan Pasar Rakyat.pdf"}
+EXCLUDED_ASSETS = {
+    "Alur Verifikasi Pasar.mp4",
+    "Mengenal e-SKPT.mp4",
+    "Panduan Pendataan Pedagang.mp4",
+    "pasar-pinrang-editorial.png",
+    "pedagang-contoh-transparan.png",
+}
 
 
 def copy_sources() -> None:
@@ -23,7 +30,7 @@ def copy_sources() -> None:
             continue
         target = DIST / source.name
         if source.is_dir():
-            shutil.copytree(source, target, ignore=shutil.ignore_patterns('node_modules', '__pycache__', '.pytest_cache', 'panduan-pendataan.mp4'))
+            shutil.copytree(source, target, ignore=shutil.ignore_patterns('node_modules', '__pycache__', '.pytest_cache', 'panduan-pendataan.mp4', *EXCLUDED_ASSETS))
         else:
             shutil.copy2(source, target)
 

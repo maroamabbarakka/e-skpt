@@ -123,6 +123,14 @@
       : 'Waktu pembaruan belum tersedia';
     statsStatus.textContent = '';
   }
+  let stopStats = null;
+  function statsFailure() {
+    document.querySelectorAll('.stats-kpi').forEach((card) => card.classList.remove('is-loading'));
+    statsElements.forEach((element) => { element.textContent = '—'; });
+    categoryBars.innerHTML = '<p class="stats-empty">Data kategori sementara tidak tersedia.</p>';
+    statsUpdated.textContent = 'Pembaruan data belum tersedia';
+    statsStatus.innerHTML = '<span class="stats-error">Data sementara tidak tersedia. <button class="stats-retry" type="button">Coba lagi</button></span>';
+  }
   async function loadStats() {
     if (!window.db) {
       statsStatus.innerHTML = 'Data sementara tidak tersedia. <button class="stats-retry" type="button">Coba lagi</button>';
@@ -130,15 +138,13 @@
     }
     statsStatus.textContent = 'Memuat statistik terbaru…';
     try {
-      const snapshot = await window.db.collection('public_stats').doc('summary').get();
-      if (!snapshot.exists) throw new Error('SUMMARY_NOT_AVAILABLE');
-      setStats(snapshot.data());
+      if (stopStats) stopStats();
+      stopStats = window.db.collection('public_stats').doc('summary').onSnapshot(snapshot => {
+        if (!snapshot.exists) return statsFailure();
+        setStats(snapshot.data());
+      }, statsFailure);
     } catch (_) {
-      document.querySelectorAll('.stats-kpi').forEach((card) => card.classList.remove('is-loading'));
-      statsElements.forEach((element) => { element.textContent = '—'; });
-      categoryBars.innerHTML = '<p class="stats-empty">Data kategori sementara tidak tersedia.</p>';
-      statsUpdated.textContent = 'Pembaruan data belum tersedia';
-      statsStatus.innerHTML = '<span class="stats-error">Data sementara tidak tersedia. <button class="stats-retry" type="button">Coba lagi</button></span>';
+      statsFailure();
     }
   }
   if (statsStatus) {

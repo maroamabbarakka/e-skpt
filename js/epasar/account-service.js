@@ -46,5 +46,28 @@
     return payload;
   }
 
-  window.EPASAR_ACCOUNT = { ROLES, profilePayload, canEdit, save };
+  async function provision(input) {
+    const actor = window.EPASAR_CURRENT_PROFILE;
+    if (!canEdit(actor, null)) throw new Error('Hanya Super Admin yang dapat membuat akun petugas.');
+    const username = clean(input.username, 60).toLowerCase();
+    const usernameEmail = username ? `${username}@eskpt.id` : '';
+    const email = clean(input.email || usernameEmail, 120).toLowerCase();
+    const password = String(input.password || '');
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) throw new Error('Isi email akun yang valid.');
+    if (username && email !== usernameEmail) throw new Error(`Agar login username berfungsi, gunakan email ${usernameEmail}.`);
+    if (password.length < 8) throw new Error('Password awal minimal 8 karakter.');
+    let secondary = firebase.apps.find(app => app.name === 'epasarAccountProvisioning');
+    if (!secondary) secondary = firebase.initializeApp(window.EPASAR_FIREBASE_CONFIG, 'epasarAccountProvisioning');
+    let credential;
+    try { credential = await secondary.auth().createUserWithEmailAndPassword(email, password); }
+    catch (error) {
+      if (error.code === 'auth/email-already-in-use') throw new Error('Email akun sudah digunakan. Cari profil yang ada atau gunakan email lain.');
+      if (error.code === 'auth/weak-password') throw new Error('Password awal terlalu lemah. Gunakan minimal 8 karakter.');
+      throw new Error('Akun Firebase belum berhasil dibuat. Periksa email, password, dan koneksi lalu coba lagi.');
+    }
+    try { return await save(credential.user.uid, { ...input, uid: credential.user.uid, username }, null); }
+    finally { await secondary.auth().signOut(); }
+  }
+
+  window.EPASAR_ACCOUNT = { ROLES, profilePayload, canEdit, save, provision };
 }());

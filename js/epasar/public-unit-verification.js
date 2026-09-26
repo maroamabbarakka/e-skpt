@@ -15,6 +15,9 @@
       add('p', unit.marketName || unit.marketId || 'Pasar tidak tercatat');
       add('p', `Blok ${unit.block || '—'} · Lantai ${unit.floor || '—'}${unit.areaM2 ? ` · ${unit.areaM2} m²` : ''}`);
       add('small', `ID unit: ${unit.unitId || '—'}`);
+      const qrPanel = document.getElementById('unitQrPanel'), qrRoot = document.getElementById('unitQr');
+      qrPanel.hidden = false;
+      if (window.QRCode) new QRCode(qrRoot, { text: location.href, width: 168, height: 168, colorDark: '#073f83', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
     } catch (error) { console.error(error); root.textContent = 'Unit pasar tidak ditemukan atau belum dipublikasikan oleh petugas.'; root.className = 'verification-result document-error'; }
   }
   boot();
