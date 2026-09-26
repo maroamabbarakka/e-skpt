@@ -1,0 +1,33 @@
+/* Penyesuaian identitas QR dan visual simulasi TTE untuk dokumen latihan. */
+.document-qr-code::after,
+.branded-qr::after {
+  width: 5.8mm !important;
+  height: 5.8mm !important;
+  border-width: 1mm !important;
+  background-size: 4.4mm 4.4mm !important;
+}
+
+.dummy-tte {
+  display: grid;
+  width: 39mm;
+  margin: .6mm auto 0;
+  padding: .7mm 1.5mm;
+  box-sizing: border-box;
+  border: 1px solid #2464a0;
+  border-radius: 1.5mm;
+  background: #f3f8fd;
+  color: #174f83;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  line-height: 1.05;
+  transform: rotate(-1deg);
+}
+
+.signature-space:has(.dummy-tte) { height: 12mm !important; }
+.dummy-tte strong { font-size: 6.6pt; letter-spacing: .08em; }
+.dummy-tte span { font-size: 5.8pt; font-weight: 700; }
+.dummy-tte small { font-size: 4.9pt; }
+
+@media print {
+  .dummy-tte { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
