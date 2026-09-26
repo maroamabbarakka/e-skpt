@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Pernyataan Elektronik · e-PASAR</title>
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/official-documents.css">
+  <link rel="stylesheet" href="css/document-polish.css">
+  <link rel="stylesheet" href="css/statement-document.css">
+</head>
+<body class="document-screen">
+  <div class="document-toolbar">
+    <a class="button secondary" href="index.html">Kembali</a>
+    <button class="button primary" type="button" onclick="window.print()">Simpan PDF / Cetak</button>
+  </div>
+  <main id="statement" class="official-document">
+    <header class="official-letterhead">
+      <img class="document-crest" src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang">
+      <div class="document-agency">PEMERINTAH KABUPATEN PINRANG</div>
+      <div class="document-agency document-agency-dept">DINAS PERINDUSTRIAN, PERDAGANGAN,<br>ENERGI DAN SUMBER DAYA MINERAL</div>
+      <div class="document-address">Jalan Bintang No. 1 · Telp/Faks. (0421) 921215 · Pinrang 91212</div>
+    </header>
+    <section class="document-title-block">
+      <h1>SURAT PERNYATAAN ELEKTRONIK</h1>
+      <p>Permohonan Surat Keterangan Pemakaian Tempat</p>
+    </section>
+    <div id="statementContent" class="loading-document">Memuat catatan persetujuan…</div>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/epasar/skpt-statement.js"></script>
+</body>
+</html>

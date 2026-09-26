@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123">
+  <defs>
+    <pattern id="waveH" width="36" height="24" patternUnits="userSpaceOnUse">
+      <path d="M0 12C6-2 12-2 18 12s12 14 18 0" fill="none" stroke="#195aa7" stroke-width="1.5"/>
+      <path d="M0 12C6 26 12 26 18 12S30-2 36 12" fill="none" stroke="#4b8ac8" stroke-width=".8"/>
+      <circle cx="18" cy="12" r="3.5" fill="none" stroke="#195aa7" stroke-width=".8"/>
+    </pattern>
+    <pattern id="waveV" width="24" height="36" patternUnits="userSpaceOnUse">
+      <path d="M12 0C-2 6-2 12 12 18s14 12 0 18" fill="none" stroke="#195aa7" stroke-width="1.5"/>
+      <path d="M12 0C26 6 26 12 12 18S-2 30 12 36" fill="none" stroke="#4b8ac8" stroke-width=".8"/>
+      <circle cx="12" cy="18" r="3.5" fill="none" stroke="#195aa7" stroke-width=".8"/>
+    </pattern>
+  </defs>
+  <rect x="18" y="18" width="758" height="1087" rx="2" fill="none" stroke="#195aa7" stroke-width="2"/>
+  <rect x="29" y="29" width="736" height="1065" fill="none" stroke="#78a8d5" stroke-width="1"/>
+  <rect x="38" y="18" width="718" height="28" fill="url(#waveH)"/>
+  <rect x="38" y="1077" width="718" height="28" fill="url(#waveH)"/>
+  <rect x="18" y="38" width="28" height="1047" fill="url(#waveV)"/>
+  <rect x="748" y="38" width="28" height="1047" fill="url(#waveV)"/>
+  <g fill="#fff" stroke="#195aa7" stroke-width="1.5">
+    <path d="M18 18h54L45 45 72 72H18z"/><path d="M776 18h-54l27 27-27 27h54z"/>
+    <path d="M18 1105h54l-27-27 27-27H18z"/><path d="M776 1105h-54l27-27-27-27h54z"/>
+  </g>
+  <g fill="none" stroke="#195aa7" stroke-width="1">
+    <circle cx="45" cy="45" r="16"/><circle cx="749" cy="45" r="16"/><circle cx="45" cy="1078" r="16"/><circle cx="749" cy="1078" r="16"/>
+    <path d="M33 45l12-12 12 12-12 12zM737 45l12-12 12 12-12 12zM33 1078l12-12 12 12-12 12zM737 1078l12-12 12 12-12 12z"/>
+  </g>
+</svg>

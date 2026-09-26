@@ -1,0 +1,97 @@
+/* Surat Pernyataan Elektronik: komposisi A4 satu halaman yang stabil. */
+#statement.official-document { padding: 16mm 18mm 14mm; }
+
+#statementContent.document-body {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 8.6pt;
+  line-height: 1.36;
+}
+
+#statementContent > p { margin: 2.5mm 0; text-align: left; }
+
+#statementContent .identity-table {
+  grid-template-columns: 36mm minmax(0, 1fr);
+  margin: 3mm 0 4mm;
+  padding: 2.5mm 3mm;
+  border: 1px solid #c9d7e5;
+  background: #f8fbfe;
+}
+
+#statementContent .identity-table dt,
+#statementContent .identity-table dd { padding: .65mm 0; }
+
+#statementContent .identity-table dt {
+  padding-left: 0;
+  color: #36516d;
+  font-weight: 700;
+}
+
+#statementContent .identity-table dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+#statementContent .statement-checks { margin: 3mm 0 4mm !important; }
+
+#statementContent .statement-checks li {
+  min-height: 6mm;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 1.35mm 2mm 1.35mm 8mm;
+  line-height: 1.32;
+}
+
+#statementContent .statement-checks li:before {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#statementContent .paperless-seal {
+  margin-top: 4mm;
+  padding: 3mm 3.5mm;
+  border: 1px solid #8db5d8;
+  border-left: 3px solid #1261a0;
+  background: #f4f9fd;
+  font-size: 7.8pt;
+  line-height: 1.42;
+}
+
+#statementContent .acceptance-grid { gap: 2.5mm 8mm; margin: 4mm 0 3mm; }
+
+#statementContent .acceptance-grid div {
+  min-height: 8mm;
+  box-sizing: border-box;
+  padding: 1.6mm 1.5mm;
+}
+
+#statementContent .document-verification { margin-top: 3mm; padding-top: 3mm; }
+#statementContent .document-disclaimer { margin-top: 2.5mm; }
+
+@media print {
+  #statement.official-document {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    overflow: hidden;
+  }
+
+  #statementContent.document-body { font-size: 8.45pt; line-height: 1.32; }
+
+  #statementContent .statement-checks li {
+    min-height: 5.5mm;
+    padding-top: 1.15mm;
+    padding-bottom: 1.15mm;
+    break-inside: avoid;
+  }
+
+  #statementContent .paperless-seal {
+    margin-top: 3mm;
+    padding: 2.5mm 3mm;
+    break-inside: avoid;
+  }
+
+  #statementContent .acceptance-grid,
+  #statementContent .document-verification { break-inside: avoid; }
+}

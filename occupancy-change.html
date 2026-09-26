@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Perubahan Pemegang Unit · e-PASAR</title>
+    <link rel="stylesheet" href="css/epasar.css" />
+    <link rel="stylesheet" href="css/annual-validation.css" />
+    <link rel="stylesheet" href="css/internal-ui.css" />
+  </head>
+  <body>
+    <main class="workflow-shell">
+      <header class="workflow-head">
+        <p class="eyebrow">PENGENDALIAN UNIT PASAR</p>
+        <h1>Perubahan pemegang unit</h1>
+        <p id="who">Memeriksa kewenangan akun…</p>
+        <a class="button secondary" href="admin-epasar.html"
+          >Kembali ke dashboard</a
+        >
+      </header>
+      <div id="message" class="admin-message">Memuat data…</div>
+      <section id="marketWorkspace" class="workflow-card" hidden>
+        <h2>Unit aktif</h2>
+        <p>
+          Kepala Pasar mengajukan hasil pemeriksaan faktual. Pengajuan tidak
+          langsung mengganti pemegang.
+        </p>
+        <div id="unitItems"></div>
+      </section>
+      <section id="reviewWorkspace" class="workflow-card" hidden>
+        <h2>Permohonan menunggu keputusan</h2>
+        <p>
+          Pastikan dasar pengalihan atau pelepasan telah diperiksa sebelum
+          mengambil keputusan.
+        </p>
+        <div id="requestItems"></div>
+      </section>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/epasar/firebase-config.local.js"></script>
+    <script src="js/epasar/constants.js"></script>
+    <script src="js/epasar/config.js"></script>
+    <script src="js/epasar/auth-service.js"></script>
+    <script src="js/epasar/internal-shell.js"></script>
+    <script src="js/epasar/occupancy-change-service.js"></script>
+    <script src="js/epasar/occupancy-change.js"></script>
+  </body>
+</html>

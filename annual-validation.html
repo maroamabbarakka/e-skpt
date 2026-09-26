@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Pengesahan Tahunan · e-PASAR</title>
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/annual-validation.css">
+  <link rel="stylesheet" href="css/internal-ui.css">
+</head>
+<body>
+  <main class="workflow-shell annual-shell">
+    <header class="workflow-head annual-head">
+      <div><p class="eyebrow">RUANG KERJA INTERNAL</p><h1>Pengesahan tahunan SKPT</h1><p id="who">Memeriksa akun…</p></div>
+      <a class="button secondary" href="admin-epasar.html">Kembali ke dashboard</a>
+    </header>
+    <section class="annual-policy" aria-label="Batas prosedur">
+      <strong>Prosedur administrasi internal</strong>
+      <p>Pengesahan ini mencatat pemeriksaan tahunan selama SKPT masih berlaku. Pengesahan tidak memperpanjang tanggal berakhir, tidak menggantikan permohonan periode baru, dan tidak otomatis membatalkan SKPT.</p>
+    </section>
+    <div id="message" class="admin-message">Memuat data SKPT…</div>
+    <section id="marketWorkspace" hidden>
+      <div class="section-heading"><div><p class="eyebrow">KEPALA PASAR</p><h2>Pemeriksaan faktual tahunan</h2></div><p>Pastikan kondisi diperiksa berdasarkan keadaan sebenarnya.</p></div>
+      <div id="issuedItems" class="annual-list"></div>
+    </section>
+    <section id="reviewWorkspace" hidden>
+      <div class="section-heading"><div><p class="eyebrow">ADMINISTRASI</p><h2>Menunggu keputusan</h2></div><p>Bandingkan hasil pemeriksaan dengan dokumen SKPT induk.</p></div>
+      <div id="pendingItems" class="annual-list"></div>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/constants.js"></script>
+  <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/auth-service.js"></script>
+  <script src="js/epasar/internal-shell.js"></script>
+  <script src="js/epasar/annual-validation-service.js"></script>
+  <script src="js/epasar/annual-validation.js"></script>
+</body>
+</html>

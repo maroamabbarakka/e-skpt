@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Pengolah Foto Pedagang · e-PASAR</title>
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/photo-editor.css">
+  <link rel="stylesheet" href="css/internal-ui.css">
+</head>
+<body>
+  <main class="photo-editor-shell">
+    <header class="workflow-head">
+      <p class="eyebrow">ALAT INTERNAL · FOTO PEDAGANG</p>
+      <h1>Rapikan latar belakang foto</h1>
+      <p>Foto diproses pada perangkat petugas. Periksa hasil dengan teliti sebelum menyimpan.</p>
+      <a class="button secondary" href="admin-epasar.html">Kembali ke dashboard</a>
+    </header>
+    <section class="photo-editor-panel">
+      <div id="editorMessage" class="admin-message">Memeriksa akses dan memuat foto…</div>
+      <div id="editorWorkspace" hidden>
+        <div class="photo-editor-controls">
+          <label>ID intake
+            <input id="intakeId" autocomplete="off" placeholder="ID data pendaftaran">
+          </label>
+          <button id="loadPhoto" class="button secondary" type="button">Muat foto</button>
+          <label>Kehalusan tepi
+            <input id="edgeThreshold" type="range" min="25" max="75" value="50">
+          </label>
+          <button id="removeBackground" class="button primary" type="button" disabled>Hapus latar otomatis</button>
+        </div>
+        <div class="photo-comparison">
+          <figure><figcaption>Foto asli</figcaption><div class="photo-stage checker"><img id="sourcePreview" alt="Pratinjau foto asli"></div></figure>
+          <figure><figcaption>Hasil transparan</figcaption><div class="photo-stage checker"><canvas id="resultCanvas" aria-label="Pratinjau hasil foto transparan"></canvas></div></figure>
+        </div>
+        <div class="photo-review">
+          <label class="review-confirm"><input id="confirmResult" type="checkbox" disabled> Saya telah memeriksa tepi wajah, hijab/rambut, bahu, dan pakaian; hasil ini layak digunakan pada kartu.</label>
+          <div class="form-actions"><button id="downloadResult" class="button secondary" type="button" disabled>Unduh hasil</button><button id="saveResult" class="button primary" type="button" disabled>Simpan hasil terverifikasi</button></div>
+        </div>
+        <p class="privacy-note">Jika hasil otomatis kurang baik, jangan simpan. Gunakan foto asli atau ambil ulang dengan latar polos dan pencahayaan merata.</p>
+      </div>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/auth-service.js"></script>
+  <script src="js/epasar/internal-shell.js"></script>
+  <script src="js/epasar/background-remove.js"></script>
+  <script src="js/epasar/photo-editor.js"></script>
+</body>
+</html>

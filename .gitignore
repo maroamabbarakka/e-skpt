@@ -1,0 +1,14 @@
+NOTE_FIREBASE_LOCAL.md
+js/epasar/firebase-config.local.js
+.firebase/
+dist/
+node_modules/
+*.log
+test-results/
+artifacts/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+firebase-debug.log

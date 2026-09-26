@@ -1,0 +1,493 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function activeStaff() { return signedIn() && profile().status == 'ACTIVE' && profile().role in ['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']; }
+    function adminStaff() { return activeStaff() && profile().role in ['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','TECH_ADMIN']; }
+    function kadis() { return activeStaff() && profile().role in ['SUPER_ADMIN','KADIS']; }
+    function superAdmin() { return activeStaff() && profile().role == 'SUPER_ADMIN'; }
+    function assignedMarket(marketId) { return activeStaff() && profile().role == 'MARKET_HEAD' && marketId is string && profile().marketIds is list && profile().marketIds.hasAny([marketId]); }
+    function annualReviewer() { return adminStaff() || kadis(); }
+    function claimInAssignedMarket(claimId) { return claimId is string && exists(/databases/$(database)/documents/market_claims/$(claimId)) && assignedMarket(get(/databases/$(database)/documents/market_claims/$(claimId)).data.marketId); }
+    function validPublicCategory(items, index) {
+      return items.size() <= index || (items[index] is map
+        && items[index].keys().hasOnly(['label','count'])
+        && items[index].label is string && items[index].label.size() > 0 && items[index].label.size() <= 80
+        && items[index].count is int && items[index].count >= 0);
+    }
+    function validPublicStats() {
+      return request.resource.data.keys().hasOnly(['totalTraders','totalIssuedSkpt','totalBusinesses','totalLocations','totalCategories','marketTraders','nonMarketTraders','topCategories','updatedAt','schemaVersion'])
+        && request.resource.data.totalTraders is int && request.resource.data.totalTraders >= 0
+        && request.resource.data.totalIssuedSkpt is int && request.resource.data.totalIssuedSkpt >= 0
+        && request.resource.data.totalBusinesses is int && request.resource.data.totalBusinesses >= 0
+        && request.resource.data.totalLocations is int && request.resource.data.totalLocations >= 0
+        && request.resource.data.totalCategories is int && request.resource.data.totalCategories >= 0
+        && request.resource.data.marketTraders is int && request.resource.data.marketTraders >= 0
+        && request.resource.data.nonMarketTraders is int && request.resource.data.nonMarketTraders >= 0
+        && request.resource.data.topCategories is list && request.resource.data.topCategories.size() <= 5
+        && validPublicCategory(request.resource.data.topCategories, 0)
+        && validPublicCategory(request.resource.data.topCategories, 1)
+        && validPublicCategory(request.resource.data.topCategories, 2)
+        && validPublicCategory(request.resource.data.topCategories, 3)
+        && validPublicCategory(request.resource.data.topCategories, 4)
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.schemaVersion == 1;
+    }
+    function validIntakeV1() {
+      return request.resource.data.keys().hasOnly(['registrationCode','submittedAt','status','identity','businessDrafts','marketDraft','hasMarketUnit','applySkpt','statementAccepted','statement','source','schemaVersion','publicToken'])
+        && request.resource.data.registrationCode is string && request.resource.data.registrationCode.size() >= 10 && request.resource.data.registrationCode.size() <= 40
+        && request.resource.data.status == 'SUBMITTED' && request.resource.data.source == 'PUBLIC_FORM' && request.resource.data.schemaVersion == 1
+        && request.resource.data.submittedAt == request.time && request.resource.data.publicToken is string && request.resource.data.publicToken.size() >= 32 && request.resource.data.publicToken.size() <= 128
+        && request.resource.data.identity is map && request.resource.data.identity.keys().hasOnly(['name','phone','birthPlace','birthDate','religion','citizenship','district','village','address','nik'])
+        && request.resource.data.identity.name is string && request.resource.data.identity.name.size() > 0 && request.resource.data.identity.name.size() <= 100
+        && request.resource.data.identity.phone is string && request.resource.data.identity.phone.size() >= 8 && request.resource.data.identity.phone.size() <= 20
+        && request.resource.data.identity.nik is string && request.resource.data.identity.nik.matches('^[0-9]{16}$')
+        && (!request.resource.data.applySkpt || (request.resource.data.identity.religion is string
+          && request.resource.data.identity.religion.size() > 0 && request.resource.data.identity.religion.size() <= 50
+          && request.resource.data.identity.citizenship is string
+          && request.resource.data.identity.citizenship.size() > 0 && request.resource.data.identity.citizenship.size() <= 60))
+        && request.resource.data.businessDrafts is list && request.resource.data.businessDrafts.size() > 0 && request.resource.data.businessDrafts.size() <= 10
+        && request.resource.data.hasMarketUnit is bool && request.resource.data.applySkpt is bool
+        && (!request.resource.data.applySkpt || request.resource.data.hasMarketUnit)
+        && (!request.resource.data.hasMarketUnit || (request.resource.data.marketDraft is map
+          && request.resource.data.marketDraft.keys().hasOnly(['marketName','unitType','unitNumber','block','floor','areaM2','locationHint'])
+          && request.resource.data.marketDraft.marketName is string && request.resource.data.marketDraft.marketName.size() > 0 && request.resource.data.marketDraft.marketName.size() <= 120
+          && request.resource.data.marketDraft.unitType in ['KIOS','LOS','LAPAK','PELATARAN']
+          && request.resource.data.marketDraft.unitNumber is string && request.resource.data.marketDraft.unitNumber.size() > 0 && request.resource.data.marketDraft.unitNumber.size() <= 50
+          && request.resource.data.marketDraft.block is string && request.resource.data.marketDraft.block.size() <= 30
+          && request.resource.data.marketDraft.floor is string && request.resource.data.marketDraft.floor.size() <= 20
+          && (request.resource.data.marketDraft.areaM2 == null || (request.resource.data.marketDraft.areaM2 is number && request.resource.data.marketDraft.areaM2 >= 0 && request.resource.data.marketDraft.areaM2 <= 10000))
+          && request.resource.data.marketDraft.locationHint is string && request.resource.data.marketDraft.locationHint.size() <= 300))
+        && request.resource.data.statementAccepted == true
+        && request.resource.data.statement is map
+        && request.resource.data.statement.keys().hasOnly(['version','type','text','accepted','acceptanceMethod','acceptedAt'])
+        && request.resource.data.statement.version in ['SKPT-STATEMENT-V2','SKPT-STATEMENT-V3-PERDA6-2024']
+        && request.resource.data.statement.acceptanceMethod == 'AFFIRMATIVE_CHECKBOX'
+        && request.resource.data.statement.acceptedAt == request.time
+        && request.resource.data.statement.accepted == true;
+    }
+    function validIntakeV2() {
+      return request.resource.data.keys().hasOnly(['registrationCode','submittedAt','status','identity','businessDrafts','marketDraft','hasMarketUnit','applySkpt','requirementsAcceptance','statementAccepted','statement','source','schemaVersion','publicToken'])
+        && request.resource.data.registrationCode is string && request.resource.data.registrationCode.size() >= 10 && request.resource.data.registrationCode.size() <= 40
+        && request.resource.data.status == 'SUBMITTED' && request.resource.data.source == 'PUBLIC_FORM' && request.resource.data.schemaVersion == 2
+        && request.resource.data.submittedAt == request.time && request.resource.data.publicToken is string && request.resource.data.publicToken.size() >= 32 && request.resource.data.publicToken.size() <= 128
+        && request.resource.data.identity is map && request.resource.data.identity.keys().hasOnly(['name','phone','birthPlace','birthDate','religion','citizenship','district','village','address','nik'])
+        && request.resource.data.identity.name is string && request.resource.data.identity.name.size() > 0 && request.resource.data.identity.name.size() <= 100
+        && request.resource.data.identity.phone is string && request.resource.data.identity.phone.size() >= 8 && request.resource.data.identity.phone.size() <= 20
+        && request.resource.data.identity.nik is string && request.resource.data.identity.nik.matches('^[0-9]{16}$')
+        && request.resource.data.businessDrafts is list && request.resource.data.businessDrafts.size() > 0 && request.resource.data.businessDrafts.size() <= 5
+        && validBusinessDraftV2(request.resource.data.businessDrafts, 0)
+        && validBusinessDraftV2(request.resource.data.businessDrafts, 1)
+        && validBusinessDraftV2(request.resource.data.businessDrafts, 2)
+        && validBusinessDraftV2(request.resource.data.businessDrafts, 3)
+        && validBusinessDraftV2(request.resource.data.businessDrafts, 4)
+        && request.resource.data.hasMarketUnit is bool && request.resource.data.applySkpt is bool && (!request.resource.data.applySkpt || request.resource.data.hasMarketUnit)
+        && request.resource.data.marketDraft is map
+        && request.resource.data.requirementsAcceptance is map
+        && request.resource.data.requirementsAcceptance.keys().hasOnly(['version','accepted','acceptedAt','itemCodes'])
+        && request.resource.data.requirementsAcceptance.version == 'SKPT-REQUIREMENTS-V1-PERDA6-2024'
+        && request.resource.data.requirementsAcceptance.accepted == true && request.resource.data.requirementsAcceptance.acceptedAt == request.time
+        && request.resource.data.requirementsAcceptance.itemCodes is list && request.resource.data.requirementsAcceptance.itemCodes.size() == 5
+        && request.resource.data.statementAccepted == true && request.resource.data.statement is map
+        && request.resource.data.statement.keys().hasOnly(['version','type','text','accepted','acceptanceMethod','acceptedAt'])
+        && request.resource.data.statement.version == 'SKPT-STATEMENT-V3-PERDA6-2024'
+        && request.resource.data.statement.acceptanceMethod == 'AFFIRMATIVE_CHECKBOX' && request.resource.data.statement.acceptedAt == request.time && request.resource.data.statement.accepted == true
+        && (!request.resource.data.applySkpt || (request.resource.data.identity.religion is string && request.resource.data.identity.religion.size() > 0 && request.resource.data.identity.citizenship is string && request.resource.data.identity.citizenship.size() > 0));
+    }
+    function validBusinessDraftV2(items, index) {
+      return items.size() <= index || (items[index] is map
+        && items[index].keys().hasOnly(['draftId','name','type','group','category','monthlyRevenue','workerCount','expense','locations'])
+        && items[index].draftId is string && items[index].draftId.size() <= 80
+        && items[index].name is string && items[index].name.size() <= 120
+        && items[index].type is string && items[index].type.size() > 0 && items[index].type.size() <= 80
+        && items[index].group is string && items[index].group.size() > 0 && items[index].group.size() <= 100
+        && items[index].category is string && items[index].category.size() > 0 && items[index].category.size() <= 120
+        && items[index].monthlyRevenue is number && items[index].monthlyRevenue >= 0 && items[index].monthlyRevenue <= 100000000000
+        && (items[index].workerCount == null || (items[index].workerCount is number && items[index].workerCount >= 0 && items[index].workerCount <= 10000))
+        && items[index].expense is string && items[index].expense.size() <= 160
+        && items[index].locations is list && items[index].locations.size() > 0 && items[index].locations.size() <= 5);
+    }
+    function validIntake() {
+      return request.resource.data.schemaVersion == 1
+        ? validIntakeV1()
+        : (request.resource.data.schemaVersion == 2 && validIntakeV2());
+    }
+    function validCorrectionV1() {
+      return request.resource.data.keys().hasOnly(['registrationCode','createdAt','status','source','schemaVersion','publicToken','section','value','reason'])
+        && request.resource.data.registrationCode is string && request.resource.data.registrationCode.size() >= 10 && request.resource.data.registrationCode.size() <= 40
+        && request.resource.data.createdAt == request.time && request.resource.data.status == 'PENDING_REVIEW' && request.resource.data.source == 'PUBLIC_FORM' && request.resource.data.schemaVersion == 1
+        && request.resource.data.publicToken is string && request.resource.data.publicToken.size() >= 32 && request.resource.data.publicToken.size() <= 128
+        && request.resource.data.section is string && request.resource.data.section.size() > 0 && request.resource.data.section.size() <= 60
+        && request.resource.data.value is string && request.resource.data.value.size() > 0 && request.resource.data.value.size() <= 2000
+        && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 500;
+    }
+    function validCorrectionV2() {
+      return request.resource.data.keys().hasOnly(['registrationCode','accessToken','createdAt','status','source','schemaVersion','publicToken','section','value','reason','marketId','claimId','routingRoles'])
+        && request.resource.data.registrationCode is string && request.resource.data.registrationCode.size() >= 10 && request.resource.data.registrationCode.size() <= 40
+        && request.resource.data.accessToken is string && request.resource.data.accessToken.size() >= 32 && request.resource.data.accessToken.size() <= 128
+        && exists(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken))
+        && get(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken)).data.registrationCode == request.resource.data.registrationCode
+        && request.resource.data.createdAt == request.time && request.resource.data.status == 'PENDING_REVIEW' && request.resource.data.source == 'PUBLIC_FORM' && request.resource.data.schemaVersion == 2
+        && request.resource.data.publicToken is string && request.resource.data.publicToken.size() >= 32 && request.resource.data.publicToken.size() <= 128
+        && request.resource.data.section in ['name','phone','business','location','marketUnit']
+        && request.resource.data.value is string && request.resource.data.value.size() > 0 && request.resource.data.value.size() <= 2000
+        && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 500
+        && request.resource.data.marketId is string && request.resource.data.claimId is string
+        && request.resource.data.routingRoles is list
+        && (request.resource.data.section != 'marketUnit' || (request.resource.data.marketId.size() > 0
+          && exists(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId))
+          && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.marketId == request.resource.data.marketId
+          && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.traderId == get(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken)).data.traderId
+          && request.resource.data.routingRoles.hasAll(['MARKET_HEAD','DISPERINDAG_ADMIN'])));
+    }
+    function validCorrection() {
+      return request.resource.data.schemaVersion == 1 ? validCorrectionV1() : (request.resource.data.schemaVersion == 2 && validCorrectionV2());
+    }
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || superAdmin());
+      allow list: if superAdmin();
+      allow create, update: if superAdmin()
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']
+        && request.resource.data.status in ['ACTIVE','INACTIVE']
+        && request.resource.data.schemaVersion == 1;
+      allow delete: if false;
+    }
+    // Username lookup is intentionally not public. A trusted provisioning layer
+    // must resolve username -> Firebase email before signInWithEmailAndPassword.
+    match /login_aliases/{username} {
+      allow read: if superAdmin();
+      allow write: if superAdmin();
+    }
+    // Ringkasan publik hanya memuat angka agregat. Data individual dan
+    // identitas pedagang tidak pernah ditempatkan pada dokumen ini.
+    match /public_stats/{documentId} {
+      allow get: if documentId == 'summary';
+      allow list: if false;
+      allow create, update: if (adminStaff() || kadis())
+        && documentId == 'summary'
+        && validPublicStats();
+      allow delete: if false;
+    }
+    match /trader_intake/{id} {
+      allow create: if !signedIn() && validIntake();
+      allow read, update, delete: if adminStaff();
+    }
+    match /correction_requests/{id} {
+      allow create: if !signedIn() && validCorrection();
+      allow create: if assignedMarket(request.resource.data.marketId)
+        && request.resource.data.keys().hasOnly(['requestType','action','marketUnitId','marketId','currentOccupancyId','currentTraderId','newTraderId','reason','status','submittedBy','submittedRole','submittedAt','decidedBy','decidedAt','decisionNote','source','schemaVersion'])
+        && request.resource.data.requestType == 'OCCUPANCY_CHANGE'
+        && request.resource.data.action in ['RELEASE','TRANSFER']
+        && request.resource.data.status == 'PENDING_REVIEW'
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submittedRole == 'MARKET_HEAD'
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 500
+        && request.resource.data.decidedBy == null && request.resource.data.decidedAt == null && request.resource.data.decisionNote == ''
+        && exists(/databases/$(database)/documents/market_units/$(request.resource.data.marketUnitId))
+        && get(/databases/$(database)/documents/market_units/$(request.resource.data.marketUnitId)).data.currentTraderId == request.resource.data.currentTraderId
+        && get(/databases/$(database)/documents/market_units/$(request.resource.data.marketUnitId)).data.currentOccupancyId == request.resource.data.currentOccupancyId;
+      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.marketId);
+      allow update: if (adminStaff() || kadis())
+        && resource.data.requestType == 'OCCUPANCY_CHANGE'
+        && resource.data.status == 'PENDING_REVIEW'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','newOccupancyId','decidedBy','decidedAt','decisionNote'])
+        && request.resource.data.status in ['APPROVED','REJECTED']
+        && request.resource.data.decidedBy == request.auth.uid
+        && request.resource.data.decidedAt == request.time
+        && request.resource.data.decisionNote is string && request.resource.data.decisionNote.size() > 0 && request.resource.data.decisionNote.size() <= 500;
+      allow delete: if false;
+    }
+    match /trader_media/{id} {
+      allow create: if !signedIn() && request.resource.data.keys().hasOnly(['ownerType','ownerId','mediaType','mime','width','height','binaryBytes','base64Bytes','dataBase64','status','schemaVersion','createdAt','publicToken'])
+        && request.resource.data.ownerType == 'TRADER_INTAKE' && request.resource.data.ownerId is string && request.resource.data.ownerId.size() >= 12 && request.resource.data.ownerId.size() <= 80
+        && request.resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','IDENTITY_KTP','IDENTITY_KK'] && request.resource.data.mime == 'image/webp'
+        && request.resource.data.width is number && request.resource.data.width > 0 && request.resource.data.width <= 2048
+        && request.resource.data.height is number && request.resource.data.height > 0 && request.resource.data.height <= 2048
+        && request.resource.data.binaryBytes is number && request.resource.data.binaryBytes > 0 && request.resource.data.binaryBytes <= 85000
+        && request.resource.data.base64Bytes is number && request.resource.data.base64Bytes > 0 && request.resource.data.base64Bytes <= 120000
+        && request.resource.data.dataBase64 is string && request.resource.data.dataBase64.size() <= 120000
+        && request.resource.data.status == 'PENDING' && request.resource.data.schemaVersion == 1 && request.resource.data.createdAt == request.time
+        && request.resource.data.publicToken is string && request.resource.data.publicToken.size() >= 32 && request.resource.data.publicToken.size() <= 128
+        && exists(/databases/$(database)/documents/trader_intake/$(request.resource.data.ownerId))
+        && get(/databases/$(database)/documents/trader_intake/$(request.resource.data.ownerId)).data.publicToken == request.resource.data.publicToken;
+      // Media dokumen publik hanya dapat diambil sebagai satu dokumen melalui
+      // token acak yang sekaligus menjadi document ID. Operasi list tetap
+      // ditolak sehingga koleksi foto tidak dapat dijelajahi publik.
+      allow get: if (resource.data.ownerType == 'PUBLIC_DOCUMENT'
+          && resource.data.ownerId == id
+          && resource.data.status == 'PUBLIC'
+          && resource.data.mediaType == 'PROFILE_PUBLIC')
+        || (activeStaff() && (resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC'] || adminStaff()));
+      allow list: if activeStaff() && (adminStaff() || profile().role in ['KADIS','MARKET_HEAD']);
+      allow create: if (adminStaff() || kadis())
+        && request.resource.data.keys().hasOnly(['ownerType','ownerId','mediaType','mime','width','height','binaryBytes','base64Bytes','dataBase64','status','schemaVersion','sourceMediaId','publishedAt'])
+        && request.resource.data.ownerType == 'PUBLIC_DOCUMENT'
+        && request.resource.data.ownerId == id
+        && request.resource.data.mediaType == 'PROFILE_PUBLIC'
+        && request.resource.data.mime == 'image/webp'
+        && request.resource.data.width is number && request.resource.data.width > 0 && request.resource.data.width <= 2048
+        && request.resource.data.height is number && request.resource.data.height > 0 && request.resource.data.height <= 2048
+        && request.resource.data.binaryBytes is number && request.resource.data.binaryBytes > 0 && request.resource.data.binaryBytes <= 55000
+        && request.resource.data.base64Bytes is number && request.resource.data.base64Bytes > 0 && request.resource.data.base64Bytes <= 80000
+        && request.resource.data.dataBase64 is string && request.resource.data.dataBase64.size() <= 80000
+        && request.resource.data.status == 'PUBLIC'
+        && request.resource.data.schemaVersion == 2
+        && request.resource.data.sourceMediaId is string
+        && request.resource.data.publishedAt == request.time;
+      allow update, delete: if adminStaff();
+    }
+    match /traders/{id} {
+      allow read: if adminStaff() || (signedIn() && profile().role == 'MARKET_HEAD');
+      allow create: if adminStaff();
+      allow update: if adminStaff() && request.resource.data.traderId == resource.data.traderId;
+      allow delete: if false;
+    }
+    match /trader_private/{id} {
+      allow read: if adminStaff();
+      allow create: if adminStaff() && request.resource.data.accessClass == 'RESTRICTED';
+      allow update: if adminStaff() && request.resource.data.accessClass == resource.data.accessClass;
+      allow delete: if false;
+    }
+    match /nik_registry/{id} {
+      allow read, create: if adminStaff();
+      allow update, delete: if false;
+    }
+    match /businesses/{id} {
+      allow read, create, update: if adminStaff();
+      allow delete: if false;
+    }
+    match /business_locations/{id} {
+      allow read, create, update: if adminStaff();
+      allow delete: if false;
+    }
+    match /business_classifications/{id} {
+      allow read: if adminStaff() || (signedIn() && profile().role == 'MARKET_HEAD');
+      allow create: if adminStaff();
+      allow update: if adminStaff() && request.resource.data.traderId == resource.data.traderId;
+      allow delete: if false;
+    }
+    match /market_claims/{id} {
+      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.marketId);
+      allow create: if adminStaff();
+      allow update: if adminStaff() || (assignedMarket(resource.data.marketId)
+        && (!('verificationStatus' in resource.data) || resource.data.verificationStatus in ['UNVERIFIED','SUBMITTED'])
+        && assignedMarket(request.resource.data.marketId)
+        && request.resource.data.marketId == resource.data.marketId
+        && request.resource.data.traderId == resource.data.traderId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified','verificationStatus','marketUnitId','updatedAt'])
+        && request.resource.data.verificationStatus in ['VERIFIED','CONFLICT']
+        && request.resource.data.marketUnitId is string
+        && request.resource.data.verified is map
+        && request.resource.data.verified.marketId == resource.data.marketId
+        && request.resource.data.verified.unitId == request.resource.data.marketUnitId);
+      allow delete: if false;
+    }
+    match /market_units/{id} {
+      allow read: if adminStaff() || assignedMarket(resource.data.marketId);
+      allow create: if adminStaff() || (assignedMarket(request.resource.data.marketId)
+        && request.resource.data.unitId == id
+        && request.resource.data.currentTraderId is string
+        && request.resource.data.currentOccupancyId is string
+        && ((request.resource.data.status == 'AVAILABLE'
+          && request.resource.data.currentTraderId == ''
+          && request.resource.data.currentOccupancyId == '')
+        || request.resource.data.status == 'OCCUPIED'));
+      allow update: if ((adminStaff() || kadis())
+        && request.resource.data.unitId == resource.data.unitId
+        && request.resource.data.marketId == resource.data.marketId
+        && request.resource.data.unitType == resource.data.unitType
+        && request.resource.data.unitNumber == resource.data.unitNumber
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','currentTraderId','currentOccupancyId','updatedAt']))
+        || (assignedMarket(resource.data.marketId)
+        && assignedMarket(request.resource.data.marketId)
+        && request.resource.data.unitId == resource.data.unitId
+        && request.resource.data.marketId == resource.data.marketId
+        && request.resource.data.unitType == resource.data.unitType
+        && request.resource.data.unitNumber == resource.data.unitNumber
+        && resource.data.currentTraderId == ''
+        && request.resource.data.currentTraderId is string
+        && request.resource.data.currentTraderId.size() > 0);
+      allow delete: if false;
+    }
+    match /market_occupancies/{id} {
+      allow read: if adminStaff() || assignedMarket(resource.data.marketId);
+      allow create: if ((adminStaff() || kadis())
+        && request.resource.data.occupancyId == id
+        && request.resource.data.status == 'ACTIVE'
+        && request.resource.data.changeRequestId is string
+        && existsAfter(/databases/$(database)/documents/correction_requests/$(request.resource.data.changeRequestId))
+        && getAfter(/databases/$(database)/documents/correction_requests/$(request.resource.data.changeRequestId)).data.status == 'APPROVED'
+        && getAfter(/databases/$(database)/documents/correction_requests/$(request.resource.data.changeRequestId)).data.newOccupancyId == id
+        && getAfter(/databases/$(database)/documents/correction_requests/$(request.resource.data.changeRequestId)).data.newTraderId == request.resource.data.traderId
+        && getAfter(/databases/$(database)/documents/market_units/$(request.resource.data.marketUnitId)).data.currentOccupancyId == id)
+        || (assignedMarket(request.resource.data.marketId)
+        && request.resource.data.occupancyId == id
+        && request.resource.data.status == 'ACTIVE'
+        && request.resource.data.marketUnitId is string
+        && request.resource.data.traderId is string
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.claimId is string
+        && exists(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId))
+        && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.marketId == request.resource.data.marketId
+        && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.traderId == request.resource.data.traderId);
+      allow update: if (adminStaff() || kadis())
+        && resource.data.status == 'ACTIVE'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','endedAt','endedBy','changeRequestId'])
+        && request.resource.data.status == 'CLOSED'
+        && request.resource.data.endedAt == request.time
+        && request.resource.data.endedBy == request.auth.uid;
+      allow delete: if false;
+    }
+    match /verification_records/{id} {
+      allow read: if adminStaff() || claimInAssignedMarket(resource.data.claimId);
+      allow create: if claimInAssignedMarket(request.resource.data.claimId);
+      allow update, delete: if false;
+    }
+    match /skpt_applications/{id} {
+      allow read: if adminStaff() || kadis() || (signedIn() && profile().role == 'MARKET_HEAD');
+      allow create: if adminStaff();
+      allow update: if adminStaff() || kadis()
+        || (assignedMarket(resource.data.marketId)
+          && request.resource.data.marketId == resource.data.marketId
+          && request.resource.data.status in ['KADIS_REVIEW','CONFLICT','NOT_FOUND','CORRECTION_REQUIRED']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','marketUnitId','verificationRecordId','statusHistory','updatedAt']));
+      allow delete: if false;
+    }
+    match /skpt_documents/{id} {
+      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.documentSnapshot.marketId);
+      allow create: if adminStaff() || kadis();
+      allow update: if adminStaff() || kadis();
+      allow delete: if false;
+    }
+    match /skpt_annual_validations/{id} {
+      allow read: if annualReviewer() || assignedMarket(resource.data.marketId);
+      allow create: if assignedMarket(request.resource.data.marketId)
+        && request.resource.data.keys().hasOnly(['skptId','validationKey','verificationToken','number','traderId','marketId','validationYear','status','stillUsesPlace','sameBusiness','sameUnit','hasChanges','note','submittedBy','submittedRole','submittedAt','validatedBy','validatorRole','validatedAt','decisionNote','reviewHistory','doesNotExtendValidity','policyBasis','schemaVersion'])
+        && request.resource.data.skptId is string && request.resource.data.skptId.size() > 0 && request.resource.data.skptId.size() <= 100
+        && request.resource.data.validationKey == id
+        && request.resource.data.verificationToken is string && request.resource.data.verificationToken.size() >= 12 && request.resource.data.verificationToken.size() <= 128
+        && request.resource.data.number is string && request.resource.data.number.size() > 0 && request.resource.data.number.size() <= 80
+        && request.resource.data.traderId is string && request.resource.data.traderId.size() > 0 && request.resource.data.traderId.size() <= 100
+        && request.resource.data.validationYear is number && request.resource.data.validationYear >= 2024 && request.resource.data.validationYear <= 2200
+        && request.resource.data.status == 'PENDING_REVIEW'
+        && request.resource.data.stillUsesPlace is bool
+        && request.resource.data.sameBusiness is bool
+        && request.resource.data.sameUnit is bool
+        && request.resource.data.hasChanges is bool
+        && ((request.resource.data.stillUsesPlace && request.resource.data.sameBusiness && request.resource.data.sameUnit) || request.resource.data.hasChanges)
+        && request.resource.data.note is string && request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 500
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submittedRole == 'MARKET_HEAD'
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.validatedBy == null
+        && request.resource.data.validatorRole == null
+        && request.resource.data.validatedAt == null
+        && request.resource.data.decisionNote == ''
+        && request.resource.data.reviewHistory is list && request.resource.data.reviewHistory.size() == 1
+        && request.resource.data.reviewHistory[0].action == 'SUBMITTED'
+        && request.resource.data.reviewHistory[0].actorUid == request.auth.uid
+        && request.resource.data.reviewHistory[0].actorRole == 'MARKET_HEAD'
+        && request.resource.data.doesNotExtendValidity == true
+        && request.resource.data.policyBasis == 'INTERNAL_ANNUAL_REGISTRATION_DRAFT_V1'
+        && request.resource.data.schemaVersion == 3
+        && exists(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptId))
+        && get(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptId)).data.status == 'ISSUED'
+        && get(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptId)).data.documentSnapshot.marketId == request.resource.data.marketId
+        && get(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptId)).data.traderId == request.resource.data.traderId
+        && get(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptId)).data.verificationToken == request.resource.data.verificationToken
+        && get(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptId)).data.number == request.resource.data.number;
+      allow update: if annualReviewer()
+        && resource.data.status == 'PENDING_REVIEW'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','validatedBy','validatorRole','validatedAt','decisionNote','reviewHistory'])
+        && request.resource.data.status in ['VALIDATED','RETURNED']
+        && (request.resource.data.status == 'RETURNED' || (!resource.data.hasChanges && resource.data.stillUsesPlace && resource.data.sameBusiness && resource.data.sameUnit))
+        && request.resource.data.validatedBy == request.auth.uid
+        && request.resource.data.validatorRole == profile().role
+        && request.resource.data.validatedAt == request.time
+        && request.resource.data.decisionNote is string
+        && request.resource.data.decisionNote.size() <= 500
+        && request.resource.data.reviewHistory is list
+        && request.resource.data.reviewHistory.size() == resource.data.reviewHistory.size() + 1
+        && request.resource.data.reviewHistory.size() <= 10
+        && request.resource.data.reviewHistory[request.resource.data.reviewHistory.size() - 1].action == request.resource.data.status
+        && request.resource.data.reviewHistory[request.resource.data.reviewHistory.size() - 1].actorUid == request.auth.uid
+        && request.resource.data.reviewHistory[request.resource.data.reviewHistory.size() - 1].actorRole == profile().role;
+      allow update: if assignedMarket(resource.data.marketId)
+        && resource.data.status == 'RETURNED'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','stillUsesPlace','sameBusiness','sameUnit','hasChanges','note','submittedBy','submittedRole','submittedAt','validatedBy','validatorRole','validatedAt','decisionNote','reviewHistory'])
+        && request.resource.data.status == 'PENDING_REVIEW'
+        && request.resource.data.stillUsesPlace is bool
+        && request.resource.data.sameBusiness is bool
+        && request.resource.data.sameUnit is bool
+        && request.resource.data.hasChanges is bool
+        && request.resource.data.hasChanges == !(request.resource.data.stillUsesPlace && request.resource.data.sameBusiness && request.resource.data.sameUnit)
+        && request.resource.data.note is string && request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 500
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submittedRole == 'MARKET_HEAD'
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.validatedBy == null && request.resource.data.validatorRole == null && request.resource.data.validatedAt == null
+        && request.resource.data.decisionNote == ''
+        && request.resource.data.reviewHistory is list
+        && request.resource.data.reviewHistory.size() == resource.data.reviewHistory.size() + 1
+        && request.resource.data.reviewHistory.size() <= 10
+        && request.resource.data.reviewHistory[request.resource.data.reviewHistory.size() - 1].action == 'RESUBMITTED'
+        && request.resource.data.reviewHistory[request.resource.data.reviewHistory.size() - 1].actorUid == request.auth.uid
+        && request.resource.data.reviewHistory[request.resource.data.reviewHistory.size() - 1].actorRole == 'MARKET_HEAD';
+      allow delete: if false;
+    }
+    match /notifications/{id} {
+      allow read: if adminStaff() || kadis();
+      allow create: if adminStaff() || kadis()
+        || (assignedMarket(request.resource.data.marketId)
+          && request.resource.data.recipientRole == 'KADIS'
+          && request.resource.data.type == 'MATERIAL_MARKET_CHANGE'
+          && request.resource.data.actorRole == 'MARKET_HEAD');
+      allow update: if adminStaff() || kadis();
+      allow delete: if false;
+    }
+    match /public_status/{token} {
+      allow get: if resource.data.publicToken == token && resource.data.publicStatus == true;
+      allow create, update: if adminStaff()
+        && request.resource.data.keys().hasOnly(['publicToken','registrationCode','status','publicStatus','displayName','traderId','businessType','marketName','marketRoutes','statementVersion','statementAcceptedAt','photoMediaToken','environment','isDemo','schemaVersion'])
+        && request.resource.data.publicToken == token
+        && request.resource.data.publicStatus == true
+        && request.resource.data.registrationCode is string
+        && request.resource.data.status is string
+        && request.resource.data.displayName is string
+        && request.resource.data.traderId is string
+        && request.resource.data.schemaVersion in [1,2]
+        && (!('marketRoutes' in request.resource.data) || (request.resource.data.marketRoutes is list && request.resource.data.marketRoutes.size() <= 25));
+      allow update: if kadis()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && resource.data.status in ['SUBMITTED','ADMIN_REVIEW','MARKET_VERIFICATION','MARKET_VERIFIED','KADIS_REVIEW','APPROVED','TTE_PENDING']
+        && request.resource.data.status == 'ISSUED';
+      allow list, delete: if false;
+    }
+    match /public_skpt_verification/{token} {
+      allow get: if resource.data.verificationToken == token && resource.data.status == 'ISSUED';
+      allow create, update: if (adminStaff() || kadis())
+        && request.resource.data.keys().hasOnly(['verificationToken','number','displayName','status','traderId','marketUnitId','issueDate','validUntil','documentHash','hashAlgorithm','hashScope','tteStatus','officialReference','documentSnapshot','signatory','annualValidations','photoMediaToken','legalBasisVersion','environment','isDemo','schemaVersion'])
+        && request.resource.data.verificationToken == token
+        && request.resource.data.status == 'ISSUED'
+        && request.resource.data.number is string
+        && request.resource.data.displayName is string
+        && request.resource.data.traderId is string
+        && request.resource.data.marketUnitId is string
+        && request.resource.data.validUntil is string
+        && request.resource.data.documentSnapshot is map
+        && request.resource.data.documentSnapshot.keys().hasOnly(['displayName','address','businessType','marketName','marketId','unitType','unitNumber','block','floor','areaM2'])
+        && request.resource.data.signatory is map
+        && request.resource.data.signatory.keys().hasOnly(['name','nip','rank','position','authority'])
+        && request.resource.data.annualValidations is list
+        && request.resource.data.annualValidations.size() <= 3
+        && request.resource.data.schemaVersion == 2;
+      allow list, delete: if false;
+    }
+    match /{collection}/{id} {
+      allow read, write: if false;
+    }
+  }
+}

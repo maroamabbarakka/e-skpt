@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Masuk Petugas | e-PASAR</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/internal-ui.css">
+</head>
+<body class="login-page">
+  <main class="auth-layout">
+    <section class="auth-brand-panel" aria-labelledby="authTitle">
+      <div class="auth-brand-content">
+        <a class="auth-brand" href="index.html"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><span><b>e-PASAR</b><small>Disperindag ESDM Kabupaten Pinrang</small></span></a>
+        <p class="eyebrow">RUANG KERJA RESMI PETUGAS</p>
+        <h1 id="authTitle">Sistem Administrasi e-PASAR</h1>
+        <p>Ruang kerja petugas untuk pengelolaan pendataan pedagang, verifikasi unit pasar, dan layanan e-SKPT.</p>
+        <div class="auth-feature"><span aria-hidden="true">✓</span><div><b>Data terkelola sesuai kewenangan</b><br><small>Setiap perubahan penting tercatat dalam jejak pemeriksaan.</small></div></div>
+      </div>
+    </section>
+    <section class="auth-form-panel">
+      <div class="auth-card">
+        <p class="eyebrow">AKSES INTERNAL</p>
+        <h2>Masuk Petugas</h2>
+        <p>Gunakan email atau username akun jabatan Anda.</p>
+        <form id="loginForm" novalidate>
+          <label>Email atau username<input id="identifier" type="text" inputmode="email" autocomplete="username" required placeholder="admin.pasar atau nama@domain.go.id"></label>
+          <label>Password<div class="password-field"><input id="password" type="password" autocomplete="current-password" required><button class="password-toggle" id="togglePassword" type="button" aria-pressed="false">Tampilkan</button></div></label>
+          <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
+          <button class="button primary auth-submit" id="loginButton" type="submit">Masuk</button>
+        </form>
+        <a class="login-back" href="index.html">← Kembali ke layanan publik</a>
+      </div>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/auth-service.js"></script>
+  <script>
+    const passwordInput=document.getElementById('password');
+    const passwordToggle=document.getElementById('togglePassword');
+    passwordToggle.addEventListener('click',()=>{const visible=passwordInput.type==='text';passwordInput.type=visible?'password':'text';passwordToggle.textContent=visible?'Tampilkan':'Sembunyikan';passwordToggle.setAttribute('aria-pressed',String(!visible));passwordInput.focus()});
+    function friendlyLoginError(error){const code=String(error?.code||'');const message=String(error?.message||'');if(/invalid-credential|wrong-password|user-not-found|invalid-login-credentials/i.test(code+' '+message))return 'Email atau kata sandi tidak sesuai. Silakan periksa kembali.';if(/too-many-requests/i.test(code+' '+message))return 'Terlalu banyak percobaan. Tunggu beberapa saat lalu coba kembali.';if(/network|offline/i.test(code+' '+message))return 'Koneksi ke layanan belum tersedia. Periksa internet lalu coba kembali.';if(/Akun belum memiliki profil|tidak aktif/i.test(message))return message;return 'Akun belum dapat diperiksa. Silakan coba kembali.'}
+    document.getElementById('loginForm').addEventListener('submit',async event=>{event.preventDefault();const error=document.getElementById('loginError');const button=document.getElementById('loginButton');error.textContent='';if(!event.target.reportValidity())return;button.disabled=true;button.textContent='Memeriksa akun…';try{await window.EPASAR_AUTH.signIn(document.getElementById('identifier').value,passwordInput.value);button.textContent='Membuka ruang kerja…';document.body.style.opacity='.78';location.href='admin-epasar.html'}catch(loginError){error.textContent=friendlyLoginError(loginError);button.disabled=false;button.textContent='Masuk'}});
+  </script>
+</body>
+</html>

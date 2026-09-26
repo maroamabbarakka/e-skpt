@@ -1,0 +1,13 @@
+[
+  { "id": "MKT-001", "name": "Pasar Rakyat Bungi", "status": "ACTIVE" },
+  { "id": "MKT-002", "name": "Pasar Rakyat Cempa", "status": "ACTIVE" },
+  { "id": "MKT-003", "name": "Pasar Rakyat Kampung Jaya", "status": "ACTIVE" },
+  { "id": "MKT-004", "name": "Pasar Rakyat Kariango", "status": "ACTIVE" },
+  { "id": "MKT-005", "name": "Pasar Rakyat Langnga", "status": "ACTIVE" },
+  { "id": "MKT-006", "name": "Pasar Rakyat Lanrisang", "status": "ACTIVE" },
+  { "id": "MKT-007", "name": "Pasar Rakyat Leppangang", "status": "ACTIVE" },
+  { "id": "MKT-008", "name": "Pasar Rakyat Marawi", "status": "ACTIVE" },
+  { "id": "MKT-009", "name": "Pasar Rakyat Pekkabata", "status": "ACTIVE" },
+  { "id": "MKT-010", "name": "Pasar Rakyat Sentral Pinrang", "status": "ACTIVE" },
+  { "id": "MKT-011", "name": "Pasar Rakyat Teppo", "status": "ACTIVE" }
+]

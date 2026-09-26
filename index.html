@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Portal Satu Data Pedagang dan layanan e-SKPT Kabupaten Pinrang"
+    />
+    <title>e-PASAR | Satu Data Pedagang Kabupaten Pinrang</title>
+    <link rel="icon" href="favicon.png" />
+    <link rel="stylesheet" href="css/epasar.css" />
+    <link rel="stylesheet" href="css/portal-reference.css" />
+    <link rel="stylesheet" href="css/portal-complete.css" />
+  </head>
+  <body>
+    <header class="sd-header">
+      <a class="sd-brand" href="index.html"
+        ><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang" /><span
+          ><b>e-PASAR</b
+          ><small>Satu Data Pedagang<br />Kabupaten Pinrang</small></span
+        ></a
+      ><button
+        class="sd-menu"
+        id="sdMenu"
+        aria-expanded="false"
+        aria-controls="sdNav"
+      >
+        <span class="menu-lines" aria-hidden="true"><i></i><i></i><i></i></span><span class="sr-only">Buka menu utama</span>
+      </button>
+      <nav id="sdNav">
+        <a class="active" href="index.html">Beranda</a
+        ><a href="layanan.html">Layanan</a><a href="data-informasi.html">Data & Informasi</a
+        ><a href="galeri-video.html">Galeri Video</a><a href="informasi.html">Informasi</a><a href="panduan.html">Panduan</a
+        ><a class="sd-login" href="login.html"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10"></path></svg><span>MASUK PETUGAS</span></a>
+      </nav>
+    </header>
+    <main>
+      <section class="sd-hero" id="beranda">
+        <div class="sd-hero-copy">
+          <p>Sistem Informasi Perdagangan Kabupaten Pinrang</p>
+          <h1>Satu data pedagang, <b>satu layanan yang lebih mudah</b></h1>
+          <h2>
+            Pendataan usaha, unit pasar, dan layanan
+            <strong class="hero-rotator" aria-live="polite" aria-atomic="true"><span id="heroRotatingText">e-SKPT</span></strong>
+          </h2>
+          <form class="sd-search" id="portalSearch">
+            <input
+              id="portalSearchInput"
+              type="search"
+              placeholder="Cari layanan atau panduan..."
+              aria-label="Cari layanan"
+            /><button aria-label="Cari"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg></button>
+          </form>
+        </div>
+        <div class="sd-metrics">
+          <article>
+            <span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg></span><small>Sasaran pendataan</small><b>2.000+</b
+            ><i>Pedagang Pinrang</i>
+          </article>
+          <article>
+            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10h16l-2-5H6l-2 5Z"></path><path d="M6 10v9h12v-9M9 19v-5h6v5"></path></svg></span><small>Jenis tempat</small><b>Kios/Lapak</b
+            ><i>Identitas unit tetap</i>
+          </article>
+          <article>
+            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5M9.5 14l1.7 1.7 3.6-4"></path></svg></span><small>Layanan dokumen</small><b>e-SKPT</b
+            ><i>Proses tercatat</i>
+          </article>
+          <article>
+            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8 7 10 4.2-2 7-5.3 7-10V6z"></path><path d="m9 12 2 2 4-4"></path></svg></span><small>Pelindungan data</small><b>Akses terbatas</b
+            ><i>NIK tidak tampil publik</i>
+          </article>
+        </div>
+        <div class="sd-services" id="layanan">
+          <a href="epasar.html" data-search="daftar pendataan pedagang usaha"
+            ><span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.6-3.4 2.4-5 5.5-5s4.9 1.6 5.5 5M18 8v6M15 11h6"></path></svg></span><b>Daftar Pedagang</b
+            ><small>Catat identitas, usaha, dan lokasi sekitar 3–5 menit.</small
+            ><strong>Mulai pendataan →</strong></a
+          ><a href="epasar-status.html" data-search="cek status registrasi"
+            ><span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg></span><b>Cek Status</b
+            ><small
+              >Pantau perkembangan data menggunakan nomor registrasi.</small
+            ><strong>Cek sekarang →</strong></a
+          ><a
+            href="verifikasi-skpt.html"
+            data-search="verifikasi qr dokumen skpt"
+            ><span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8 7 10 4.2-2 7-5.3 7-10V6z"></path><path d="m9 12 2 2 4-4"></path></svg></span><b>Verifikasi SKPT</b
+            ><small
+              >Periksa keabsahan dokumen tanpa membuka data sensitif.</small
+            ><strong>Periksa dokumen →</strong></a
+          ><a href="panduan.html" data-search="panduan bantuan petunjuk"
+            ><span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"></path><path d="M8 4v13a3 3 0 0 0 3 3M11 8h5M11 12h5"></path></svg></span><b>Panduan Layanan</b
+            ><small>Ikuti petunjuk sederhana untuk pedagang dan petugas.</small
+            ><strong>Baca panduan →</strong></a
+          >
+        </div>
+      </section>
+      <section class="sd-video-section sd-wrap" id="video">
+        <div class="sd-title video-heading"><small>PANDUAN VIDEO</small><h2>Galeri Video e-PASAR</h2><p>Panduan singkat menggunakan layanan e-PASAR.</p></div>
+        <div class="video-grid">
+          <article class="video-card"><div class="video-frame"><video controls playsinline preload="none" poster="assets/images/pasar-pinrang-editorial.webp"><source src="assets/videos/panduan-pendataan-web.mp4" type="video/mp4" />Peramban Anda belum mendukung video.</video></div><div class="video-card-copy"><span>01</span><div><h3>Panduan Pendataan Pedagang</h3><p>Langkah sederhana mengisi identitas, usaha, dan lokasi.</p></div></div></article>
+          <article class="video-card"><div class="video-frame"><video controls playsinline preload="none" poster="assets/images/pasar-pinrang-editorial.webp"><source src="assets/videos/alur-verifikasi.mp4" type="video/mp4" />Peramban Anda belum mendukung video.</video></div><div class="video-card-copy"><span>02</span><div><h3>Alur Verifikasi Pasar</h3><p>Memahami pemeriksaan klaim kios, los, lapak, dan pelataran.</p></div></div></article>
+          <article class="video-card"><div class="video-frame"><video controls playsinline preload="none" poster="assets/images/pasar-pinrang-editorial.webp"><source src="assets/videos/mengenal-skpt.mp4" type="video/mp4" />Peramban Anda belum mendukung video.</video></div><div class="video-card-copy"><span>03</span><div><h3>Mengenal e-SKPT</h3><p>Informasi pengajuan, penerbitan, dan pemeriksaan QR dokumen.</p></div></div></article>
+        </div>
+      </section>
+      <section class="sd-section sd-wrap" id="data">
+        <div class="sd-title">
+          <small>RINGKASAN LAYANAN</small>
+          <h2>Data & Informasi Pedagang</h2>
+          <p>
+            Data publik disajikan dalam bentuk ringkasan untuk memberikan gambaran
+            perkembangan pendataan tanpa menampilkan informasi pribadi pedagang.
+          </p>
+        </div>
+        <div class="sd-data-layout">
+          <div class="sd-table-card">
+            <div class="sd-tabs" role="tablist" aria-label="Ringkasan data">
+              <button class="selected" data-table="pedagang" role="tab" aria-selected="true">
+                Pedagang & Usaha</button
+              ><button data-table="pasar" role="tab" aria-selected="false">Pasar & Unit</button
+              ><button data-table="skpt" role="tab" aria-selected="false">e-SKPT</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Informasi</th>
+                  <th>Cakupan</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="portalDataRows">
+                <tr>
+                  <td>Satu identitas pedagang</td>
+                  <td>Beragam usaha dan lokasi</td>
+                  <td>Dalam pendataan</td>
+                </tr>
+                <tr>
+                  <td>Klasifikasi usaha</td>
+                  <td>Perdagangan, industri, kerajinan</td>
+                  <td>Multi-label</td>
+                </tr>
+                <tr>
+                  <td>Data pribadi</td>
+                  <td>NIK dan lampiran terbatas</td>
+                  <td>Dilindungi</td>
+                </tr>
+              </tbody>
+            </table>
+            <small class="table-note"
+              >Tidak ada foto atau NIK yang dimuat dalam ringkasan
+              publik.</small
+            >
+          </div>
+          <div class="sd-side-cards">
+            <a href="epasar.html"
+              ><b>Pendataan umum</b
+              ><small
+                >Pedagang pasar maupun non-pasar tetap dapat terdaftar.</small
+              ><strong>Buka formulir →</strong></a
+            ><a href="verifikasi-skpt.html"
+              ><b>Dokumen dapat diperiksa</b
+              ><small>QR mengarah ke halaman verifikasi publik yang aman.</small
+              ><strong>Buka verifikasi →</strong></a
+            >
+          </div>
+        </div>
+      </section>
+      <section class="sd-apps" id="akses">
+        <div class="sd-wrap apps-inner">
+          <div class="apps-copy">
+            <small>AKSES CEPAT</small>
+            <h2>Semua halaman dalam satu tempat</h2>
+            <p>
+              Pilih halaman sesuai kebutuhan. Ruang kerja internal hanya terbuka
+              untuk akun yang memiliki kewenangan.
+            </p>
+          </div>
+          <div class="app-cards app-cards-wide">
+            <a href="epasar.html"
+              ><span aria-hidden="true">01</span><b>Form Pedagang</b><small>Pendataan publik</small
+              ><strong>Buka →</strong></a
+            ><a href="epasar-status.html"
+              ><span aria-hidden="true">02</span><b>Status</b><small>Pantau registrasi</small
+              ><strong>Buka →</strong></a
+            ><a href="verifikasi-skpt.html"
+              ><span aria-hidden="true">03</span><b>Verifikasi</b><small>Periksa SKPT</small
+              ><strong>Buka →</strong></a
+            ><a href="trader-card.html"
+              ><span aria-hidden="true">04</span><b>Kartu Pedagang</b
+              ><small>Kartu berbasis token</small><strong>Buka →</strong></a
+            ><a href="login.html"
+              ><span aria-hidden="true">05</span><b>Masuk Petugas</b
+              ><small>Ruang kerja internal</small><strong>Masuk →</strong></a
+            ><a href="demo-training.html"
+              ><span aria-hidden="true">06</span><b>Simulasi</b><small>Latihan internal</small
+              ><strong>Buka →</strong></a
+            >
+          </div>
+        </div>
+      </section>
+      <section class="public-stats" id="statistik" aria-labelledby="statsTitle">
+        <div class="sd-wrap stats-inner">
+          <header class="stats-heading"><div><small>DATA TERKINI</small><h2 id="statsTitle">Statistik e-PASAR</h2><p>Ringkasan data pedagang, usaha, lokasi perdagangan, dan layanan e-SKPT Kabupaten Pinrang.</p></div><p class="stats-updated" id="statsUpdated">Memuat waktu pembaruan…</p></header>
+          <div class="stats-status" id="statsStatus" role="status" aria-live="polite">Memuat statistik terbaru…</div>
+          <div class="stats-kpi-grid" id="statsKpis">
+            <article class="stats-kpi"><span class="stats-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.6-3.4 2.4-5 5.5-5s4.9 1.6 5.5 5M18 8v6M15 11h6"></path></svg></span><small>Pedagang Terdaftar</small><strong data-stat="totalTraders">—</strong><p>Pedagang unik yang telah tercatat di e-PASAR</p></article>
+            <article class="stats-kpi"><span class="stats-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5"></path><path d="m9.5 14 1.7 1.7 3.6-4"></path></svg></span><small>SKPT Terbit</small><strong data-stat="totalIssuedSkpt">—</strong><p>Dokumen aktif yang telah selesai diterbitkan</p></article>
+            <article class="stats-kpi"><span class="stats-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10h16l-2-5H6zM6 10v10h12V10M9 20v-6h6v6"></path></svg></span><small>Usaha Terdata</small><strong data-stat="totalBusinesses">—</strong><p>Usaha yang tercatat pada data pedagang</p></article>
+            <article class="stats-kpi"><span class="stats-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span><small>Lokasi Usaha</small><strong data-stat="totalLocations">—</strong><p>Kios, los, lapak, pelataran, dan lokasi lainnya</p></article>
+          </div>
+          <div class="stats-detail-grid">
+            <article class="stats-detail"><div class="stats-card-title"><div><small>RINGKASAN KATEGORI</small><h3>Jenis Dagangan</h3></div><strong><span data-stat="totalCategories">—</span> kategori</strong></div><div class="category-bars" id="categoryBars"><p class="stats-empty">Menyiapkan data kategori…</p></div><a href="data-informasi.html">Lihat data selengkapnya →</a></article>
+            <article class="stats-detail"><div class="stats-card-title"><div><small>CAKUPAN PENDATAAN</small><h3>Pedagang Pasar &amp; Non-Pasar</h3></div></div><div class="coverage-values"><div><span>Pedagang Pasar</span><strong data-stat="marketTraders">—</strong></div><div><span>Pedagang Non-Pasar</span><strong data-stat="nonMarketTraders">—</strong></div></div><div class="coverage-bar" aria-hidden="true"><i id="marketCoverageBar"></i></div><p id="coverageNote">Cakupan dihitung dari lokasi usaha yang tercatat.</p></article>
+          </div>
+          <p class="stats-note">Data diperbarui mengikuti pencatatan dan proses verifikasi pada sistem e-PASAR. Informasi pribadi pedagang tidak ditampilkan.</p>
+        </div>
+      </section>
+      <section class="sd-summary">
+        <div class="summary-panel">
+          <div class="summary-copy">
+          <small>PETUNJUK MUDAH</small>
+          <h2>Belum yakin harus mulai dari mana?</h2>
+          <p>
+            Panduan menjelaskan alur pedagang, Kepala Pasar, Admin, dan Kadis
+            dengan bahasa sederhana.
+          </p>
+          <a href="panduan.html">BUKA PANDUAN →</a>
+          </div>
+          <div class="summary-visual" aria-label="Alur singkat layanan e-PASAR">
+            <div class="visual-step"><span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.6-3.4 2.4-5 5.5-5s4.9 1.6 5.5 5M18 8v6M15 11h6"></path></svg></span><b>Daftar</b><small>Isi data usaha</small></div>
+            <i class="visual-arrow" aria-hidden="true">→</i>
+            <div class="visual-step"><span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8 7 10 4.2-2 7-5.3 7-10V6z"></path><path d="m9 12 2 2 4-4"></path></svg></span><b>Verifikasi</b><small>Diperiksa petugas</small></div>
+            <i class="visual-arrow" aria-hidden="true">→</i>
+            <div class="visual-step"><span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5M9.5 14l1.7 1.7 3.6-4"></path></svg></span><b>Hasil</b><small>Status tercatat</small></div>
+          </div>
+        </div>
+      </section>
+      <section class="sd-news sd-wrap">
+        <div class="news-image" role="img" aria-label="Aktivitas pedagang dan pembeli di pasar rakyat Kabupaten Pinrang"></div>
+        <div>
+          <small>INFORMASI LAYANAN</small>
+          <h2>Data yang rapi membantu pelayanan yang lebih tepat</h2>
+          <p>
+            Satu pedagang dapat mempunyai beberapa usaha, lokasi, dan
+            klasifikasi tanpa membuat identitas terpisah. Klaim unit tetap
+            diperiksa sebelum menjadi data resmi.
+          </p>
+          <a href="epasar.html">MULAI PENDATAAN →</a>
+        </div>
+      </section>
+    </main>
+    <footer class="sd-footer">
+      <div class="sd-wrap footer-grid">
+        <div class="footer-brand">
+          <a class="sd-brand" href="index.html"
+            ><img
+              src="logo_pinrang_opt.png"
+              alt="Logo Kabupaten Pinrang"
+            /><span
+              ><b>e-PASAR</b
+              ><small>Satu Data Pedagang<br />Kabupaten Pinrang</small></span
+            ></a
+          >
+          <p>Disperindag ESDM Kabupaten Pinrang</p>
+        </div>
+        <div>
+          <b>Layanan Publik</b><a href="epasar.html">Daftar Pedagang</a
+          ><a href="epasar-status.html">Cek Status</a
+          ><a href="verifikasi-skpt.html">Verifikasi SKPT</a
+          ><a href="panduan.html">Panduan</a>
+        </div>
+        <div>
+          <b>Akses Internal</b><a href="login.html">Masuk Petugas</a
+          ><a href="admin-epasar.html">Dashboard</a
+          ><a href="demo-training.html">Simulasi Pelatihan</a>
+        </div>
+      </div>
+      <div class="sd-wrap footer-bottom">
+        © 2026 e-PASAR Kabupaten Pinrang
+        <span class="made-with">Made with <i aria-label="cinta">♥</i> by <a class="maroa-project-link" href="https://maroamedia.web.app/" target="_blank" rel="noopener noreferrer">MAROA Project</a></span>
+      </div>
+    </footer>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/epasar/firebase-config.local.js"></script>
+    <script src="js/epasar/config.js"></script>
+    <script src="js/epasar/portal.js"></script>
+  </body>
+</html>

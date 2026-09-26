@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Paket Training e-PASAR</title>
+<link rel="stylesheet" href="css/epasar.css" />
+<link rel="stylesheet" href="css/internal-ui.css" />
+    <style>
+      .training-shell {
+        max-width: 1180px;
+        margin: auto;
+        padding: 24px 16px 60px;
+      }
+      .training-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .training-note {
+        padding: 14px 16px;
+        border-left: 4px solid #e49a2f;
+        background: #fff8e8;
+        color: #654915;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+      .training-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .training-card {
+        background: #fff;
+        border: 1px solid #dce5ef;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 8px 24px #17365d0b;
+      }
+      .training-card h2 {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
+        color: #17365d;
+      }
+      .training-card p {
+        color: #52657c;
+        font-size: 0.85rem;
+      }
+      .training-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .training-table th,
+      .training-table td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid #e5ebf2;
+        font-size: 0.82rem;
+      }
+      .training-table th {
+        color: #405875;
+        background: #f4f7fb;
+      }
+      .status-issued {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 99px;
+        background: #e9f8ef;
+        color: #16723c;
+        font-size: 0.7rem;
+        font-weight: 800;
+      }
+      .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .qr-box {
+        text-align: center;
+        border: 1px solid #e3eaf2;
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .qr-box img {
+        width: 150px;
+        height: 150px;
+        display: block;
+        margin: auto;
+      }
+      .qr-box small {
+        display: block;
+        color: #52657c;
+        margin-top: 8px;
+        overflow-wrap: anywhere;
+      }
+      .account-role {
+        color: #1261a0;
+        font-weight: 800;
+        font-size: 0.78rem;
+      }
+      .training-wide {
+        grid-column: 1/-1;
+      }
+      @media (max-width: 800px) {
+        .training-grid {
+          grid-template-columns: 1fr;
+        }
+        .training-wide {
+          grid-column: auto;
+        }
+        .training-table {
+          min-width: 650px;
+        }
+        .table-scroll {
+          overflow: auto;
+        }
+        .qr-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+<body class="training-mode">
+  <div class="training-banner">⚠ MODE TRAINING <span class="training-label">DATA DUMMY</span><br><small>Seluruh data pada halaman ini tidak memengaruhi data operasional.</small></div>
+    <main class="training-shell">
+      <header class="training-head">
+        <div>
+          <p class="eyebrow">MODE TRAINING TERISOLASI</p>
+          <h1>Evaluasi Akun dan SKPT Demo</h1>
+          <p class="intro">
+            Data pada halaman ini hanya contoh untuk pelatihan. Tidak terhubung
+            ke Firebase dan tidak mewakili pedagang nyata.
+          </p>
+        </div>
+        <a class="button secondary" href="demo-epasar.html"
+          >Buka simulasi workflow</a
+        >
+      </header>
+      <div class="training-note">
+        <b>Peringatan:</b> Semua identitas, email, nomor SKPT, nomor unit, dan
+        QR di halaman ini adalah dummy. Jangan digunakan untuk layanan publik
+        atau dokumen resmi.
+      </div>
+      <section class="training-grid">
+        <article class="training-card training-wide">
+          <h2>Akun simulasi berdasarkan role</h2>
+          <div class="table-scroll">
+            <table class="training-table">
+              <thead>
+                <tr>
+                  <th>Username simulasi</th>
+                  <th>Role</th>
+                  <th>Scope</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>superadmin.demo</td>
+                  <td class="account-role">SUPER_ADMIN</td>
+                  <td>Seluruh modul demo</td>
+                  <td><span class="status-issued">AKTIF</span></td>
+                </tr>
+                <tr>
+                  <td>admin.pasar.demo</td>
+                  <td class="account-role">MARKET_ADMIN</td>
+                  <td>Seluruh pasar demo</td>
+                  <td><span class="status-issued">AKTIF</span></td>
+                </tr>
+                <tr>
+                  <td>kepala.sent ral.demo</td>
+                  <td class="account-role">MARKET_HEAD</td>
+                  <td>MKT-010 · Pasar Rakyat Sentral Pinrang</td>
+                  <td><span class="status-issued">AKTIF</span></td>
+                </tr>
+                <tr>
+                  <td>kadis.demo</td>
+                  <td class="account-role">KADIS</td>
+                  <td>Approval final demo</td>
+                  <td><span class="status-issued">AKTIF</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+        <article class="training-card">
+          <h2>Pedagang Demo 01</h2>
+          <p>
+            <b>Siti Aminah</b><br />Usaha kuliner · MKT-010 · Pasar Rakyat Sentral Pinrang<br />Unit
+            klaim: A-18 · Unit terverifikasi: A-19
+          </p>
+          <p>
+            <b>SKPT-DEM-2026-0001</b><br />Status:
+            <span class="status-issued">ISSUED</span><br />Berlaku sampai: 24
+            September 2028
+          </p>
+        </article>
+        <article class="training-card">
+          <h2>Pedagang Demo 02</h2>
+          <p>
+            <b>Andi Ramadhan</b><br />Perdagangan · MKT-009 · Pasar Rakyat Pekkabata<br />Unit
+            terverifikasi: B-07
+          </p>
+          <p>
+            <b>SKPT-DEM-2026-0002</b><br />Status:
+            <span class="status-issued">ISSUED</span><br />Berlaku sampai: 24
+            September 2028
+          </p>
+        </article>
+        <article class="training-card">
+          <h2>Pedagang Demo 03</h2>
+          <p>
+            <b>Nurul Husna</b><br />Kerajinan · Non-pasar<br />Registrasi:
+            REG-DEM-0003
+          </p>
+          <p>
+            Tanpa SKPT pasar; digunakan untuk latihan alur pedagang non-pasar.
+          </p>
+        </article>
+        <article class="training-card training-wide">
+          <h2>QR Training</h2>
+          <p>
+            QR dokumen dan QR unit dibuat dengan payload dummy yang berbeda. QR
+            ini hanya untuk evaluasi tampilan dan alur pemindaian.
+          </p>
+          <div class="qr-grid">
+            <div class="qr-box">
+              <b>QR Dokumen SKPT 0001</b
+              ><img
+                alt="QR dummy dokumen SKPT 0001"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=EPASAR-DEMO-DOC-SKPT-DEM-2026-0001"
+              /><small>Payload: EPASAR-DEMO-DOC-SKPT-DEM-2026-0001</small>
+            </div>
+            <div class="qr-box">
+              <b>QR Unit Pasar A-19</b
+              ><img
+                alt="QR dummy unit pasar A-19"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=EPASAR-DEMO-UNIT-MKT-010-A-19"
+              /><small
+                >Payload: EPASAR-DEMO-UNIT-MKT-010-A-19</small
+              >
+            </div>
+            <div class="qr-box">
+              <b>QR Dokumen SKPT 0002</b
+              ><img
+                alt="QR dummy dokumen SKPT 0002"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=EPASAR-DEMO-DOC-SKPT-DEM-2026-0002"
+              /><small>Payload: EPASAR-DEMO-DOC-SKPT-DEM-2026-0002</small>
+            </div>
+            <div class="qr-box">
+              <b>QR Unit Pasar B-07</b
+              ><img
+                alt="QR dummy unit pasar B-07"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=EPASAR-DEMO-UNIT-MKT-009-B-07"
+              /><small>Payload: EPASAR-DEMO-UNIT-MKT-009-B-07</small>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

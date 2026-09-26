@@ -1,0 +1,14 @@
+/* Kartu dicetak pada satu lembar A4 tanpa menghasilkan halaman kosong. */
+@media print {
+  .card-sheet {
+    margin: 15mm auto 0 !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .card-note {
+    margin: 5mm auto 0 !important;
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+}
