@@ -16,7 +16,7 @@ for (const viewport of [
   });
 }
 
-for (const path of ['index.html', 'layanan.html', 'data-informasi.html', 'galeri-video.html', 'informasi.html', 'panduan.html', 'epasar-status.html', 'verifikasi-skpt.html', 'admin-epasar.html', 'admin-intake-review.html', 'photo-editor.html', 'market-verification.html', 'annual-validation.html', 'occupancy-change.html', 'kadis-approval.html', 'profil.html', 'login.html']) {
+for (const path of ['index.html', 'layanan.html', 'data-informasi.html', 'galeri-video.html', 'informasi.html', 'panduan.html', 'epasar-status.html', 'verifikasi-skpt.html', 'verifikasi-unit.html', 'admin-epasar.html', 'admin-intake-review.html', 'photo-editor.html', 'market-verification.html', 'annual-validation.html', 'occupancy-change.html', 'kadis-approval.html', 'profil.html', 'login.html']) {
   test(`${path} loads without horizontal overflow`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`http://127.0.0.1:8090/${path}`);

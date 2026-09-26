@@ -27,6 +27,11 @@
     })) : [];
     const places = businesses.flatMap(b => b.locations.flatMap(l => l.marketPlaces));
     const applySkpt = places.some(place => place.applySkpt);
+    const basicAcceptance = Boolean(data.truthAck && data.verificationAck);
+    const completeAcceptance = Boolean(basicAcceptance && (!applySkpt || data.skptAck));
+    const statementText = applySkpt
+      ? 'Pemohon menyatakan data benar, menyetujui verifikasi, bersedia menaati kewajiban Pedagang Pasar Rakyat, memahami pelindungan data, dan memahami bahwa SKPT berlaku dua tahun serta bukan bukti kepemilikan.'
+      : 'Pemohon menyatakan data pendataan benar, dapat dipertanggungjawabkan, dan menyetujui pemeriksaan data oleh petugas yang berwenang.';
     return {
       registrationCode: registrationCode(),
       submittedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
@@ -40,9 +45,9 @@
       businessDrafts: businesses,
       marketDraft: places[0] || {},
       hasMarketUnit: places.length > 0, applySkpt,
-      requirementsAcceptance: { version: window.EPASAR.REQUIREMENTS_VERSION, accepted: Boolean(data.truthAck && data.verificationAck && data.skptAck), acceptedAt: window.firebase.firestore.FieldValue.serverTimestamp(), itemCodes: ['DATA_VERIFICATION','SEPARATE_APPLICATION_PER_PLACE','TWO_YEAR_VALIDITY','NOT_PROOF_OF_OWNERSHIP','SAME_LOCATION_LIMIT_REVIEW'] },
-      statementAccepted: Boolean(data.truthAck && data.verificationAck && data.skptAck),
-      statement: { version: 'SKPT-STATEMENT-V3-PERDA6-2024', type: 'PERNYATAAN_ELEKTRONIK_SKPT', text: 'Pemohon menyatakan data benar, menyetujui verifikasi, bersedia menaati kewajiban Pedagang Pasar Rakyat, memahami pelindungan data, dan memahami bahwa SKPT berlaku dua tahun serta bukan bukti kepemilikan.', accepted: Boolean(data.truthAck && data.verificationAck && data.skptAck), acceptanceMethod: 'AFFIRMATIVE_CHECKBOX', acceptedAt: window.firebase.firestore.FieldValue.serverTimestamp() },
+      requirementsAcceptance: { version: window.EPASAR.REQUIREMENTS_VERSION, accepted: completeAcceptance, acceptedAt: window.firebase.firestore.FieldValue.serverTimestamp(), itemCodes: ['DATA_VERIFICATION','SEPARATE_APPLICATION_PER_PLACE','TWO_YEAR_VALIDITY','NOT_PROOF_OF_OWNERSHIP','SAME_LOCATION_LIMIT_REVIEW'] },
+      statementAccepted: completeAcceptance,
+      statement: { version: 'SKPT-STATEMENT-V3-PERDA6-2024', type: applySkpt ? 'PERNYATAAN_ELEKTRONIK_SKPT' : 'PERNYATAAN_ELEKTRONIK_PENDATAAN', text: statementText, accepted: completeAcceptance, acceptanceMethod: 'AFFIRMATIVE_CHECKBOX', acceptedAt: window.firebase.firestore.FieldValue.serverTimestamp() },
       source: 'PUBLIC_FORM', schemaVersion: 2, publicToken: token()
     };
   }

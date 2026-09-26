@@ -92,6 +92,9 @@ service cloud.firestore {
         && request.resource.data.statementAccepted == true && request.resource.data.statement is map
         && request.resource.data.statement.keys().hasOnly(['version','type','text','accepted','acceptanceMethod','acceptedAt'])
         && request.resource.data.statement.version == 'SKPT-STATEMENT-V3-PERDA6-2024'
+        && request.resource.data.statement.type in ['PERNYATAAN_ELEKTRONIK_SKPT','PERNYATAAN_ELEKTRONIK_PENDATAAN']
+        && ((request.resource.data.applySkpt && request.resource.data.statement.type == 'PERNYATAAN_ELEKTRONIK_SKPT')
+          || (!request.resource.data.applySkpt && request.resource.data.statement.type == 'PERNYATAAN_ELEKTRONIK_PENDATAAN'))
         && request.resource.data.statement.acceptanceMethod == 'AFFIRMATIVE_CHECKBOX' && request.resource.data.statement.acceptedAt == request.time && request.resource.data.statement.accepted == true
         && (!request.resource.data.applySkpt || (request.resource.data.identity.religion is string && request.resource.data.identity.religion.size() > 0 && request.resource.data.identity.citizenship is string && request.resource.data.identity.citizenship.size() > 0));
     }
@@ -168,6 +171,19 @@ service cloud.firestore {
       allow create, update: if (adminStaff() || kadis())
         && documentId == 'summary'
         && validPublicStats();
+      allow delete: if false;
+    }
+    match /markets/{marketId} {
+      allow read: if true;
+      allow create, update: if adminStaff()
+        && request.resource.data.keys().hasOnly(['marketId','name','status','schemaVersion','updatedAt'])
+        && request.resource.data.marketId == marketId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.status in ['ACTIVE','INACTIVE']
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.updatedAt is timestamp;
       allow delete: if false;
     }
     match /trader_intake/{id} {
@@ -485,6 +501,23 @@ service cloud.firestore {
         && request.resource.data.annualValidations.size() <= 3
         && request.resource.data.schemaVersion == 2;
       allow list, delete: if false;
+    }
+    match /public_market_units/{token} {
+      allow get: if resource.data.verificationToken == token && resource.data.publicStatus == true;
+      allow list: if false;
+      allow create, update: if (adminStaff() || assignedMarket(request.resource.data.marketId))
+        && request.resource.data.keys().hasOnly(['verificationToken','unitId','marketId','marketName','unitType','unitNumber','block','floor','areaM2','status','publicStatus','schemaVersion','updatedAt'])
+        && request.resource.data.verificationToken == token
+        && request.resource.data.publicStatus == true
+        && request.resource.data.unitId is string
+        && request.resource.data.marketId is string
+        && request.resource.data.marketName is string
+        && request.resource.data.unitType in ['KIOS','LOS','LAPAK','PELATARAN']
+        && request.resource.data.unitNumber is string
+        && request.resource.data.status in ['TERVERIFIKASI','PERLU_PEMERIKSAAN']
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
     match /{collection}/{id} {
       allow read, write: if false;

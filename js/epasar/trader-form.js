@@ -18,6 +18,18 @@
   }
   function showError(message) { error.textContent = message; error.hidden = !message; return false; }
   function clearError() { showError(''); }
+  function friendlySubmitError(exception) {
+    const code = String(exception?.code || '');
+    const detail = String(exception?.message || '');
+    if (code === 'permission-denied' || /missing or insufficient permissions/i.test(detail)) {
+      if (window.epasarAuth?.currentUser) return 'Anda sedang masuk sebagai petugas. Keluar dari akun petugas atau buka formulir melalui jendela privat, lalu kirim kembali. Data yang sudah diisi tetap tersimpan.';
+      return 'Pendataan belum dapat dikirim karena akses layanan belum tersedia. Muat ulang halaman lalu coba kembali. Data yang sudah diisi tetap tersimpan.';
+    }
+    if (code === 'unavailable' || code === 'network-request-failed' || /network|offline|koneksi/i.test(detail)) return 'Koneksi ke layanan terputus. Data Anda masih tersimpan. Periksa jaringan lalu coba lagi.';
+    if (code === 'resource-exhausted') return 'Layanan sedang menerima banyak permintaan. Tunggu beberapa saat lalu coba kembali.';
+    if (code === 'invalid-argument') return 'Beberapa data belum sesuai. Periksa kembali bagian yang ditandai lalu coba lagi.';
+    return 'Pendataan belum berhasil dikirim. Data Anda masih tersimpan di halaman ini. Silakan coba kembali.';
+  }
   function labelFor(field) {
     const label = field.closest('label');
     return (field.dataset.label || (label && label.childNodes[0] && label.childNodes[0].textContent) || field.name || 'Bagian ini').replace(/\s+/g, ' ').trim();
@@ -165,6 +177,10 @@
   }
   async function submit() {
     if (submitting || !validate()) return;
+    if (window.epasarAuth?.currentUser) {
+      showError('Anda sedang masuk sebagai petugas. Keluar dari akun petugas atau buka formulir melalui jendela privat sebelum mengirim pendataan. Data yang sudah diisi tetap tersimpan.');
+      return;
+    }
     submitting = true; const button = document.getElementById('nextButton'); button.disabled = true; button.textContent = 'Mengirim…';
     let created = null;
     try {
@@ -178,7 +194,8 @@
       document.getElementById('statusLink').href = `epasar-status.html?registration=${encodeURIComponent(created.registrationCode)}&token=${encodeURIComponent(created.publicToken)}`;
       sessionStorage.removeItem(E.DRAFT_KEY);
     } catch (exception) {
-      showError(created ? `Pendataan utama tercatat dengan nomor ${created.registrationCode}, tetapi lampiran belum lengkap. Jangan kirim ulang; hubungi petugas.` : (exception.message || 'Pendataan belum terkirim. Data Anda masih tersimpan di halaman ini.'));
+      console.error('[e-PASAR] Pengiriman pendataan gagal.', exception);
+      showError(created ? `Pendataan utama tercatat dengan nomor ${created.registrationCode}, tetapi lampiran belum lengkap. Jangan kirim ulang; hubungi petugas.` : friendlySubmitError(exception));
       button.disabled = false; button.textContent = 'Kirim Pendataan'; submitting = false;
     }
   }

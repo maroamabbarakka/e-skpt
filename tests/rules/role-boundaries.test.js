@@ -26,6 +26,7 @@ await env.withSecurityRulesDisabled(async context => {
   await setDoc(doc(db, 'public_status', 's'.repeat(32)), { publicToken: 's'.repeat(32), publicStatus: true, registrationCode: 'REG-PIN-2026-MULTI01', status: 'MARKET_VERIFICATION', traderId: 'TRD-1' });
   await setDoc(doc(db, 'public_skpt_verification', 'verify-token-1'), { verificationToken: 'verify-token-1', status: 'ISSUED', number: 'SKPT-1' });
   await setDoc(doc(db, 'public_stats', 'summary'), { totalTraders: 2, totalIssuedSkpt: 1, totalBusinesses: 2, totalLocations: 2, totalCategories: 2, marketTraders: 1, nonMarketTraders: 1, topCategories: [{ label: 'TRADE', count: 1 }, { label: 'CRAFT', count: 1 }], updatedAt: new Date(), schemaVersion: 1 });
+  await setDoc(doc(db, 'markets', 'MKT-001'), { marketId: 'MKT-001', name: 'Pasar Rakyat Bungi', status: 'ACTIVE', schemaVersion: 1, updatedAt: new Date() });
   await setDoc(doc(db, 'trader_media', 'private-media-1'), { ownerType: 'TRADER_INTAKE', ownerId: 'private-1', mediaType: 'PROFILE', mime: 'image/webp', width: 600, height: 800, binaryBytes: 3, base64Bytes: 4, dataBase64: 'YWJj', status: 'PENDING', schemaVersion: 1 });
   await setDoc(doc(db, 'trader_media', 'public-photo-token-1'), { ownerType: 'PUBLIC_DOCUMENT', ownerId: 'public-photo-token-1', mediaType: 'PROFILE_PUBLIC', mime: 'image/webp', width: 600, height: 800, binaryBytes: 3, base64Bytes: 4, dataBase64: 'YWJj', status: 'PUBLIC', schemaVersion: 2, sourceMediaId: 'private-media-1' });
   await setDoc(doc(db, 'public_skpt_verification', 'annual-token-1'), { verificationToken: 'annual-token-1', number: 'SKPT-ANNUAL-1', displayName: 'Pedagang Uji', status: 'ISSUED', traderId: 'TRD-1', marketUnitId: 'unit-1', issueDate: '2026-01-01T00:00:00.000Z', validUntil: '2028-01-01T00:00:00.000Z', documentHash: 'hash', hashAlgorithm: 'SHA-256', hashScope: 'CANONICAL_DOCUMENT_SNAPSHOT', tteStatus: 'REGISTERED_MANUAL', officialReference: 'REF-1', documentSnapshot: { displayName: 'Pedagang Uji', address: 'Pinrang', businessType: 'Perdagangan', marketName: 'Pasar Uji', marketId: 'M1', unitType: 'LOS', unitNumber: 'A-1', block: 'A', floor: '1', areaM2: 6 }, signatory: { name: 'Pejabat Uji', nip: '1', rank: 'Pembina', position: 'Kepala Dinas', authority: 'a.n. BUPATI PINRANG' }, annualValidations: [{ year: 2026, status: 'INITIAL_ISSUE' }, { year: 2027, status: 'DUE' }], legalBasisVersion: 'TEST', environment: 'TEST', isDemo: true, schemaVersion: 2 });
@@ -38,6 +39,15 @@ const otherMarketHead = env.authenticatedContext('market-head-2').firestore();
 const kadis = env.authenticatedContext('kadis-1').firestore();
 const admin = env.authenticatedContext('admin-1').firestore();
 const anonymous = env.unauthenticatedContext().firestore();
+
+await assertSucceeds(getDoc(doc(anonymous, 'markets', 'MKT-001')));
+await assertSucceeds(getDocs(collection(anonymous, 'markets')));
+await assertFails(setDoc(doc(anonymous, 'markets', 'MKT-099'), { marketId: 'MKT-099', name: 'Pasar Palsu', status: 'ACTIVE', schemaVersion: 1, updatedAt: serverTimestamp() }));
+await assertSucceeds(setDoc(doc(admin, 'markets', 'MKT-011'), { marketId: 'MKT-011', name: 'Pasar Rakyat Teppo', status: 'ACTIVE', schemaVersion: 1, updatedAt: serverTimestamp() }));
+await assertSucceeds(setDoc(doc(marketHead, 'public_market_units', 'unit-token-public-001'), { verificationToken: 'unit-token-public-001', unitId: 'UNT-PUBLIC-1', marketId: 'M1', marketName: 'Pasar Uji', unitType: 'PELATARAN', unitNumber: 'P-1', block: '', floor: '', areaM2: 4, status: 'TERVERIFIKASI', publicStatus: true, schemaVersion: 1, updatedAt: serverTimestamp() }));
+await assertSucceeds(getDoc(doc(anonymous, 'public_market_units', 'unit-token-public-001')));
+await assertFails(getDocs(collection(anonymous, 'public_market_units')));
+await assertFails(setDoc(doc(otherMarketHead, 'public_market_units', 'forged-unit-token-001'), { verificationToken: 'forged-unit-token-001', unitId: 'UNT-PUBLIC-2', marketId: 'M1', marketName: 'Pasar Uji', unitType: 'KIOS', unitNumber: 'K-1', block: '', floor: '', areaM2: 4, status: 'TERVERIFIKASI', publicStatus: true, schemaVersion: 1, updatedAt: serverTimestamp() }));
 
 const validPublicIntake = {
   registrationCode: 'REG-PIN-2026-MARKET01', submittedAt: serverTimestamp(), status: 'SUBMITTED', source: 'PUBLIC_FORM', schemaVersion: 1, publicToken: 'a'.repeat(32),
@@ -56,6 +66,23 @@ const validMultiIntake = {
   requirementsAcceptance: { version: 'SKPT-REQUIREMENTS-V1-PERDA6-2024', accepted: true, acceptedAt: serverTimestamp(), itemCodes: ['DATA_VERIFICATION','SEPARATE_APPLICATION_PER_PLACE','TWO_YEAR_VALIDITY','NOT_PROOF_OF_OWNERSHIP','SAME_LOCATION_LIMIT_REVIEW'] }
 };
 await assertSucceeds(setDoc(doc(anonymous, 'trader_intake', 'valid-multi-intake'), validMultiIntake));
+await assertSucceeds(setDoc(doc(anonymous, 'trader_intake', 'valid-multi-intake-without-skpt'), {
+  ...validMultiIntake,
+  publicToken: 'n'.repeat(32),
+  registrationCode: 'REG-PIN-2026-NOSKPT1',
+  applySkpt: false,
+  identity: { ...validMultiIntake.identity, religion: '', citizenship: '' },
+  businessDrafts: validMultiIntake.businessDrafts.map(business => ({ ...business, locations: business.locations.map(location => ({ ...location, marketPlaces: location.marketPlaces.map(place => ({ ...place, applySkpt: false })) })) })),
+  marketDraft: { ...validMultiIntake.marketDraft, applySkpt: false },
+  statement: { ...validMultiIntake.statement, type: 'PERNYATAAN_ELEKTRONIK_PENDATAAN' }
+}));
+await assertFails(setDoc(doc(anonymous, 'trader_intake', 'invalid-no-skpt-statement-type'), {
+  ...validMultiIntake,
+  publicToken: 'o'.repeat(32),
+  registrationCode: 'REG-PIN-2026-NOSKPT2',
+  applySkpt: false,
+  statement: { ...validMultiIntake.statement, type: 'PERNYATAAN_ELEKTRONIK_SKPT' }
+}));
 await assertFails(setDoc(doc(anonymous, 'trader_intake', 'invalid-multi-intake'), { ...validMultiIntake, publicToken: 'w'.repeat(32), requirementsAcceptance: { ...validMultiIntake.requirementsAcceptance, accepted: false } }));
 const validMarketCorrection = { registrationCode: 'REG-PIN-2026-MULTI01', accessToken: 's'.repeat(32), createdAt: serverTimestamp(), status: 'PENDING_REVIEW', source: 'PUBLIC_FORM', schemaVersion: 2, publicToken: 'r'.repeat(32), section: 'marketUnit', value: 'Nomor yang benar A-2', reason: 'Hasil pemeriksaan ulang', marketId: 'M1', claimId: 'claim-1', routingRoles: ['MARKET_HEAD','DISPERINDAG_ADMIN'] };
 await assertSucceeds(setDoc(doc(anonymous, 'correction_requests', 'valid-market-correction-v2'), validMarketCorrection));
