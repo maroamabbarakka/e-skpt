@@ -8,22 +8,28 @@
 }
 
 .dummy-tte {
-  display: grid;
-  width: 39mm;
-  margin: .6mm auto 0;
-  padding: .7mm 1.5mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5mm;
+  width: 50mm;
+  margin: .5mm auto 0;
+  padding: .6mm 1mm;
   box-sizing: border-box;
   border: 1px solid #2464a0;
   border-radius: 1.5mm;
   background: #f3f8fd;
   color: #174f83;
-  text-align: center;
+  text-align: left;
   font-family: Arial, sans-serif;
   line-height: 1.05;
-  transform: rotate(-1deg);
 }
 
-.signature-space:has(.dummy-tte) { height: 12mm !important; }
+.signature-space:has(.dummy-tte) { height: 21mm !important; }
+.dummy-tte-qr { position: relative; flex: 0 0 18mm; width: 18mm; height: 18mm; padding: .5mm; box-sizing: border-box; background: #fff; }
+.dummy-tte-qr canvas,.dummy-tte-qr img { width: 100% !important; height: 100% !important; }
+.dummy-tte-qr::after { width: 5mm !important; height: 5mm !important; border-width: .8mm !important; background-size: 3.7mm 3.7mm !important; }
+.dummy-tte-copy { display: grid; min-width: 0; }
 .dummy-tte strong { font-size: 6.6pt; letter-spacing: .08em; }
 .dummy-tte span { font-size: 5.8pt; font-weight: 700; }
 .dummy-tte small { font-size: 4.9pt; }
