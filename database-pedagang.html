@@ -208,7 +208,30 @@
             <h2 id="modalTraderName" style="margin: 3px 0 0; color: var(--app-navy); font-size: 1.3rem;">Nama Pedagang</h2>
             <small style="color: var(--app-muted);">ID Pedagang: <span id="modalTraderId">—</span></small>
           </div>
-          <button id="closeModalBtn" class="button secondary" type="button" style="min-height: 34px; padding: 4px 10px;">✕ Tutup</button>
+          <button id="closeModalBtn" class="db-modal-close" type="button" aria-label="Tutup Modal">✕</button>
+        </div>
+
+        <!-- BLOK AKSI KHUSUS PEDAGANG DENGAN SKPT RESMI / TERBIT -->
+        <div id="modalSkptActionContainer" class="db-skpt-action-card" hidden>
+          <div class="db-skpt-action-head">
+            <span class="db-skpt-badge-verified">✓ SKPT Resmi Terbit</span>
+            <small id="modalSkptDate">Masa berlaku 2 tahun</small>
+          </div>
+          <p id="modalSkptDesc" style="margin: 6px 0 12px; font-size: 0.78rem; color: #1e3a5f;">Dokumen legalitas pemakaian unit pasar telah disahkan oleh Kepala Dinas dan terdaftar pada sistem satu data e-PASAR Pinrang.</p>
+          <div class="db-skpt-btn-group">
+            <a id="modalBtnPrintSkpt" href="#" target="_blank" class="db-btn db-btn-skpt-pdf">
+              <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+              Cetak SKPT Resmi
+            </a>
+            <a id="modalBtnPrintCard" href="#" target="_blank" class="db-btn db-btn-trader-card">
+              <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+              Cetak Kartu Pedagang
+            </a>
+            <button id="modalBtnSendWa" type="button" class="db-btn db-btn-whatsapp">
+              <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 18.07c-1.5 0-2.97-.4-4.25-1.17l-.3-.18-3.12.82.83-3.04-.2-.32a8.04 8.04 0 0 1-1.23-4.27c0-4.47 3.64-8.11 8.12-8.11 2.17 0 4.21.85 5.74 2.39a8.07 8.07 0 0 1 2.38 5.72c0 4.47-3.65 8.11-8.12 8.11zm4.45-6.08c-.24-.12-1.44-.71-1.66-.79-.23-.08-.39-.12-.56.12-.17.24-.65.79-.8 1-.15.2-.3.24-.54.12-.24-.12-1.03-.38-1.96-1.21-.72-.64-1.21-1.44-1.35-1.68-.15-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.02s.87 2.34 1 2.51c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28z"/></svg>
+              Kirim Dokumen ke WhatsApp
+            </button>
+          </div>
         </div>
 
         <div class="db-modal-grid">
@@ -255,7 +278,56 @@
         </div>
 
         <div style="background: #eef6ff; padding: 12px 14px; border-radius: 10px; font-size: 0.72rem; color: #1e4a73;">
-          ℹ️ Data ini terhubung langsung ke basis data terpusat e-PASAR. Perubahan hak tempat atau pengalihan hak wajib melalui menu <b>Perubahan Pemegang</b> dengan persetujuan Kepala Dinas.
+          ℹ️ Data ini terhubung langsung ke basis data terpusat e-PASAR. Dokumen SKPT dan Kartu Pedagang hanya diterbitkan setelah memenuhi verifikasi fisik pasar dan pengesahan Kepala Dinas.
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL POPUP RINCIAN KPI / BREAKDOWN DATA -->
+    <div id="kpiModal" class="db-modal-overlay" hidden>
+      <div class="db-modal-box" style="width: min(880px, 100%);" role="dialog" aria-modal="true" aria-labelledby="kpiModalTitle">
+        <div class="db-modal-head">
+          <div>
+            <p class="eyebrow" id="kpiModalSubtitle">RINGKASAN METRIK SISTEM</p>
+            <h2 id="kpiModalTitle" style="margin: 3px 0 0; color: var(--app-navy); font-size: 1.25rem;">Rincian Metrik</h2>
+            <small id="kpiModalCount" style="color: var(--app-muted);">0 data terkait</small>
+          </div>
+          <button id="closeKpiModalBtn" class="db-modal-close" type="button" aria-label="Tutup Modal KPI">✕</button>
+        </div>
+
+        <!-- Filter pencarian instan di dalam popup modal -->
+        <div class="db-popup-toolbar">
+          <input id="kpiSearchInput" type="search" placeholder="Cari pedagang, pasar, jenis tempat, nomor SKPT..." style="width: 100%; min-height: 38px; border-radius: 8px; font-size: 0.85rem; padding: 6px 12px; margin: 0 0 12px;">
+        </div>
+
+        <div id="kpiModalBody" class="db-popup-list-wrap">
+          <!-- Tabel data dinamis / list rincian KPI -->
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px; border-top: 1px solid #e7edf5; padding-top: 14px;">
+          <button id="closeKpiModalFooterBtn" class="button secondary" type="button" style="min-height: 36px; padding: 0 16px;">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL INPUT NOMOR WA JIKA BELUM TERSEDIA -->
+    <div id="waPromptModal" class="db-modal-overlay" hidden>
+      <div class="db-modal-box" style="width: min(440px, 100%);" role="dialog" aria-modal="true">
+        <div class="db-modal-head">
+          <div>
+            <p class="eyebrow">PENGIRIMAN DOKUMEN RESMI</p>
+            <h3 style="margin: 2px 0 0; font-size: 1.1rem; color: #1e3a5f;">Kirim ke WhatsApp</h3>
+          </div>
+          <button id="closeWaModalBtn" class="db-modal-close" type="button">✕</button>
+        </div>
+        <p style="font-size: 0.76rem; color: #51657c; margin-bottom: 12px;">Masukkan nomor WhatsApp pedagang untuk mengirimkan tautan resmi e-SKPT dan Kartu Pedagang.</p>
+        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 4px;" for="waPhoneNumberInput">Nomor WhatsApp (Contoh: 081234567890)</label>
+        <input id="waPhoneNumberInput" type="tel" placeholder="08xxxxxxxxxx" style="width: 100%; min-height: 40px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; padding: 6px 12px; margin-bottom: 16px;">
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button id="cancelWaBtn" class="button secondary" type="button" style="min-height: 36px;">Batal</button>
+          <button id="sendWaSubmitBtn" class="db-btn db-btn-whatsapp" type="button" style="min-height: 36px; font-size: 0.8rem; padding: 0 16px;">
+            Kirim Sekarang 🚀
+          </button>
         </div>
       </div>
     </div>

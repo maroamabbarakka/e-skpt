@@ -415,6 +415,260 @@
     }
   }
 
+  let currentKpiData = [];
+  let currentKpiType = '';
+  let activeAdminWaRecord = null;
+
+  function formatAdminWaMessage(record) {
+    const origin = window.location.origin;
+    const name = record.displayName || record.applicantSnapshot?.displayName || 'Pedagang';
+    const skptNumber = record.number || record.skptNumber || '—';
+    const market = record.documentSnapshot?.marketName || record.applicantSnapshot?.marketName || record.marketName || 'Pasar Rakyat Pinrang';
+    const unit = `${record.documentSnapshot?.unitType || record.applicantSnapshot?.claimedUnitType || 'Unit'} ${record.documentSnapshot?.unitNumber || record.applicantSnapshot?.claimedUnitNumber || ''}`;
+    const business = record.documentSnapshot?.businessType || record.applicantSnapshot?.businessName || 'Usaha Pasar';
+
+    const skptUrl = record.verificationToken ? `${origin}/skpt-pdf.html?token=${encodeURIComponent(record.verificationToken)}` : `${origin}/verifikasi-skpt.html`;
+    const cardUrl = `${origin}/trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+    const statusUrl = `${origin}/epasar-status.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+
+    return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${name}*,\nBerikut dokumen legalitas usaha pasar Anda yang telah resmi terdaftar dan disahkan:\n\n📋 *Nomor SKPT:* ${skptNumber}\n🏪 *Unit Pasar:* ${market} (${unit})\n💼 *Usaha:* ${business}\n\nSilakan unduh dokumen digital resmi Anda:\n1. 📄 *Unduh Dokumen SKPT Resmi (PDF):*\n${skptUrl}\n\n2. 🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n3. 🔍 *Cek Status & Verifikasi Digital:*\n${statusUrl}\n\n_Dokumen ini sah, dilengkapi cryptographic QR Code resmi yang dapat diverifikasi publik melalui portal e-PASAR Kabupaten Pinrang._`;
+  }
+
+  function sendAdminWa(record) {
+    activeAdminWaRecord = record;
+    let phone = String(record.phone || record.applicantSnapshot?.phone || '').trim().replace(/\D/g, '');
+    if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+
+    if (phone && phone.length >= 10) {
+      const text = encodeURIComponent(formatAdminWaMessage(record));
+      window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
+    } else {
+      const modal = document.getElementById('adminWaModal');
+      const input = document.getElementById('adminWaPhoneInput');
+      if (input) input.value = phone || '';
+      if (modal) modal.hidden = false;
+      if (input) setTimeout(() => input.focus(), 100);
+    }
+  }
+
+  async function openAdminKpi(type) {
+    currentKpiType = type;
+    const modal = document.getElementById('adminKpiModal');
+    const titleEl = document.getElementById('adminKpiTitle');
+    const subtitleEl = document.getElementById('adminKpiSubtitle');
+    const countEl = document.getElementById('adminKpiCount');
+    const bodyEl = document.getElementById('adminKpiModalBody');
+    const searchInput = document.getElementById('adminKpiSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    modal.hidden = false;
+    bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;">Memuat data rincian…</div>';
+
+    const titles = {
+      kpiTotalTraders: { title: 'Daftar Master Pedagang Aktif', subtitle: 'SATU DATA PEDAGANG PINRANG' },
+      kpiSubmitted: { title: 'Antrean Pendaftaran Baru', subtitle: 'PENDAFTARAN MENUNGGU TINJAUAN ADMIN' },
+      kpiMarket: { title: 'Klaim Menunggu Verifikasi Fisik Pasar', subtitle: 'PEMERIKSAAN KEPALA PASAR' },
+      kpiConflict: { title: 'Daftar Unit Tercatat Konflik', subtitle: 'PENANGANAN & KOREKSI LAPANGAN' },
+      kpiKadis: { title: 'Permohonan Siap Pengesahan Kadis', subtitle: 'KEPUTUSAN KEPALA DINAS' },
+      kpiIssued: { title: 'Dokumen SKPT Resmi Diterbitkan', subtitle: 'DOKUMEN LEGALITAS AKTIF' },
+      kpiAnnual: { title: 'Pemeriksaan & Validasi Tahunan', subtitle: 'MONITORING SKPT DUA TAHUN' }
+    };
+
+    const cfg = titles[type] || { title: 'Rincian Data', subtitle: 'DASHBOARD METRIK' };
+    titleEl.textContent = cfg.title;
+    subtitleEl.textContent = cfg.subtitle;
+
+    try {
+      if (type === 'kpiIssued') {
+        const snap = await window.db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiSubmitted') {
+        const snap = await window.db.collection('trader_intake').where('status', '==', 'SUBMITTED').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiMarket') {
+        const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'UNVERIFIED').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiConflict') {
+        const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'CONFLICT').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiKadis') {
+        const snap = await window.db.collection('skpt_applications').where('status', '==', 'KADIS_REVIEW').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiTotalTraders') {
+        const snap = await window.db.collection('traders').where('status', '==', 'ACTIVE').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiAnnual') {
+        const snap = await window.db.collection('skpt_annual_validations').limit(80).get();
+        currentKpiData = [];
+        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      }
+      filterAndRenderAdminKpi();
+    } catch (err) {
+      console.error(err);
+      bodyEl.innerHTML = `<div style="text-align:center;padding:25px;color:#dc2626;">Gagal memuat rincian: ${esc(err.message)}</div>`;
+    }
+  }
+
+  function filterAndRenderAdminKpi() {
+    const term = (document.getElementById('adminKpiSearchInput')?.value || '').trim().toLowerCase();
+    const bodyEl = document.getElementById('adminKpiModalBody');
+    const countEl = document.getElementById('adminKpiCount');
+
+    const matching = currentKpiData.filter(item => {
+      if (!term) return true;
+      const snap = item.documentSnapshot || item.applicantSnapshot || {};
+      const name = String(item.displayName || snap.displayName || item.traderDisplayName || '').toLowerCase();
+      const num = String(item.number || item.registrationCode || item.traderId || '').toLowerCase();
+      const mName = String(snap.marketName || item.marketName || item.marketId || '').toLowerCase();
+      const uNum = String(snap.unitNumber || snap.claimedUnitNumber || item.unitNumber || item.submittedUnit || '').toLowerCase();
+      return name.includes(term) || num.includes(term) || mName.includes(term) || uNum.includes(term);
+    });
+
+    countEl.textContent = `Menampilkan ${matching.length} dari ${currentKpiData.length} data`;
+
+    if (!matching.length) {
+      bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;">Tidak ada data yang sesuai pencarian.</div>';
+      return;
+    }
+
+    if (currentKpiType === 'kpiIssued') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar & Unit</th><th>Nomor SKPT</th><th>Aksi Legalitas</th></tr></thead><tbody>${
+        matching.map((r, i) => {
+          const snap = r.documentSnapshot || {};
+          const token = r.verificationToken || '';
+          const pToken = r.photoMediaToken || token;
+          return `<tr>
+            <td>${i + 1}</td>
+            <td><b>${esc(snap.displayName || r.displayName || r.traderId)}</b><br><small>${esc(snap.businessType || 'Usaha Pasar')}</small></td>
+            <td>${esc(snap.marketName || r.marketId)}<br><small>${esc(snap.unitType || 'Unit')} ${esc(snap.unitNumber || '-')}</small></td>
+            <td><span class="db-badge db-badge-success">${esc(r.number)}</span><br><small>${r.issueDate ? new Date(r.issueDate).toLocaleDateString('id-ID') : 'Terbit'}</small></td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <a href="skpt-pdf.html?token=${encodeURIComponent(token)}" target="_blank" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">📄 Cetak SKPT</a>
+                <a href="trader-card.html?token=${encodeURIComponent(pToken)}" target="_blank" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">🪪 Kartu</a>
+                <button type="button" class="db-btn db-btn-whatsapp" style="min-height:28px;padding:2px 8px;font-size:0.68rem;" data-admin-wa="${esc(r.id)}">💬 WA</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')
+      }</tbody></table>`;
+
+      bodyEl.querySelectorAll('button[data-admin-wa]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const record = matching.find(row => row.id === btn.dataset.adminWa);
+          if (record) sendAdminWa(record);
+        });
+      });
+    } else if (currentKpiType === 'kpiSubmitted') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Registrasi</th><th>Nama Pemohon</th><th>Pasar</th><th>Unit Diklaim</th><th>Aksi</th></tr></thead><tbody>${
+        matching.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><b>${esc(r.registrationCode)}</b><br><small>${r.submittedAt?.toDate ? r.submittedAt.toDate().toLocaleDateString('id-ID') : 'Baru'}</small></td>
+          <td>${esc(r.displayName)}<br><small>NIK: ${esc(r.nikMasked || '7315************')}</small></td>
+          <td>${esc(r.marketName || r.marketId)}</td>
+          <td>${esc(r.claimedUnitType)} ${esc(r.claimedUnitNumber)}</td>
+          <td><a href="#pendaftaran" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;" onclick="document.getElementById('adminKpiModal').hidden=true;">Periksa Berkas →</a></td>
+        </tr>`).join('')
+      }</tbody></table>`;
+    } else if (currentKpiType === 'kpiMarket') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID Pedagang</th><th>Pasar</th><th>Unit Diklaim</th><th>Status Verifikasi</th><th>Aksi</th></tr></thead><tbody>${
+        matching.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><b>${esc(r.traderDisplayName || r.traderId)}</b><br><small>Klaim ID: ${esc(r.id)}</small></td>
+          <td>${esc(r.marketId)}</td>
+          <td>${esc(r.claimedUnitType || r.unitType)} ${esc(r.claimedUnitNumber || r.submittedUnit)}</td>
+          <td><span class="db-badge db-badge-warning">${esc(r.verificationStatus)}</span></td>
+          <td><a href="market-verification.html" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Buka Verifikasi →</a></td>
+        </tr>`).join('')
+      }</tbody></table>`;
+    } else if (currentKpiType === 'kpiKadis') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID Permohonan</th><th>Pemohon</th><th>Pasar & Unit</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${
+        matching.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><b>${esc(r.id)}</b><br><small>Pedagang: ${esc(r.traderId)}</small></td>
+          <td>${esc(r.applicantSnapshot?.displayName || 'Pemohon')}<br><small>${esc(r.applicantSnapshot?.businessName || '')}</small></td>
+          <td>${esc(r.applicantSnapshot?.marketName || r.marketId)}<br><small>${esc(r.applicantSnapshot?.claimedUnitType)} ${esc(r.applicantSnapshot?.claimedUnitNumber)}</small></td>
+          <td><span class="db-badge db-badge-info">SIAP KEPUTUSAN</span></td>
+          <td><a href="kadis-approval.html" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Buka Ruang Kadis →</a></td>
+        </tr>`).join('')
+      }</tbody></table>`;
+    } else {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID</th><th>Nama</th><th>Pasar</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${
+        matching.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><b>${esc(r.traderId || r.id)}</b></td>
+          <td>${esc(r.displayName || r.applicantSnapshot?.displayName || 'Data')}</td>
+          <td>${esc(r.primaryMarketId || r.marketId || '—')}</td>
+          <td><span class="db-badge db-badge-success">${esc(r.status || 'ACTIVE')}</span></td>
+          <td><a href="database-pedagang.html" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Lihat di Database →</a></td>
+        </tr>`).join('')
+      }</tbody></table>`;
+    }
+  }
+
+  function setupKpiInteractions() {
+    const kpis = [
+      { id: 'kpiTotalTraders', type: 'kpiTotalTraders' },
+      { id: 'kpiSubmitted', type: 'kpiSubmitted' },
+      { id: 'kpiMarket', type: 'kpiMarket' },
+      { id: 'kpiConflict', type: 'kpiConflict' },
+      { id: 'kpiKadis', type: 'kpiKadis' },
+      { id: 'kpiIssued', type: 'kpiIssued' },
+      { id: 'kpiAnnual', type: 'kpiAnnual' }
+    ];
+
+    kpis.forEach(item => {
+      const el = document.getElementById(item.id);
+      const article = el?.closest('.kpi');
+      if (article) {
+        article.addEventListener('click', () => openAdminKpi(item.type));
+      }
+    });
+
+    const closeKpi = () => { document.getElementById('adminKpiModal').hidden = true; };
+    document.getElementById('closeAdminKpiBtn')?.addEventListener('click', closeKpi);
+    document.getElementById('closeAdminKpiFooterBtn')?.addEventListener('click', closeKpi);
+    document.getElementById('adminKpiModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'adminKpiModal') closeKpi();
+    });
+    document.getElementById('adminKpiSearchInput')?.addEventListener('input', filterAndRenderAdminKpi);
+
+    const closeWa = () => { document.getElementById('adminWaModal').hidden = true; };
+    document.getElementById('closeAdminWaBtn')?.addEventListener('click', closeWa);
+    document.getElementById('cancelAdminWaBtn')?.addEventListener('click', closeWa);
+    document.getElementById('adminWaModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'adminWaModal') closeWa();
+    });
+    document.getElementById('submitAdminWaBtn')?.addEventListener('click', () => {
+      const input = document.getElementById('adminWaPhoneInput');
+      let phone = String(input?.value || '').trim().replace(/\D/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+      if (!phone || phone.length < 10) {
+        alert('Masukkan nomor WhatsApp yang valid (contoh: 081234567890).');
+        input?.focus();
+        return;
+      }
+      closeWa();
+      if (activeAdminWaRecord) {
+        const text = encodeURIComponent(formatAdminWaMessage(activeAdminWaRecord));
+        window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeKpi();
+        closeWa();
+      }
+    });
+  }
+
   document.getElementById('refreshButton').addEventListener('click', () => {
     currentPage = 1;
     currentCursor = null;
@@ -444,6 +698,7 @@
       const profile = await window.EPASAR_AUTH.requireStaff(['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']);
       window.EPASAR_INTERNAL_UI?.setProfile(profile);
       setupIntakeFilterEvents();
+      setupKpiInteractions();
       if (profile.role === 'MARKET_HEAD' || profile.role === 'KADIS') renderRoleWorkspace(profile);
       else load(null);
     } catch (error) {

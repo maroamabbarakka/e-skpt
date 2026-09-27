@@ -344,6 +344,192 @@
   line-height: 1.4;
 }
 
+/* Interaktivitas & Hover Card KPI */
+.db-kpi-card {
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.db-kpi-card::after {
+  content: "Klik rincian 🔍";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #1978d2;
+  background: rgba(25, 120, 210, 0.08);
+  padding: 2px 7px;
+  border-radius: 99px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.db-kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(10, 50, 100, 0.12);
+  border-color: #79aee4;
+}
+.db-kpi-card:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Tombol Tutup Bulat (X) */
+.db-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #d0dbe7;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  line-height: 1;
+  padding: 0;
+}
+.db-modal-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  transform: rotate(90deg);
+}
+
+/* Card Aksi SKPT & Legalisasi Digital */
+.db-skpt-action-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+.db-skpt-action-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.db-skpt-badge-verified {
+  background: #15803d;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.03em;
+}
+.db-skpt-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.db-btn-skpt-pdf {
+  background: linear-gradient(135deg, #094eb8, #053b94);
+  color: #fff !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(9, 78, 184, 0.2);
+}
+.db-btn-skpt-pdf:hover {
+  background: linear-gradient(135deg, #053b94, #032b6e);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(9, 78, 184, 0.3);
+}
+.db-btn-skpt-pdf svg, .db-btn-trader-card svg, .db-btn-whatsapp svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.db-btn-trader-card {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fff !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+}
+.db-btn-trader-card:hover {
+  background: linear-gradient(135deg, #b45309, #92400e);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(217, 119, 6, 0.3);
+}
+.db-btn-whatsapp {
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  color: #fff;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(37, 211, 102, 0.25);
+}
+.db-btn-whatsapp:hover {
+  background: linear-gradient(135deg, #20ba5a, #075E54);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.38);
+}
+
+/* Modal Popup List / Breakdown */
+.db-popup-toolbar {
+  margin-bottom: 8px;
+}
+.db-popup-list-wrap {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+.db-popup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+.db-popup-table th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 750;
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid #cbd5e1;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.db-popup-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.db-popup-table tr:hover {
+  background: #f8fafc;
+}
+
+
+
 /* ==========================================================================
    OFFICIAL PRINT-READY LAYOUT (@media print)
    Khusus Cetak Buku Induk dan Rekapitulasi Resmi Pemerintah Kab. Pinrang

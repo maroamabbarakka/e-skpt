@@ -50,5 +50,55 @@
 
       <div class="table-wrap"><table class="admin-table"><thead><tr><th>Registrasi</th><th>Nama</th><th>Wilayah</th><th>Pasar</th><th>SKPT</th><th>Waktu</th><th>Tindakan</th></tr></thead><tbody id="intakeRows"><tr><td colspan="7">Belum dimuat.</td></tr></tbody></table></div><div class="form-actions"><button id="previousButton" class="button secondary" type="button" disabled>Sebelumnya</button><button id="nextButton" class="button primary" type="button">Berikutnya</button></div></section>
   </section>
+
+  <!-- MODAL POPUP RESPONSIF RINCIAN KPI DASHBOARD -->
+  <div id="adminKpiModal" class="db-modal-overlay" hidden>
+    <div class="db-modal-box" style="width: min(880px, 100%);" role="dialog" aria-modal="true" aria-labelledby="adminKpiTitle">
+      <div class="db-modal-head">
+        <div>
+          <p class="eyebrow" id="adminKpiSubtitle">RINCIAN DATA DASHBOARD</p>
+          <h2 id="adminKpiTitle" style="margin: 3px 0 0; color: var(--app-navy); font-size: 1.25rem;">Rincian Metrik</h2>
+          <small id="adminKpiCount" style="color: var(--app-muted);">0 data terkait</small>
+        </div>
+        <button id="closeAdminKpiBtn" class="db-modal-close" type="button" aria-label="Tutup">✕</button>
+      </div>
+
+      <!-- Filter pencarian instan di dalam popup modal -->
+      <div class="db-popup-toolbar">
+        <input id="adminKpiSearchInput" type="search" placeholder="Cari nama, pasar, unit, kode registrasi, atau nomor SKPT..." style="width: 100%; min-height: 40px; border-radius: 8px; font-size: 0.85rem; padding: 6px 12px; margin: 0 0 12px; border: 1px solid #cbd5e1;">
+      </div>
+
+      <div id="adminKpiModalBody" class="db-popup-list-wrap">
+        <!-- Konten tabel / list data dinamis -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px solid #e7edf5; padding-top: 14px;">
+        <span id="adminKpiFooterNote" style="font-size: 0.72rem; color: #64748b;">Klik baris atau tombol aksi untuk memproses data.</span>
+        <button id="closeAdminKpiFooterBtn" class="button secondary" type="button" style="min-height: 36px; padding: 0 16px;">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL WA PENGIRIMAN DOKUMEN -->
+  <div id="adminWaModal" class="db-modal-overlay" hidden>
+    <div class="db-modal-box" style="width: min(440px, 100%);" role="dialog" aria-modal="true">
+      <div class="db-modal-head">
+        <div>
+          <p class="eyebrow">PENGIRIMAN DOKUMEN RESMI</p>
+          <h3 style="margin: 2px 0 0; font-size: 1.1rem; color: #1e3a5f;">Kirim ke WhatsApp</h3>
+        </div>
+        <button id="closeAdminWaBtn" class="db-modal-close" type="button">✕</button>
+      </div>
+      <p style="font-size: 0.76rem; color: #51657c; margin-bottom: 12px;">Masukkan nomor WhatsApp pedagang untuk mengirimkan dokumen e-SKPT dan Kartu Pedagang.</p>
+      <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 4px;" for="adminWaPhoneInput">Nomor WhatsApp (Contoh: 081234567890)</label>
+      <input id="adminWaPhoneInput" type="tel" placeholder="08xxxxxxxxxx" style="width: 100%; min-height: 40px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; padding: 6px 12px; margin-bottom: 16px; border: 1px solid #cbd5e1;">
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="cancelAdminWaBtn" class="button secondary" type="button" style="min-height: 36px;">Batal</button>
+        <button id="submitAdminWaBtn" class="db-btn db-btn-whatsapp" type="button" style="min-height: 36px; font-size: 0.8rem; padding: 0 16px;">
+          Kirim Sekarang 🚀
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/auth-service.js"></script><script src="js/epasar/internal-shell.js?v=20260928"></script><script src="js/epasar/admin-intake-service.js"></script><script src="js/epasar/admin-epasar.js?v=20260928"></script></body></html>

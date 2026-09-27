@@ -87,7 +87,7 @@
         claimsSnap.forEach(doc => claimsList.push({ id: doc.id, ...doc.data() }));
       }
 
-      // 4. Ambil data skpt_applications
+      // 4. Ambil data skpt_applications & skpt_documents
       let appsSnapshots = [];
       if (isMarketHead && assignedIds.length > 0) {
         appsSnapshots = await Promise.all(
@@ -107,6 +107,20 @@
         });
       });
 
+      // Ambil juga dokumen resmi SKPT yang sudah terbit (skpt_documents)
+      const skptDocsByApp = new Map();
+      const skptDocsByTrader = new Map();
+      try {
+        const skptDocsSnap = await db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(300).get();
+        skptDocsSnap.forEach(doc => {
+          const sd = doc.data();
+          if (sd.applicationId) skptDocsByApp.set(sd.applicationId, { id: doc.id, ...sd });
+          if (sd.traderId) skptDocsByTrader.set(sd.traderId, { id: doc.id, ...sd });
+        });
+      } catch (errSkpt) {
+        console.warn('skpt_documents belum dapat dimuat lengkap:', errSkpt);
+      }
+
       // 5. Gabungkan menjadi flat Master Records
       const records = [];
       const processedTraderIds = new Set();
@@ -118,6 +132,7 @@
         const businesses = businessesByTrader.get(traderId) || [];
         const app = appsByClaim.get(claim.id) || appsByTrader.get(traderId) || {};
         const business = businesses[0] || {};
+        const skptDoc = skptDocsByApp.get(app.id) || skptDocsByTrader.get(traderId) || {};
 
         processedTraderIds.add(traderId);
         const marketObj = window.EPASAR?.marketById(claim.marketId);
@@ -129,6 +144,12 @@
         const areaM2 = claim.claimedAreaM2 ?? claim.areaM2 ?? 8;
         const monthlyRevenue = business.monthlyRevenue || 10000000;
         const monthlyRetribution = calculateRetribution(unitType, areaM2);
+
+        const hasSkpt = app.status === 'ISSUED' || skptDoc.status === 'ISSUED';
+        const skptNumber = skptDoc.number || app.skptNumber || app.number || (hasSkpt ? `SKPT-PIN-${String(claim.marketId || '').slice(-3)}-${traderId.slice(-4)}` : '—');
+        const verificationToken = skptDoc.verificationToken || app.verificationToken || '';
+        const publicToken = app.publicToken || trader.publicToken || claim.publicToken || trader.intakeId || '';
+        const phone = trader.phone || app.applicantSnapshot?.phone || business.phone || '';
 
         records.push({
           traderId,
@@ -150,8 +171,11 @@
           monthlyRetribution,
           verificationStatus: claim.verificationStatus || 'UNVERIFIED',
           skptStatus: app.status || 'BELUM_PENGAJUAN',
-          skptNumber: app.skptNumber || (app.status === 'ISSUED' ? `SKPT-PIN-${String(claim.marketId || '').slice(-3)}-${traderId.slice(-4)}` : '—'),
-          hasSkpt: app.status === 'ISSUED',
+          skptNumber,
+          hasSkpt,
+          verificationToken,
+          publicToken,
+          phone,
           claimId: claim.id,
           applicationId: app.id || claim.applicationId || '',
           registeredAt: claim.createdAt?.toDate ? claim.createdAt.toDate().toISOString() : new Date().toISOString()
@@ -515,6 +539,35 @@
     URL.revokeObjectURL(url);
   }
 
+  let activeWaRecord = null;
+  let activeKpiType = 'traders';
+
+  function formatWaMessage(record) {
+    const origin = window.location.origin;
+    const skptUrl = record.verificationToken ? `${origin}/skpt-pdf.html?token=${encodeURIComponent(record.verificationToken)}` : `${origin}/verifikasi-skpt.html`;
+    const cardUrl = `${origin}/trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+    const statusUrl = `${origin}/epasar-status.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+
+    return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${record.displayName}*,\nBerikut dokumen legalitas usaha pasar Anda yang telah resmi terdaftar dan disahkan:\n\n📋 *Nomor SKPT:* ${record.skptNumber}\n🏪 *Unit Pasar:* ${record.marketName} (${record.unitType} ${record.unitNumber})\n💼 *Usaha:* ${record.businessName} (${record.businessType})\n\nSilakan unduh dokumen digital resmi Anda:\n1. 📄 *Unduh Dokumen SKPT Resmi (PDF):*\n${skptUrl}\n\n2. 🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n3. 🔍 *Cek Status & Verifikasi Digital:*\n${statusUrl}\n\n_Dokumen ini sah, dilengkapi cryptographic QR Code resmi yang dapat diverifikasi publik melalui portal e-PASAR Kabupaten Pinrang._`;
+  }
+
+  function sendSkptToWa(record) {
+    activeWaRecord = record;
+    let phone = String(record.phone || '').trim().replace(/\D/g, '');
+    if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+
+    if (phone && phone.length >= 10) {
+      const text = encodeURIComponent(formatWaMessage(record));
+      window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
+    } else {
+      const waModal = document.getElementById('waPromptModal');
+      const waInput = document.getElementById('waPhoneNumberInput');
+      if (waInput) waInput.value = phone || '';
+      if (waModal) waModal.hidden = false;
+      if (waInput) setTimeout(() => waInput.focus(), 100);
+    }
+  }
+
   function viewDetail(traderId, claimId) {
     const record = filteredRecords.find(r => r.traderId === traderId && (!claimId || r.claimId === claimId)) || filteredRecords.find(r => r.traderId === traderId);
     if (!record) return;
@@ -533,7 +586,89 @@
     document.getElementById('modalSkpt').textContent = record.hasSkpt ? record.skptNumber : record.skptStatus;
     document.getElementById('modalVerification').textContent = record.verificationStatus;
 
+    // Aksi Dokumen Legalitas (Cetak SKPT, Kartu Pedagang, WhatsApp)
+    const skptContainer = document.getElementById('modalSkptActionContainer');
+    if (skptContainer) {
+      if (record.hasSkpt || record.verificationToken) {
+        skptContainer.hidden = false;
+        const btnSkpt = document.getElementById('modalBtnPrintSkpt');
+        const btnCard = document.getElementById('modalBtnPrintCard');
+        const btnWa = document.getElementById('modalBtnSendWa');
+
+        if (btnSkpt) {
+          btnSkpt.href = `skpt-pdf.html?token=${encodeURIComponent(record.verificationToken || record.publicToken)}`;
+        }
+        if (btnCard) {
+          btnCard.href = `trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+        }
+        if (btnWa) {
+          btnWa.onclick = () => sendSkptToWa(record);
+        }
+      } else {
+        skptContainer.hidden = true;
+      }
+    }
+
     modal.hidden = false;
+  }
+
+  // MODAL BREAKDOWN KPI DENGAN FILTER PENCARIAN
+  function openKpiModal(type) {
+    activeKpiType = type;
+    const modal = document.getElementById('kpiModal');
+    const titleEl = document.getElementById('kpiModalTitle');
+    const subtitleEl = document.getElementById('kpiModalSubtitle');
+    const searchInput = document.getElementById('kpiSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    const titles = {
+      traders: { title: 'Rincian Seluruh Pedagang Pasar', subtitle: 'DATA MASTER PEDAGANG' },
+      units: { title: 'Sebaran Unit Tempat Usaha', subtitle: 'INVENTARIS FISIK PASAR' },
+      area: { title: 'Pemanfaatan Luas Area Produktif', subtitle: 'ANALISIS SPASIAL PASAR' },
+      omzet: { title: 'Estimasi Perputaran Omzet Pedagang', subtitle: 'INDIKATOR EKONOMI DAERAH' },
+      retribusi: { title: 'Proyeksi Pendapatan Asli Daerah (Retribusi)', subtitle: 'TARGET PERDA NO. 6 TAHUN 2024' }
+    };
+
+    const cfg = titles[type] || titles.traders;
+    titleEl.textContent = cfg.title;
+    subtitleEl.textContent = cfg.subtitle;
+
+    renderKpiModalBody('');
+    modal.hidden = false;
+  }
+
+  function renderKpiModalBody(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    const bodyEl = document.getElementById('kpiModalBody');
+    const countEl = document.getElementById('kpiModalCount');
+
+    let matching = allRecords.filter(r => {
+      if (!term) return true;
+      return (
+        r.displayName.toLowerCase().includes(term) ||
+        r.businessName.toLowerCase().includes(term) ||
+        r.marketName.toLowerCase().includes(term) ||
+        r.unitNumber.toLowerCase().includes(term) ||
+        r.traderId.toLowerCase().includes(term) ||
+        String(r.skptNumber || '').toLowerCase().includes(term)
+      );
+    });
+
+    countEl.textContent = `Menampilkan ${matching.length} data sesuai`;
+
+    if (activeKpiType === 'units') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar</th><th>Unit</th><th>Blok / Lt</th><th>Luas</th><th>Status Tempat</th></tr></thead><tbody>${
+        matching.slice(0, 100).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.displayName)}</b><br><small>${esc(r.traderId)}</small></td><td>${esc(r.marketName)}</td><td><span class="db-badge db-badge-info">${esc(r.unitType)} ${esc(r.unitNumber)}</span></td><td>Blok ${esc(r.block)} · Lt. ${esc(r.floor)}</td><td>${r.areaM2} m²</td><td><span class="db-badge ${r.verificationStatus === 'VERIFIED' ? 'db-badge-success' : 'db-badge-warning'}">${esc(r.verificationStatus)}</span></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">Tidak ada data yang cocok.</td></tr>'
+      }</tbody></table>`;
+    } else if (activeKpiType === 'retribusi') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar</th><th>Unit</th><th>Tarif Bulanan</th><th>Legalitas SKPT</th><th>Aksi</th></tr></thead><tbody>${
+        matching.slice(0, 100).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.displayName)}</b><br><small>${esc(r.businessName)}</small></td><td>${esc(r.marketName)}</td><td>${esc(r.unitType)} ${esc(r.unitNumber)} (${r.areaM2} m²)</td><td><b style="color:#094eb8;">${formatRupiah(r.monthlyRetribution)}</b>/bln</td><td><span class="db-badge ${r.hasSkpt ? 'db-badge-success' : 'db-badge-neutral'}">${r.hasSkpt ? 'SKPT Terbit' : 'Belum Ada'}</span></td><td><button class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;" onclick="window.EPASAR_DB.viewDetail('${esc(r.traderId)}', '${esc(r.claimId)}')">Detail</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">Tidak ada data yang cocok.</td></tr>'
+      }</tbody></table>`;
+    } else {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Nama Pedagang</th><th>Usaha & Komoditas</th><th>Pasar</th><th>Unit</th><th>Legalitas e-SKPT</th><th>Aksi</th></tr></thead><tbody>${
+        matching.slice(0, 100).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.displayName)}</b><br><small>ID: ${esc(r.traderId)}</small></td><td>${esc(r.businessName)}<br><small style="color:#64748b;">${esc(r.businessCategory)}</small></td><td>${esc(r.marketName)}</td><td>${esc(r.unitType)} ${esc(r.unitNumber)}</td><td><span class="db-badge ${r.hasSkpt ? 'db-badge-success' : 'db-badge-neutral'}">${esc(r.skptNumber)}</span></td><td><button class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;" onclick="window.EPASAR_DB.viewDetail('${esc(r.traderId)}', '${esc(r.claimId)}')">Rincian</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">Tidak ada data yang cocok.</td></tr>'
+      }</tbody></table>`;
+    }
   }
 
   function setupEvents() {
@@ -563,8 +698,62 @@
     document.getElementById('btnExportJson').addEventListener('click', exportJson);
     document.getElementById('btnRefresh').addEventListener('click', () => loadDatabase(currentProfile));
 
-    document.getElementById('closeModalBtn').addEventListener('click', () => {
-      document.getElementById('detailModal').hidden = true;
+    // Tutup Modal Detail Pedagang
+    const closeModal = () => { document.getElementById('detailModal').hidden = true; };
+    document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+    document.getElementById('detailModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'detailModal') closeModal();
+    });
+
+    // Card KPI Interaktif (Klik Membuka Modal Breakdown)
+    const kpiCards = document.querySelectorAll('.db-kpi-card');
+    if (kpiCards[0]) kpiCards[0].addEventListener('click', () => openKpiModal('traders'));
+    if (kpiCards[1]) kpiCards[1].addEventListener('click', () => openKpiModal('units'));
+    if (kpiCards[2]) kpiCards[2].addEventListener('click', () => openKpiModal('area'));
+    if (kpiCards[3]) kpiCards[3].addEventListener('click', () => openKpiModal('omzet'));
+    if (kpiCards[4]) kpiCards[4].addEventListener('click', () => openKpiModal('retribusi'));
+
+    // Modal KPI Controls
+    const closeKpiModal = () => { document.getElementById('kpiModal').hidden = true; };
+    document.getElementById('closeKpiModalBtn')?.addEventListener('click', closeKpiModal);
+    document.getElementById('closeKpiModalFooterBtn')?.addEventListener('click', closeKpiModal);
+    document.getElementById('kpiModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'kpiModal') closeKpiModal();
+    });
+    document.getElementById('kpiSearchInput')?.addEventListener('input', (e) => {
+      renderKpiModalBody(e.target.value);
+    });
+
+    // Modal WhatsApp Controls
+    const closeWaModal = () => { document.getElementById('waPromptModal').hidden = true; };
+    document.getElementById('closeWaModalBtn')?.addEventListener('click', closeWaModal);
+    document.getElementById('cancelWaBtn')?.addEventListener('click', closeWaModal);
+    document.getElementById('waPromptModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'waPromptModal') closeWaModal();
+    });
+    document.getElementById('sendWaSubmitBtn')?.addEventListener('click', () => {
+      const phoneInput = document.getElementById('waPhoneNumberInput');
+      let phone = String(phoneInput?.value || '').trim().replace(/\D/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+      if (!phone || phone.length < 10) {
+        alert('Masukkan nomor WhatsApp yang valid (minimal 10 digit, contoh: 081234567890).');
+        phoneInput?.focus();
+        return;
+      }
+      closeWaModal();
+      if (activeWaRecord) {
+        const text = encodeURIComponent(formatWaMessage(activeWaRecord));
+        window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
+      }
+    });
+
+    // Keyboard ESC to close any open modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeKpiModal();
+        closeWaModal();
+      }
     });
   }
 
