@@ -261,6 +261,71 @@
     }
   }
 
+  let rawIntakeList = [];
+
+  function populateIntakeMarketOptions() {
+    const marketSelect = document.getElementById('intakeMarketFilter');
+    if (!marketSelect || marketSelect.children.length > 1) return;
+    const markets = window.EPASAR?.MARKETS || [
+      { id: 'MKT-010', name: 'Pasar Rakyat Sentral Pinrang' },
+      { id: 'MKT-001', name: 'Pasar Rakyat Kariango' },
+      { id: 'MKT-002', name: 'Pasar Rakyat Pekkabata' },
+      { id: 'MKT-003', name: 'Pasar Rakyat Batulappa' },
+      { id: 'MKT-004', name: 'Pasar Rakyat Bungi' }
+    ];
+    markets.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `${m.id} · ${m.name}`;
+      marketSelect.appendChild(opt);
+    });
+  }
+
+  function filterAndRenderIntake() {
+    populateIntakeMarketOptions();
+    const searchVal = (document.getElementById('intakeSearch')?.value || '').trim().toLowerCase();
+    const marketVal = document.getElementById('intakeMarketFilter')?.value || '';
+    const statusVal = document.getElementById('intakeStatusFilter')?.value || '';
+    const skptVal = document.getElementById('intakeSkptFilter')?.value || '';
+
+    const filtered = rawIntakeList.filter(item => {
+      const reg = String(item.registrationCode || '').toLowerCase();
+      const name = String(item.identity?.name || '').toLowerCase();
+      const district = String(item.identity?.district || '').toLowerCase();
+      const village = String(item.identity?.village || '').toLowerCase();
+      const bNames = (item.businessDrafts || []).map(b => String(b.name || '').toLowerCase()).join(' ');
+
+      const matchSearch = !searchVal || reg.includes(searchVal) || name.includes(searchVal) || district.includes(searchVal) || village.includes(searchVal) || bNames.includes(searchVal);
+
+      // Pasar
+      let matchMarket = true;
+      if (marketVal) {
+        const itemMarketIds = (item.businessDrafts || []).flatMap(business => (business.locations || []).flatMap(location => (location.marketPlaces || []).map(place => place.marketId || ''))).filter(Boolean);
+        matchMarket = itemMarketIds.includes(marketVal) || itemMarketIds.map(id => window.EPASAR?.canonicalMarketId(id)).includes(marketVal);
+      }
+
+      // Status
+      let matchStatus = true;
+      if (statusVal) {
+        matchStatus = item.status === statusVal;
+      }
+
+      // SKPT
+      let matchSkpt = true;
+      if (skptVal === 'yes') matchSkpt = item.applySkpt === true;
+      if (skptVal === 'no') matchSkpt = item.applySkpt !== true;
+
+      return matchSearch && matchMarket && matchStatus && matchSkpt;
+    });
+
+    const badge = document.getElementById('intakeCountBadge');
+    if (badge) {
+      badge.textContent = `Menampilkan ${filtered.length} dari ${rawIntakeList.length} pendaftaran`;
+    }
+
+    render(filtered);
+  }
+
   function render(list) {
     document.getElementById('kpiPage').textContent = currentPage;
     rows.innerHTML = list.map(item => {
@@ -268,15 +333,15 @@
         ? item.submittedAt.toDate().toLocaleString('id-ID') : '—';
       const marketNames = (item.businessDrafts || []).flatMap(business => (business.locations || []).flatMap(location => (location.marketPlaces || []).map(place => window.EPASAR?.marketById(place.marketId)?.name || place.marketName || place.marketId))).filter(Boolean);
       return `<tr>
-        <td data-label="Registrasi">${escapeHtml(item.registrationCode)}</td>
+        <td data-label="Registrasi"><b>${escapeHtml(item.registrationCode)}</b></td>
         <td data-label="Nama">${escapeHtml(item.identity?.name)}</td>
         <td data-label="Wilayah">${escapeHtml(item.identity?.district)} / ${escapeHtml(item.identity?.village)}</td>
         <td data-label="Pasar">${marketNames.length ? escapeHtml([...new Set(marketNames)].join(', ')) : (item.hasMarketUnit === true ? 'Data lama: perlu diperiksa' : 'Non-pasar')}</td>
-        <td data-label="SKPT">${item.applySkpt === true ? 'Ya' : 'Tidak'}</td>
+        <td data-label="SKPT">${item.applySkpt === true ? '<span style="color:#033bd4; font-weight:700;">Ya</span>' : '<span style="color:#64748b;">Tidak</span>'}</td>
         <td data-label="Waktu">${escapeHtml(submittedAt)}</td>
         <td data-label="Tindakan"><div class="table-actions"><a class="button primary" href="admin-intake-review.html?id=${encodeURIComponent(item.id)}">${item.status === 'CORRECTION_REQUIRED' ? 'Tinjau koreksi' : 'Review'}</a><a class="button secondary" href="photo-editor.html?intake=${encodeURIComponent(item.id)}">Olah foto</a></div></td>
       </tr>`;
-    }).join('') || '<tr><td colspan="7">Tidak ada intake pada halaman ini.</td></tr>';
+    }).join('') || '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Tidak ada data pendaftaran yang cocok dengan pencarian / filter ini.</td></tr>';
     nextButton.disabled = !currentHasMore;
     previousButton.disabled = currentPage === 1;
   }
@@ -317,13 +382,36 @@
       const result = await window.EPASAR_ADMIN_INTAKE.page(cursor);
       currentCursor = result.last || null;
       currentHasMore = result.hasMore;
-      render(result.rows);
+      rawIntakeList = result.rows;
+      filterAndRenderIntake();
       if (currentPage === 1) loadMetrics();
       workspace.hidden = false;
       message.hidden = true;
     } catch (error) {
       workspace.hidden = true;
       setMessage(friendlyError(error), true);
+    }
+  }
+
+  function setupIntakeFilterEvents() {
+    const searchInput = document.getElementById('intakeSearch');
+    const marketSelect = document.getElementById('intakeMarketFilter');
+    const statusSelect = document.getElementById('intakeStatusFilter');
+    const skptSelect = document.getElementById('intakeSkptFilter');
+    const resetBtn = document.getElementById('intakeResetBtn');
+
+    if (searchInput) searchInput.addEventListener('input', filterAndRenderIntake);
+    if (marketSelect) marketSelect.addEventListener('change', filterAndRenderIntake);
+    if (statusSelect) statusSelect.addEventListener('change', filterAndRenderIntake);
+    if (skptSelect) skptSelect.addEventListener('change', filterAndRenderIntake);
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        if (marketSelect) marketSelect.value = '';
+        if (statusSelect) statusSelect.value = '';
+        if (skptSelect) skptSelect.value = '';
+        filterAndRenderIntake();
+      });
     }
   }
 
@@ -355,6 +443,7 @@
       if (window.EPASAR_FIREBASE_INIT) window.EPASAR_FIREBASE_INIT();
       const profile = await window.EPASAR_AUTH.requireStaff(['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']);
       window.EPASAR_INTERNAL_UI?.setProfile(profile);
+      setupIntakeFilterEvents();
       if (profile.role === 'MARKET_HEAD' || profile.role === 'KADIS') renderRoleWorkspace(profile);
       else load(null);
     } catch (error) {

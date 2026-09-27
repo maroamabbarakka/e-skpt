@@ -1,5 +1,32 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Persetujuan Kadis · e-PASAR</title><link rel="stylesheet" href="css/epasar.css"><link rel="stylesheet" href="css/internal-ui.css"></head><body>
-<main class="workflow-shell"><header class="workflow-head"><p class="eyebrow">KEWENANGAN FINAL</p><h1>Review dan penerbitan SKPT</h1><p id="who">Memeriksa akun…</p><a class="button secondary" href="admin-epasar.html">Kembali ke dashboard</a></header><section class="workflow-card"><div id="message" class="admin-message">Memuat berkas Kadis…</div><div id="items"></div></section></main>
+<main class="workflow-shell"><header class="workflow-head"><p class="eyebrow">KEWENANGAN FINAL</p><h1>Review dan penerbitan SKPT</h1><p id="who">Memeriksa akun…</p><a class="button secondary" href="admin-epasar.html">Kembali ke dashboard</a></header><section class="workflow-card"><div id="message" class="admin-message">Memuat berkas Kadis…</div>
+<div id="kadisFilterToolbar" style="display:grid; grid-template-columns:minmax(220px,2fr) minmax(180px,1.2fr) minmax(160px,1fr) auto; gap:10px; background:#f8fafc; padding:12px 14px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:18px; align-items:flex-end;">
+  <div>
+    <label for="kadisSearch" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Cari Permohonan</label>
+    <input id="kadisSearch" type="search" placeholder="Nama pemohon, usaha, unit, ID..." style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+  </div>
+  <div>
+    <label for="kadisMarketFilter" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Pasar Rakyat</label>
+    <select id="kadisMarketFilter" style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+      <option value="">Semua Pasar Pinrang</option>
+    </select>
+  </div>
+  <div>
+    <label for="kadisStageFilter" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Tahapan Berkas</label>
+    <select id="kadisStageFilter" style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+      <option value="">Semua Tahapan</option>
+      <option value="KADIS_REVIEW">Menunggu Persetujuan Kadis</option>
+      <option value="TTE_PENDING">Menunggu Penerbitan TTE</option>
+    </select>
+  </div>
+  <div>
+    <button id="kadisResetBtn" class="button secondary" type="button" style="min-height:38px; padding:0 14px; font-size:0.8rem; border-radius:8px;">Reset</button>
+  </div>
+</div>
+<div id="kadisCounterBadge" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:0.82rem; color:#475569;">
+  <span id="kadisCountText">Menampilkan seluruh permohonan aktif</span>
+</div>
+<div id="items"></div></section></main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/constants.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/auth-service.js"></script><script src="js/epasar/internal-shell.js"></script><script src="js/epasar/workflow-service.js"></script><script src="js/epasar/kadis-approval.js"></script>
 </body></html>

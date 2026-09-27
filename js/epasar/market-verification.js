@@ -78,15 +78,33 @@
     })));
   }
 
+  function filterPendingList(claims) {
+    const term = (pendingSearch ? pendingSearch.value : '').trim().toLowerCase();
+    const unitFilter = document.getElementById('pendingUnitFilter')?.value || '';
+    const marketFilter = document.getElementById('pendingMarketFilter')?.value || '';
+
+    return claims.filter(claim => {
+      const matchSearch = !term || pendingMatches(claim, term);
+      const claimedType = String(claim.claimedUnitType || claim.unitType || '').toUpperCase();
+      const matchUnit = !unitFilter || claimedType === unitFilter;
+      const matchMarket = !marketFilter || claim.marketId === marketFilter;
+      return matchSearch && matchUnit && matchMarket;
+    });
+  }
+
   function renderPending(claims, profile) {
-    const term = pendingSearch.value.trim().toLowerCase();
-    const visible = claims.filter(claim => pendingMatches(claim, term));
+    const visible = filterPendingList(claims);
+    const matchBadge = document.getElementById('pendingMatchBadge');
+    if (matchBadge) {
+      matchBadge.textContent = `${visible.length} dari ${claims.length} antrean`;
+    }
+
     if (!visible.some(claim => claim.id === selectedClaimId)) selectedClaimId = visible[0]?.id || '';
     pendingList.innerHTML = visible.map(claim => {
       const selected = claim.id === selectedClaimId;
       const unit = `${claim.claimedUnitType || claim.unitType || 'Unit'} ${claim.claimedUnitNumber || claim.submittedUnit || '-'}`;
       return `<button class="pending-queue-item${selected ? ' selected' : ''}" type="button" data-select="${escapeHtml(claim.id)}" aria-pressed="${selected}"><span><strong>${escapeHtml(traderName(claim))}</strong><small>${escapeHtml(claim.traderId || 'ID tidak tersedia')}</small></span><span><b>${escapeHtml(unit)}</b><small>${escapeHtml(marketLabel(claim.marketId))}</small></span><em>${selected ? 'Sedang diperiksa' : 'Periksa'}</em></button>`;
-    }).join('') || empty(term ? 'Data tidak ditemukan' : 'Tidak ada klaim baru', term ? 'Ubah kata pencarian untuk melihat antrean lain.' : 'Tidak ada klaim berstatus UNVERIFIED pada pasar yang ditugaskan.');
+    }).join('') || empty('Data tidak ditemukan', 'Ubah kata pencarian atau pilihan filter untuk melihat antrean lain.');
 
     pendingList.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => {
       selectedClaimId = button.dataset.select;
@@ -138,12 +156,45 @@
     });
   }
 
+  function filterDirectoryList(rows) {
+    const term = (document.getElementById('directorySearch')?.value || '').trim().toLowerCase();
+    const statusFilter = document.getElementById('directoryStatusFilter')?.value || '';
+    const unitFilter = document.getElementById('directoryUnitFilter')?.value || '';
+    const marketFilter = document.getElementById('directoryMarketFilter')?.value || '';
+
+    return rows.filter(row => {
+      const name = traderName(row).toLowerCase();
+      const traderId = String(row.traderId || '').toLowerCase();
+      const unitNum = String(row.claimedUnitNumber || row.submittedUnit || row.unitNumber || '').toLowerCase();
+      const mLabel = marketLabel(row.marketId).toLowerCase();
+
+      const matchSearch = !term ||
+        name.includes(term) ||
+        traderId.includes(term) ||
+        unitNum.includes(term) ||
+        mLabel.includes(term);
+
+      const matchStatus = !statusFilter || row.state === statusFilter || row.verificationStatus === statusFilter;
+      const claimedType = String(row.claimedUnitType || row.unitType || '').toUpperCase();
+      const matchUnit = !unitFilter || claimedType === unitFilter;
+      const matchMarket = !marketFilter || row.marketId === marketFilter;
+
+      return matchSearch && matchStatus && matchUnit && matchMarket;
+    });
+  }
+
   function renderDirectory(rows) {
-    directoryItems.innerHTML = rows.map(row => {
+    const visible = filterDirectoryList(rows);
+    const matchBadge = document.getElementById('directoryMatchBadge');
+    if (matchBadge) {
+      matchBadge.textContent = `${visible.length} dari ${rows.length} pedagang`;
+    }
+
+    directoryItems.innerHTML = visible.map(row => {
       const name = traderName(row);
       const statusClass = row.state === 'LEGACY_REVIEW' ? 'market-directory-warning' : row.state === 'CONFLICT' ? 'market-directory-danger' : '';
       return `<article class="market-directory-row"><div><small>Pedagang</small><strong>${escapeHtml(name)}</strong><small>${escapeHtml(row.traderId || 'ID tidak tersedia')}</small></div><div><small>Pasar</small><strong>${escapeHtml(marketLabel(row.marketId))}</strong></div><div><small>Unit diklaim</small><strong>${escapeHtml(row.claimedUnitType || row.unitType || 'Unit')} ${escapeHtml(row.claimedUnitNumber || row.submittedUnit || '-')}</strong></div><div><small>Status</small><strong class="${statusClass}">${escapeHtml(stateLabel(row.state))}</strong></div></article>`;
-    }).join('') || empty('Belum ada data pasar', 'Belum ditemukan klaim pedagang pada pasar yang ditugaskan.');
+    }).join('') || empty('Data tidak ditemukan', 'Ubah kata pencarian atau pilihan filter untuk melihat pedagang lain.');
   }
 
   async function loadMore(kind) {
@@ -176,10 +227,61 @@
     }
   }
 
+  function setupFilterEvents(marketIds) {
+    // Populate dropdown pasar jika ada beberapa pasar
+    const populateMarkets = (selectId) => {
+      const select = document.getElementById(selectId);
+      if (!select || !marketIds.length) return;
+      marketIds.forEach(mId => {
+        const opt = document.createElement('option');
+        opt.value = mId;
+        opt.textContent = marketLabel(mId);
+        select.appendChild(opt);
+      });
+    };
+    populateMarkets('pendingMarketFilter');
+    populateMarkets('directoryMarketFilter');
+
+    // Tab 1: Antrean Verifikasi
+    const pUnit = document.getElementById('pendingUnitFilter');
+    const pMarket = document.getElementById('pendingMarketFilter');
+    const pReset = document.getElementById('pendingResetFilter');
+    if (pendingSearch) pendingSearch.addEventListener('input', () => renderPending(pendingRows, currentProfile));
+    if (pUnit) pUnit.addEventListener('change', () => renderPending(pendingRows, currentProfile));
+    if (pMarket) pMarket.addEventListener('change', () => renderPending(pendingRows, currentProfile));
+    if (pReset) {
+      pReset.addEventListener('click', () => {
+        if (pendingSearch) pendingSearch.value = '';
+        if (pUnit) pUnit.value = '';
+        if (pMarket) pMarket.value = '';
+        renderPending(pendingRows, currentProfile);
+      });
+    }
+
+    // Tab 2: Direktori Pasar
+    const dSearch = document.getElementById('directorySearch');
+    const dStatus = document.getElementById('directoryStatusFilter');
+    const dUnit = document.getElementById('directoryUnitFilter');
+    const dMarket = document.getElementById('directoryMarketFilter');
+    const dReset = document.getElementById('directoryResetFilter');
+    if (dSearch) dSearch.addEventListener('input', () => renderDirectory(directoryRows));
+    if (dStatus) dStatus.addEventListener('change', () => renderDirectory(directoryRows));
+    if (dUnit) dUnit.addEventListener('change', () => renderDirectory(directoryRows));
+    if (dMarket) dMarket.addEventListener('change', () => renderDirectory(directoryRows));
+    if (dReset) {
+      dReset.addEventListener('click', () => {
+        if (dSearch) dSearch.value = '';
+        if (dStatus) dStatus.value = '';
+        if (dUnit) dUnit.value = '';
+        if (dMarket) dMarket.value = '';
+        renderDirectory(directoryRows);
+      });
+    }
+  }
+
   async function boot() {
     setupTabs();
     directoryItems.insertAdjacentHTML('beforebegin', '<div class="directory-explanation"><strong>Daftar referensi pedagang pasar</strong><span>Gunakan daftar ini untuk melihat siapa yang tercatat dan status unitnya. Verifikasi baru hanya dilakukan dari tab “Menunggu verifikasi”; data yang sudah terverifikasi tidak perlu diproses ulang.</span></div>');
-    pendingSearch.addEventListener('input', () => renderPending(pendingRows, currentProfile));
     pendingMore.addEventListener('click', () => loadMore('pending'));
     directoryMore.addEventListener('click', () => loadMore('directory'));
     try {
@@ -192,6 +294,9 @@
         notify('Akun belum memiliki pasar yang ditugaskan. Hubungi Super Admin.', true);
         return;
       }
+
+      setupFilterEvents(marketIds);
+
       const data = await window.EPASAR_MARKET_WORKSPACE.load(profile);
       pendingRows = data.pending;
       directoryRows = data.directory;

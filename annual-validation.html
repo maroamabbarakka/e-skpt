@@ -22,10 +22,54 @@
     <div id="message" class="admin-message">Memuat data SKPT…</div>
     <section id="marketWorkspace" hidden>
       <div class="section-heading"><div><p class="eyebrow">KEPALA PASAR</p><h2>Pemeriksaan faktual tahunan</h2></div><p>Pastikan kondisi diperiksa berdasarkan keadaan sebenarnya.</p></div>
+
+      <!-- TOOLBAR FILTER KEPALA PASAR -->
+      <div id="annualMarketToolbar" style="display:grid; grid-template-columns:minmax(220px,2fr) minmax(160px,1.2fr) auto; gap:10px; background:#f8fafc; padding:12px 14px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:14px; align-items:flex-end;">
+        <div>
+          <label for="annualMarketSearch" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Cari Dokumen SKPT</label>
+          <input id="annualMarketSearch" type="search" placeholder="Nomor SKPT, nama pedagang, atau unit..." style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+        </div>
+        <div>
+          <label for="annualMarketTimingFilter" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Jadwal Pemeriksaan</label>
+          <select id="annualMarketTimingFilter" style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+            <option value="">Semua Jadwal</option>
+            <option value="DUE">Jatuh Tempo</option>
+            <option value="UPCOMING">Terjadwal</option>
+            <option value="RETURNED">Perlu Perbaikan</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="annualMarketReset" class="button secondary" type="button" style="min-height:38px; font-size:0.8rem; padding:0 12px; white-space:nowrap;">Reset</button>
+          <span id="annualMarketCounter" style="background:#eaf2fd; color:#0646c8; font-weight:700; font-size:0.75rem; padding:7px 12px; border-radius:8px; white-space:nowrap;">0 SKPT</span>
+        </div>
+      </div>
+
       <div id="issuedItems" class="annual-list"></div>
     </section>
+
     <section id="reviewWorkspace" hidden>
       <div class="section-heading"><div><p class="eyebrow">ADMINISTRASI</p><h2>Menunggu keputusan</h2></div><p>Bandingkan hasil pemeriksaan dengan dokumen SKPT induk.</p></div>
+
+      <!-- TOOLBAR FILTER REVIEW ADMINISTRASI -->
+      <div id="annualAdminToolbar" style="display:grid; grid-template-columns:minmax(220px,2fr) minmax(160px,1.2fr) auto; gap:10px; background:#f8fafc; padding:12px 14px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:14px; align-items:flex-end;">
+        <div>
+          <label for="annualAdminSearch" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Cari Pemeriksaan</label>
+          <input id="annualAdminSearch" type="search" placeholder="Nomor SKPT, ID pedagang, pasar..." style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+        </div>
+        <div>
+          <label for="annualAdminChangesFilter" style="display:block; font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:4px;">Kondisi Faktual</label>
+          <select id="annualAdminChangesFilter" style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
+            <option value="">Semua Kondisi</option>
+            <option value="CHANGES">Ada Perubahan Lapangan</option>
+            <option value="NO_CHANGES">Sesuai (Tanpa Perubahan)</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="annualAdminReset" class="button secondary" type="button" style="min-height:38px; font-size:0.8rem; padding:0 12px; white-space:nowrap;">Reset</button>
+          <span id="annualAdminCounter" style="background:#eaf2fd; color:#0646c8; font-weight:700; font-size:0.75rem; padding:7px 12px; border-radius:8px; white-space:nowrap;">0 berkas</span>
+        </div>
+      </div>
+
       <div id="pendingItems" class="annual-list"></div>
     </section>
   </main>

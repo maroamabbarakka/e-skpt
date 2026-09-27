@@ -29,54 +29,153 @@
   function issueCard(application) {
     return `<article class="workflow-item"><header><div><p class="eyebrow">REGISTRASI DOKUMEN UAT</p><h2>Penerbitan e-SKPT Uji Coba</h2></div><span class="status-badge status-warning">MENUNGGU DOKUMEN UAT</span></header>${summary(application)}<p class="notice"><strong>Mode UAT internal.</strong> Dokumen akan memakai QR pengesahan simulasi dan penanda “Dokumen Uji Coba”. Dokumen ini bukan SKPT produksi dan bukan hasil TTE resmi.</p><form data-action="issue" data-id="${esc(application.id)}"><div class="workflow-grid"><label>Nama pada dokumen<input name="displayName" required maxlength="120" value="${esc(application.applicantSnapshot?.displayName || '')}"></label><label>Nomor SKPT UAT<input name="number" required maxlength="80" placeholder="SKPT-UAT-2026-0001"></label><label>Referensi uji coba<input name="reference" required maxlength="300" placeholder="Contoh: UAT-INTERNAL-2026-001"></label></div><div class="form-actions"><button class="button primary" type="submit">Terbitkan Dokumen Uji Coba</button></div></form></article>`;
   }
+  let allApplications = [], reviewRows = [], pendingRows = [], currentProfile = null;
+
+  function renderList(list) {
+    if (!list.length) {
+      items.innerHTML = '<div class="internal-empty"><span>🔍</span><b>Tidak ada permohonan yang sesuai</b><p>Coba sesuaikan kata kunci pencarian atau ganti filter pasar / tahapan.</p></div>';
+      return;
+    }
+    items.innerHTML = list.map(app => app.status === 'KADIS_REVIEW' ? approvalCard(app) : issueCard(app)).join('');
+    bindActions();
+  }
+
+  function filterApplications() {
+    const search = (document.getElementById('kadisSearchInput')?.value || '').trim().toLowerCase();
+    const market = document.getElementById('kadisMarketFilter')?.value || 'ALL';
+    const stage = document.getElementById('kadisStageFilter')?.value || 'ALL';
+
+    const filtered = allApplications.filter(app => {
+      const snap = app.applicantSnapshot || {};
+      const matchSearch = !search ||
+        (snap.displayName && snap.displayName.toLowerCase().includes(search)) ||
+        (snap.businessName && snap.businessName.toLowerCase().includes(search)) ||
+        (snap.nik && snap.nik.toLowerCase().includes(search)) ||
+        (snap.claimedUnitNumber && snap.claimedUnitNumber.toLowerCase().includes(search)) ||
+        (app.id && app.id.toLowerCase().includes(search)) ||
+        (app.traderId && app.traderId.toLowerCase().includes(search));
+
+      const matchMarket = market === 'ALL' ||
+        app.marketId === market ||
+        snap.marketId === market ||
+        (snap.marketName && snap.marketName.toLowerCase().includes(market.toLowerCase()));
+
+      const matchStage = stage === 'ALL' || app.status === stage;
+
+      return matchSearch && matchMarket && matchStage;
+    });
+
+    const counter = document.getElementById('kadisFilterCounter');
+    if (counter) {
+      counter.textContent = `Menampilkan ${filtered.length} dari ${allApplications.length} berkas`;
+    }
+
+    renderList(filtered);
+  }
+
+  function bindActions() {
+    items.querySelectorAll('form[data-action]').forEach(form => form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const application = allApplications.find(row => row.id === form.dataset.id);
+      if (!application) return;
+      const values = Object.fromEntries(new FormData(form)), applicant = application.applicantSnapshot || {}, approving = form.dataset.action === 'approve';
+      if (approving && !application.verificationRecord) return notice('Rekaman verifikasi belum tersedia. Berkas belum dapat disetujui.', true);
+      const accepted = await window.EPASAR_INTERNAL_UI.confirm({
+        title: approving ? 'Setujui penerbitan e-SKPT?' : 'Terbitkan dokumen e-SKPT?',
+        message: `<b>${esc(applicant.displayName || application.traderId)}</b><br>${esc(applicant.marketName || application.marketId)} · ${esc(applicant.claimedUnitType)} ${esc(applicant.claimedUnitNumber)}<br><br>${approving ? 'Setelah disetujui, proses penerbitan dokumen dapat dilanjutkan.' : 'Dokumen akan memperoleh nomor dan tautan verifikasi publik.'}`,
+        confirmText: approving ? 'Ya, Setujui' : 'Ya, Terbitkan'
+      });
+      if (!accepted) return;
+      const submit = form.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        if (approving) {
+          await window.EPASAR_WORKFLOW.approveForTte(application, values, currentProfile);
+          notice('Permohonan disetujui dan masuk tahap menunggu pengesahan.');
+          allApplications = allApplications.filter(r => r.id !== application.id);
+          filterApplications();
+        } else {
+          const output = await window.EPASAR_WORKFLOW.issue(application, values, currentProfile);
+          notice(`SKPT ${output.number} berhasil diterbitkan.`);
+          allApplications = allApplications.filter(r => r.id !== application.id);
+          filterApplications();
+          setTimeout(() => location.href = `skpt-pdf.html?token=${encodeURIComponent(output.verificationToken)}`, 600);
+        }
+      } catch (error) {
+        console.error(error);
+        notice('Tindakan belum berhasil diproses. Periksa status berkas dan koneksi, lalu coba kembali.', true);
+        submit.disabled = false;
+      }
+    }));
+
+    items.querySelectorAll('button[data-action="reject"]').forEach(button => button.addEventListener('click', async event => {
+      event.preventDefault();
+      const form = button.closest('form');
+      const application = allApplications.find(row => row.id === form?.dataset.id);
+      if (!application) return;
+      const note = form.querySelector('[name="note"]')?.value.trim();
+      if (!note) {
+        notice('Catatan alasan penolakan wajib diisi sebelum menolak permohonan.', true);
+        form.querySelector('[name="note"]')?.focus();
+        return;
+      }
+      const applicant = application.applicantSnapshot || {};
+      const accepted = await window.EPASAR_INTERNAL_UI.confirm({
+        title: 'Tolak permohonan e-SKPT?',
+        message: `<b>${esc(applicant.displayName || application.traderId)}</b><br>${esc(applicant.marketName || application.marketId)} · ${esc(applicant.claimedUnitType)} ${esc(applicant.claimedUnitNumber)}<br><br>Permohonan akan ditolak dan berkas tidak diterbitkan. Catatan penolakan akan dicatat secara permanen.`,
+        confirmText: 'Ya, Tolak'
+      });
+      if (!accepted) return;
+      button.disabled = true;
+      try {
+        await window.EPASAR_WORKFLOW.rejectByKadis(application, { note }, currentProfile);
+        notice('Permohonan resmi ditolak oleh Kepala Dinas. Dokumen tidak diterbitkan.');
+        allApplications = allApplications.filter(r => r.id !== application.id);
+        filterApplications();
+      } catch (error) {
+        console.error(error);
+        notice('Penolakan belum berhasil diproses. ' + (error.message || ''), true);
+        button.disabled = false;
+      }
+    }));
+  }
+
+  function setupFilterEvents() {
+    const searchInput = document.getElementById('kadisSearchInput');
+    const marketFilter = document.getElementById('kadisMarketFilter');
+    const stageFilter = document.getElementById('kadisStageFilter');
+    const resetBtn = document.getElementById('kadisResetFilter');
+
+    if (searchInput) searchInput.addEventListener('input', filterApplications);
+    if (marketFilter) marketFilter.addEventListener('change', filterApplications);
+    if (stageFilter) stageFilter.addEventListener('change', filterApplications);
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        if (marketFilter) marketFilter.value = 'ALL';
+        if (stageFilter) stageFilter.value = 'ALL';
+        filterApplications();
+      });
+    }
+  }
+
   async function boot() {
     try {
-      const profile = await window.EPASAR_AUTH.requireStaff(['KADIS', 'SUPER_ADMIN']);
-      window.EPASAR_INTERNAL_UI?.setProfile(profile);
-      document.getElementById('who').textContent = `${profile.displayName || profile.position || 'Kepala Dinas'} · ruang keputusan final`;
-      const [review, pending] = await Promise.all([rows('KADIS_REVIEW'), rows('TTE_PENDING')]), all = [...review, ...pending];
-      items.innerHTML = [...review.map(approvalCard), ...pending.map(issueCard)].join('') || '<div class="internal-empty"><span>✓</span><b>Tidak ada permohonan menunggu keputusan</b><p>Seluruh permohonan terbaru sudah diproses.</p></div>';
-      document.querySelectorAll('form[data-action]').forEach(form => form.addEventListener('submit', async event => {
-        event.preventDefault(); const application = all.find(row => row.id === form.dataset.id); if (!application) return;
-        const values = Object.fromEntries(new FormData(form)), applicant = application.applicantSnapshot || {}, approving = form.dataset.action === 'approve';
-        if (approving && !application.verificationRecord) return notice('Rekaman verifikasi belum tersedia. Berkas belum dapat disetujui.', true);
-        const accepted = await window.EPASAR_INTERNAL_UI.confirm({ title: approving ? 'Setujui penerbitan e-SKPT?' : 'Terbitkan dokumen e-SKPT?', message: `<b>${esc(applicant.displayName || application.traderId)}</b><br>${esc(applicant.marketName || application.marketId)} · ${esc(applicant.claimedUnitType)} ${esc(applicant.claimedUnitNumber)}<br><br>${approving ? 'Setelah disetujui, proses penerbitan dokumen dapat dilanjutkan.' : 'Dokumen akan memperoleh nomor dan tautan verifikasi publik.'}`, confirmText: approving ? 'Ya, Setujui' : 'Ya, Terbitkan' });
-        if (!accepted) return; const submit = form.querySelector('button[type="submit"]'); submit.disabled = true;
-        try {
-          if (approving) { await window.EPASAR_WORKFLOW.approveForTte(application, values, profile); notice('Permohonan disetujui dan masuk tahap menunggu pengesahan.'); form.closest('.workflow-item').remove(); }
-          else { const output = await window.EPASAR_WORKFLOW.issue(application, values, profile); notice(`SKPT ${output.number} berhasil diterbitkan.`); setTimeout(() => location.href = `skpt-pdf.html?token=${encodeURIComponent(output.verificationToken)}`, 600); }
-        } catch (error) { console.error(error); notice('Tindakan belum berhasil diproses. Periksa status berkas dan koneksi, lalu coba kembali.', true); submit.disabled = false; }
-      }));
-      document.querySelectorAll('button[data-action="reject"]').forEach(button => button.addEventListener('click', async event => {
-        event.preventDefault();
-        const form = button.closest('form');
-        const application = all.find(row => row.id === form?.dataset.id);
-        if (!application) return;
-        const note = form.querySelector('[name="note"]')?.value.trim();
-        if (!note) {
-          notice('Catatan alasan penolakan wajib diisi sebelum menolak permohonan.', true);
-          form.querySelector('[name="note"]')?.focus();
-          return;
-        }
-        const applicant = application.applicantSnapshot || {};
-        const accepted = await window.EPASAR_INTERNAL_UI.confirm({
-          title: 'Tolak permohonan e-SKPT?',
-          message: `<b>${esc(applicant.displayName || application.traderId)}</b><br>${esc(applicant.marketName || application.marketId)} · ${esc(applicant.claimedUnitType)} ${esc(applicant.claimedUnitNumber)}<br><br>Permohonan akan ditolak dan berkas tidak diterbitkan. Catatan penolakan akan dicatat secara permanen.`,
-          confirmText: 'Ya, Tolak'
-        });
-        if (!accepted) return;
-        button.disabled = true;
-        try {
-          await window.EPASAR_WORKFLOW.rejectByKadis(application, { note }, profile);
-          notice('Permohonan resmi ditolak oleh Kepala Dinas. Dokumen tidak diterbitkan.');
-          form.closest('.workflow-item').remove();
-        } catch (error) {
-          console.error(error);
-          notice('Penolakan belum berhasil diproses. ' + (error.message || ''), true);
-          button.disabled = false;
-        }
-      }));
-    } catch (error) { notice('Ruang keputusan belum dapat dimuat. Periksa akun dan koneksi data.', true); console.error(error); }
+      currentProfile = await window.EPASAR_AUTH.requireStaff(['KADIS', 'SUPER_ADMIN']);
+      window.EPASAR_INTERNAL_UI?.setProfile(currentProfile);
+      document.getElementById('who').textContent = `${currentProfile.displayName || currentProfile.position || 'Kepala Dinas'} · ruang keputusan final`;
+      const [review, pending] = await Promise.all([rows('KADIS_REVIEW'), rows('TTE_PENDING')]);
+      reviewRows = review;
+      pendingRows = pending;
+      allApplications = [...review, ...pending];
+
+      setupFilterEvents();
+      filterApplications();
+    } catch (error) {
+      notice('Ruang keputusan belum dapat dimuat. Periksa akun dan koneksi data.', true);
+      console.error(error);
+    }
   }
+
   boot();
 }());
