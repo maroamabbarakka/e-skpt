@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  const path=location.pathname.split('/').pop()||'admin-epasar.html';
+  const rawName = (location.pathname.split('/').pop() || 'admin-epasar.html').split('?')[0].split('#')[0];
+  const path = (!rawName || rawName === '') ? 'admin-epasar.html' : (rawName.endsWith('.html') ? rawName : rawName + '.html');
   const pageMap={
     'admin-epasar.html':['Dashboard','Utama'],
     'database-pedagang.html':['Database Pedagang','Data & Laporan'],
