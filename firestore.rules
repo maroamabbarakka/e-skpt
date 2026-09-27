@@ -133,12 +133,14 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken)).data.registrationCode == request.resource.data.registrationCode
         && request.resource.data.createdAt == request.time && request.resource.data.status == 'PENDING_REVIEW' && request.resource.data.source == 'PUBLIC_FORM' && request.resource.data.schemaVersion == 2
         && request.resource.data.publicToken is string && request.resource.data.publicToken.size() >= 32 && request.resource.data.publicToken.size() <= 128
-        && request.resource.data.section in ['name','phone','business','location','marketUnit']
+        && request.resource.data.section in ['name','phone','business','location','marketUnit','document']
         && request.resource.data.value is string && request.resource.data.value.size() > 0 && request.resource.data.value.size() <= 2000
         && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 500
         && request.resource.data.marketId is string && request.resource.data.claimId is string
         && request.resource.data.routingRoles is list
-        && (request.resource.data.section != 'marketUnit' || (request.resource.data.marketId.size() > 0
+        && get(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken)).data.status == 'CORRECTION_REQUIRED'
+        && get(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken)).data.canResubmit == true
+        && (request.resource.data.section != 'marketUnit' || request.resource.data.claimId.size() == 0 || (request.resource.data.marketId.size() > 0
           && exists(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId))
           && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.marketId == request.resource.data.marketId
           && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.traderId == get(/databases/$(database)/documents/public_status/$(request.resource.data.accessToken)).data.traderId
@@ -237,7 +239,9 @@ service cloud.firestore {
           && resource.data.status == 'PUBLIC'
           && resource.data.mediaType == 'PROFILE_PUBLIC')
         || (activeStaff() && (resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC'] || adminStaff()));
-      allow list: if activeStaff() && (adminStaff() || profile().role in ['KADIS','MARKET_HEAD']);
+      allow list: if adminStaff() || (activeStaff()
+        && profile().role in ['KADIS','MARKET_HEAD']
+        && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC']);
       allow create: if (adminStaff() || kadis())
         && request.resource.data.keys().hasOnly(['ownerType','ownerId','mediaType','mime','width','height','binaryBytes','base64Bytes','dataBase64','status','schemaVersion','sourceMediaId','publishedAt'])
         && request.resource.data.ownerType == 'PUBLIC_DOCUMENT'
@@ -256,9 +260,19 @@ service cloud.firestore {
       allow update, delete: if adminStaff();
     }
     match /traders/{id} {
-      allow read: if adminStaff() || (signedIn() && profile().role == 'MARKET_HEAD');
+      allow read: if activeStaff();
       allow create: if adminStaff();
       allow update: if adminStaff() && request.resource.data.traderId == resource.data.traderId;
+      allow delete: if false;
+    }
+    match /market_trader_directory/{id} {
+      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.marketId);
+      allow create: if adminStaff()
+        && request.resource.data.marketId is string
+        && request.resource.data.traderId is string;
+      allow update: if adminStaff()
+        && request.resource.data.marketId == resource.data.marketId
+        && request.resource.data.traderId == resource.data.traderId;
       allow delete: if false;
     }
     match /trader_private/{id} {
@@ -272,11 +286,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     match /businesses/{id} {
-      allow read, create, update: if adminStaff();
+      allow read: if activeStaff();
+      allow create, update: if adminStaff();
       allow delete: if false;
     }
     match /business_locations/{id} {
-      allow read, create, update: if adminStaff();
+      allow read: if activeStaff();
+      allow create, update: if adminStaff();
       allow delete: if false;
     }
     match /business_classifications/{id} {
@@ -289,7 +305,7 @@ service cloud.firestore {
       allow read: if adminStaff() || kadis() || assignedMarket(resource.data.marketId);
       allow create: if adminStaff();
       allow update: if adminStaff() || (assignedMarket(resource.data.marketId)
-        && (!('verificationStatus' in resource.data) || resource.data.verificationStatus in ['UNVERIFIED','SUBMITTED'])
+        && resource.data.verificationStatus == 'UNVERIFIED'
         && assignedMarket(request.resource.data.marketId)
         && request.resource.data.marketId == resource.data.marketId
         && request.resource.data.traderId == resource.data.traderId
@@ -302,7 +318,8 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /market_units/{id} {
-      allow read: if adminStaff() || assignedMarket(resource.data.marketId);
+      allow get: if activeStaff();
+      allow list: if adminStaff() || kadis() || assignedMarket(resource.data.marketId);
       allow create: if adminStaff() || (assignedMarket(request.resource.data.marketId)
         && request.resource.data.unitId == id
         && request.resource.data.currentTraderId is string
@@ -358,19 +375,19 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /verification_records/{id} {
-      allow read: if adminStaff() || claimInAssignedMarket(resource.data.claimId);
+      allow read: if adminStaff() || kadis() || claimInAssignedMarket(resource.data.claimId);
       allow create: if claimInAssignedMarket(request.resource.data.claimId);
       allow update, delete: if false;
     }
     match /skpt_applications/{id} {
-      allow read: if adminStaff() || kadis() || (signedIn() && profile().role == 'MARKET_HEAD');
+      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.marketId);
       allow create: if adminStaff();
       allow update: if (adminStaff() && resource.data.status != 'ISSUED' && request.resource.data.status != 'ISSUED')
         || (kadis()
           && resource.data.status == 'KADIS_REVIEW'
-          && request.resource.data.status == 'TTE_PENDING'
+          && request.resource.data.status in ['TTE_PENDING','REJECTED']
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approval','statusHistory','updatedAt'])
-          && request.resource.data.approval.decision == 'APPROVED'
+          && request.resource.data.approval.decision in ['APPROVED','REJECTED']
           && request.resource.data.approval.actorUid == request.auth.uid
           && request.resource.data.approval.actorRole in ['KADIS','SUPER_ADMIN'])
         || (kadis()
@@ -381,7 +398,10 @@ service cloud.firestore {
           && existsAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptDocumentId))
           && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptDocumentId)).data.applicationId == id)
         || (assignedMarket(resource.data.marketId)
+          && resource.data.status == 'MARKET_VERIFICATION'
           && request.resource.data.marketId == resource.data.marketId
+          && request.resource.data.traderId == resource.data.traderId
+          && request.resource.data.claimId == resource.data.claimId
           && request.resource.data.status in ['KADIS_REVIEW','CONFLICT','NOT_FOUND','CORRECTION_REQUIRED']
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','marketUnitId','verificationRecordId','statusHistory','updatedAt']));
       allow delete: if false;
@@ -500,8 +520,20 @@ service cloud.firestore {
     }
     match /public_status/{token} {
       allow get: if resource.data.publicToken == token && resource.data.publicStatus == true;
+      allow create: if !signedIn()
+        && request.resource.data.keys().hasOnly(['intakeId','publicToken','registrationCode','status','publicStatus','displayName','traderId','businessType','marketName','marketRoutes','statementVersion','statementAcceptedAt','photoMediaToken','reviewMessage','correctionSections','canResubmit','environment','isDemo','schemaVersion','updatedAt'])
+        && request.resource.data.publicToken == token
+        && request.resource.data.intakeId is string
+        && existsAfter(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId))
+        && getAfter(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.publicToken == token
+        && getAfter(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.registrationCode == request.resource.data.registrationCode
+        && request.resource.data.status == 'SUBMITTED' && request.resource.data.publicStatus == true
+        && request.resource.data.traderId == '' && request.resource.data.marketRoutes.size() == 0
+        && request.resource.data.reviewMessage == '' && request.resource.data.correctionSections.size() == 0 && request.resource.data.canResubmit == false
+        && request.resource.data.environment == 'UAT' && request.resource.data.isDemo == true
+        && request.resource.data.schemaVersion == 2 && request.resource.data.updatedAt == request.time;
       allow create, update: if adminStaff()
-        && request.resource.data.keys().hasOnly(['publicToken','registrationCode','status','publicStatus','displayName','traderId','businessType','marketName','marketRoutes','statementVersion','statementAcceptedAt','photoMediaToken','environment','isDemo','schemaVersion'])
+        && request.resource.data.keys().hasOnly(['intakeId','publicToken','registrationCode','status','publicStatus','displayName','traderId','businessType','marketName','marketRoutes','statementVersion','statementAcceptedAt','photoMediaToken','reviewMessage','correctionSections','canResubmit','environment','isDemo','schemaVersion','updatedAt'])
         && request.resource.data.publicToken == token
         && request.resource.data.publicStatus == true
         && request.resource.data.registrationCode is string
@@ -509,11 +541,16 @@ service cloud.firestore {
         && request.resource.data.displayName is string
         && request.resource.data.traderId is string
         && request.resource.data.schemaVersion in [1,2]
+        && (!('reviewMessage' in request.resource.data) || (request.resource.data.reviewMessage is string && request.resource.data.reviewMessage.size() <= 500))
+        && (!('correctionSections' in request.resource.data) || (request.resource.data.correctionSections is list && request.resource.data.correctionSections.size() <= 5))
+        && (!('canResubmit' in request.resource.data) || request.resource.data.canResubmit is bool)
         && (!('marketRoutes' in request.resource.data) || (request.resource.data.marketRoutes is list && request.resource.data.marketRoutes.size() <= 25));
       allow update: if kadis()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
         && resource.data.status in ['SUBMITTED','ADMIN_REVIEW','MARKET_VERIFICATION','MARKET_VERIFIED','KADIS_REVIEW','APPROVED','TTE_PENDING']
-        && request.resource.data.status == 'ISSUED';
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status in ['ISSUED','REJECTED'])
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewMessage']) && request.resource.data.status == 'REJECTED' && request.resource.data.reviewMessage is string && request.resource.data.reviewMessage.size() <= 500)
+        );
       allow list, delete: if false;
     }
     match /public_skpt_verification/{token} {

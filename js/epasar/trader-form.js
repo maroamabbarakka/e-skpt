@@ -97,6 +97,10 @@
         if (!field || field.type === 'file' || Array.isArray(value)) return;
         if (field.type === 'checkbox') field.checked = Boolean(value); else field.value = value;
       });
+      if (draft.district) {
+        syncIdentityVillage(false);
+        if (E.villagesByDistrict(draft.district).includes(draft.village)) form.elements.village.value = draft.village;
+      }
       window.EPASAR_MULTI.restore(draft.businessDrafts);
       document.getElementById('draftNotice').hidden = false;
     } catch (_) {}
@@ -206,6 +210,17 @@
   document.getElementById('discardDraft').addEventListener('click', () => { sessionStorage.removeItem(E.DRAFT_KEY); location.reload(); });
   document.getElementById('toggleToken').addEventListener('click', event => { const token = document.getElementById('privateToken'); token.classList.toggle('is-masked'); event.currentTarget.textContent = token.classList.contains('is-masked') ? 'Tampilkan' : 'Sembunyikan'; });
   document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', () => copy(button.dataset.copy)));
+  const identityDistrict = document.getElementById('identityDistrict');
+  const identityVillage = document.getElementById('identityVillage');
+  identityDistrict.innerHTML = '<option value="">Pilih kecamatan</option>' + E.DISTRICTS.map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('');
+  const syncIdentityVillage = preserve => {
+    const selected = preserve ? identityVillage.value : '';
+    const villages = E.villagesByDistrict(identityDistrict.value);
+    identityVillage.innerHTML = `<option value="">${villages.length ? 'Pilih desa/kelurahan' : 'Pilih kecamatan terlebih dahulu'}</option>` + villages.map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('');
+    identityVillage.disabled = !villages.length;
+    if (preserve && villages.includes(selected)) identityVillage.value = selected;
+  };
+  identityDistrict.addEventListener('change', () => { syncIdentityVillage(false); save(); });
   form.addEventListener('input', event => {
     const field = event.target;
     if (field.name === 'nik' || field.name === 'phone') validateIdentityInline();
@@ -218,5 +233,6 @@
     save();
   });
   document.addEventListener('epasar:entities-changed', save);
-  restore(); render();
+  restore(); syncIdentityVillage(true); render();
+  form.dataset.ready = 'true';
 }());

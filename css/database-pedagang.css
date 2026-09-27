@@ -1,0 +1,549 @@
+/* ==========================================================================
+   STYLING MODUL MASTER DATABASE PEDAGANG & LAPORAN RESMI
+   Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kab. Pinrang
+   ========================================================================== */
+
+.db-shell {
+  padding-bottom: 50px;
+}
+
+/* Header & Action Bar */
+.db-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.db-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.db-btn-primary {
+  background: linear-gradient(135deg, #0752c5, #096ad8);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(7, 82, 197, 0.22);
+}
+.db-btn-primary:hover {
+  background: linear-gradient(135deg, #0645a8, #075bbd);
+  transform: translateY(-1px);
+}
+
+.db-btn-excel {
+  background: linear-gradient(135deg, #107c41, #189852);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(16, 124, 65, 0.22);
+}
+.db-btn-excel:hover {
+  background: linear-gradient(135deg, #0d6535, #127d42);
+  transform: translateY(-1px);
+}
+
+.db-btn-json {
+  background: #fff;
+  color: #1a3b61;
+  border-color: #cbdbee;
+}
+.db-btn-json:hover {
+  background: #f1f7fe;
+  border-color: #92b8e3;
+  transform: translateY(-1px);
+}
+
+.db-btn-print {
+  background: linear-gradient(135deg, #1a3353, #2b496d);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(26, 51, 83, 0.22);
+}
+.db-btn-print:hover {
+  background: linear-gradient(135deg, #12243b, #213957);
+  transform: translateY(-1px);
+}
+
+/* KPI Highlights */
+.db-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.db-kpi-card {
+  padding: 16px;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--app-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.db-kpi-card small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.db-kpi-card strong {
+  display: block;
+  margin: 10px 0 2px;
+  color: var(--app-navy);
+  font-size: 1.65rem;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.db-kpi-card p {
+  margin: 4px 0 0;
+  color: var(--app-muted);
+  font-size: 0.67rem;
+}
+
+.db-kpi-card.highlight-1 { background: linear-gradient(145deg, #ffffff, #f0f6ff); border-color: #c7defa; }
+.db-kpi-card.highlight-2 { background: linear-gradient(145deg, #ffffff, #f1faed); border-color: #c9e8be; }
+.db-kpi-card.highlight-3 { background: linear-gradient(145deg, #ffffff, #fffdf0); border-color: #faeec4; }
+.db-kpi-card.highlight-4 { background: linear-gradient(145deg, #ffffff, #fdf4f4); border-color: #f7d2cf; }
+.db-kpi-card.highlight-5 { background: linear-gradient(145deg, #ffffff, #f4f5f8); border-color: #d8dee8; }
+
+/* Filter Panel */
+.db-filter-panel {
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--app-line);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: var(--app-shadow);
+}
+
+.db-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(130px, 1.2fr));
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.db-filter-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #244161;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.db-filter-group input,
+.db-filter-group select {
+  min-height: 40px;
+  margin-top: 0;
+  padding: 7px 11px;
+  font-size: 0.76rem;
+  background: #fbfdff;
+}
+
+.db-filter-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e7edf5;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+}
+
+.db-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.db-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #eef5fc;
+  color: #114e8b;
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+/* Master Data Table */
+.db-table-panel {
+  border: 1px solid var(--app-line);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
+.db-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.db-table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.db-table th {
+  padding: 12px 14px;
+  background: #f0f5fa;
+  color: #254668;
+  font-size: 0.67rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #dbe6f2;
+  white-space: nowrap;
+}
+
+.db-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e9f0f6;
+  color: #203a58;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.db-table tbody tr:hover {
+  background: #f6fafe;
+}
+
+.db-trader-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.db-trader-meta strong {
+  color: var(--app-navy);
+  font-size: 0.8rem;
+}
+
+.db-trader-meta small {
+  color: var(--app-muted);
+  font-size: 0.66rem;
+  font-family: monospace;
+}
+
+.db-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.db-badge-success { background: #ebf7e2; color: #3f7b06; border: 1px solid #c8e8af; }
+.db-badge-warning { background: #fff8e8; color: #875700; border: 1px solid #fae4ad; }
+.db-badge-danger { background: #fff0ef; color: #b02319; border: 1px solid #f6c8c4; }
+.db-badge-info { background: #eaf4ff; color: #0861be; border: 1px solid #c2defc; }
+.db-badge-neutral { background: #f2f5f9; color: #51657c; border: 1px solid #dbe3ed; }
+
+/* Pagination & Footnote */
+.db-pagination-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid #e7edf5;
+  background: #fcfdfe;
+}
+
+/* Modal Rincian Pedagang */
+.db-modal-overlay {
+  position: fixed;
+  z-index: 250;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 19, 45, 0.6);
+  backdrop-filter: blur(4px);
+}
+.db-modal-overlay[hidden] { display: none; }
+
+.db-modal-box {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--app-line);
+  box-shadow: 0 30px 80px rgba(0, 20, 60, 0.35);
+  padding: 28px;
+}
+
+.db-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e6edf5;
+}
+
+.db-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.db-modal-item {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e4ecf4;
+  background: #f9fbfe;
+}
+
+.db-modal-item small {
+  display: block;
+  color: var(--app-muted);
+  font-size: 0.65rem;
+  margin-bottom: 3px;
+}
+
+.db-modal-item strong {
+  display: block;
+  color: var(--app-text);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   OFFICIAL PRINT-READY LAYOUT (@media print)
+   Khusus Cetak Buku Induk dan Rekapitulasi Resmi Pemerintah Kab. Pinrang
+   ========================================================================== */
+.print-only {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  body.internal-app {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 9pt !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Sembunyikan elemen aplikasi internal non-cetak */
+  .internal-sidebar,
+  .internal-topbar,
+  .internal-scrim,
+  .db-filter-panel,
+  .db-kpis,
+  .db-header-actions,
+  .db-pagination-wrap,
+  .db-btn,
+  .table-actions,
+  .no-print {
+    display: none !important;
+  }
+
+  .internal-layout,
+  .internal-stage,
+  .internal-content,
+  .db-shell,
+  .db-table-panel,
+  .db-table-wrap {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  /* Tampilkan Kop Surat Resmi Cetak */
+  .print-only {
+    display: block !important;
+  }
+
+  .print-official-header {
+    display: flex !important;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 8px;
+    border-bottom: 3px double #000;
+    margin-bottom: 12px;
+  }
+
+  .print-official-logo {
+    width: 65px;
+    height: 78px;
+    object-fit: contain;
+  }
+
+  .print-official-titles {
+    flex: 1;
+    text-align: center;
+  }
+
+  .print-official-titles h3 {
+    margin: 0;
+    font-size: 13pt;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .print-official-titles h2 {
+    margin: 2px 0;
+    font-size: 14pt;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .print-official-titles p {
+    margin: 1px 0;
+    font-size: 8pt;
+    color: #222;
+  }
+
+  .print-report-meta {
+    margin: 12px 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .print-report-meta h1 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .print-report-meta p {
+    margin: 0;
+    font-size: 8.5pt;
+  }
+
+  /* Tabel Cetak Resmi */
+  .db-table {
+    min-width: 100% !important;
+    border: 1px solid #000 !important;
+    font-size: 8pt !important;
+  }
+
+  .db-table th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    padding: 5px 6px !important;
+    font-weight: 800 !important;
+  }
+
+  .db-table td {
+    border: 1px solid #555 !important;
+    padding: 4px 6px !important;
+    color: #000 !important;
+  }
+
+  .db-table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .db-badge {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Kolom Pengesahan Tanda Tangan Resmi Cetak */
+  .print-signatures {
+    display: flex !important;
+    justify-content: space-between;
+    margin-top: 26px;
+    page-break-inside: avoid;
+  }
+
+  .print-signature-box {
+    width: 250px;
+    text-align: center;
+    font-size: 8.5pt;
+  }
+
+  .print-signature-box .sign-role {
+    margin-bottom: 50px;
+  }
+
+  .print-signature-box .sign-name {
+    font-weight: 800;
+    text-decoration: underline;
+  }
+
+  .print-signature-box .sign-nip {
+    margin-top: 2px;
+  }
+}
+
+/* Responsif Mobile & Tablet */
+@media (max-width: 1100px) {
+  .db-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .db-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .db-kpis {
+    grid-template-columns: 1fr;
+  }
+  .db-filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .db-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .db-btn {
+    justify-content: center;
+  }
+}

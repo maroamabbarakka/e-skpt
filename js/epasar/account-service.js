@@ -21,6 +21,7 @@
       position: clean(input.position, 120),
       role,
       marketIds,
+      marketDirectoryScoped: role === 'MARKET_HEAD' && existing?.marketDirectoryScoped === true,
       status,
       phone: clean(input.phone, 30),
       photoMediaId: existing?.photoMediaId || null,

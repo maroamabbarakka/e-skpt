@@ -1,1 +1,211 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Status Pendataan e-PASAR</title><link rel="stylesheet" href="css/epasar.css"></head><body><main class="form-shell"><header class="page-header"><p class="eyebrow">e-PASAR PINRANG</p><h1>Cek Status Pengajuan</h1><p class="intro">Gunakan nomor registrasi dan token pribadi yang diterima setelah mengirim data.</p></header><form id="statusForm" novalidate><label>Nomor registrasi<input id="registrationCode" maxlength="40" required></label><label>Token pribadi<input id="publicToken" maxlength="128" autocomplete="off" required><small>Jangan membagikan token ini kepada orang lain.</small></label><p id="statusError" class="form-error" role="alert"></p><button class="button primary" type="submit">Cek Status</button></form><section id="statusResult" class="success-panel" hidden></section><section id="correctionPanel" class="form-step is-active" hidden><h2>Ajukan Koreksi Data</h2><p class="step-help">Koreksi tidak langsung mengubah data induk dan akan diperiksa petugas.</p><form id="correctionForm"><label>Bagian yang dikoreksi<select id="correctionSection" required><option value="">Pilih bagian</option><option value="name">Identitas/nama</option><option value="phone">Nomor telepon</option><option value="business">Data usaha</option><option value="location">Lokasi usaha umum</option><option value="marketUnit">Data tempat pasar</option></select></label><label id="marketRouteWrap" hidden>Tempat pasar<select id="marketRoute"></select></label><label>Data yang seharusnya<textarea id="correctionValue" maxlength="2000" required></textarea></label><label>Alasan koreksi<textarea id="correctionReason" maxlength="500" required></textarea></label><p id="correctionMessage" class="form-error" role="alert"></p><button class="button primary" type="submit">Kirim Permohonan Koreksi</button></form></section></main><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/status-service.js"></script><script src="js/epasar/correction-service.js"></script><script src="js/epasar/status-ui.js"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Layanan Cek Status dan Perbaikan Berkas Pendaftaran e-PASAR Disperindag ESDM Pinrang">
+  <title>Cek Status Pendaftaran | e-PASAR Pinrang</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/form-wizard.css">
+  <link rel="stylesheet" href="css/status.css">
+  <style>
+    .status-container {
+      max-width: 680px;
+      margin: 40px auto 80px;
+      padding: 0 16px;
+    }
+    .status-card {
+      background: #ffffff;
+      border: 1px solid var(--form-line, #d5e2ee);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 16px 42px rgba(14, 61, 111, 0.08);
+    }
+    .status-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .status-header .eyebrow {
+      display: inline-block;
+      padding: 5px 12px;
+      background: #eaf2fd;
+      color: #0646c8;
+      border-radius: 99px;
+      font-weight: 800;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .status-header h1 {
+      margin: 0 0 10px;
+      color: var(--form-navy, #06295d);
+      font-size: clamp(1.6rem, 5vw, 2.1rem);
+    }
+    .status-header p {
+      color: var(--form-muted, #5f738c);
+      font-size: 0.92rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .info-box {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: #f0f7ff;
+      border: 1px solid #c8e1fb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      font-size: 0.84rem;
+      color: #1e4a73;
+    }
+    .info-box svg {
+      flex: 0 0 20px;
+      width: 20px;
+      height: 20px;
+      fill: #0d6efd;
+      margin-top: 2px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      color: var(--form-navy, #06295d);
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+    }
+    .form-group small {
+      display: block;
+      color: var(--form-muted, #5f738c);
+      font-size: 0.76rem;
+      margin-top: 4px;
+    }
+    .status-btn {
+      width: 100%;
+      height: 48px;
+      font-size: 0.95rem;
+      margin-top: 10px;
+    }
+    .footer-help {
+      margin-top: 26px;
+      padding-top: 20px;
+      border-top: 1px solid #e5edf5;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #64748b;
+    }
+    .footer-help a {
+      color: #0646c8;
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body class="registration-page">
+
+  <!-- TOPBAR RESMI PORTAL -->
+  <header class="registration-topbar">
+    <a class="registration-brand" href="index.html">
+      <img src="logo_pinrang_opt.png" alt="Lambang Kabupaten Pinrang">
+      <span>
+        <b>e-PASAR</b>
+        <small>Dinas Perindag-ESDM Kabupaten Pinrang</small>
+      </span>
+    </a>
+    <a href="index.html" class="help-button" style="text-decoration:none;">
+      ← Kembali ke Beranda
+    </a>
+  </header>
+
+  <main class="status-container">
+    <div class="status-card">
+      <div class="status-header">
+        <span class="eyebrow">PORTAL LAYANAN PUBLIK</span>
+        <h1>Cek Status Pengajuan</h1>
+        <p>Pantau perkembangan verifikasi berkas dan penerbitan izin Surat Keterangan Penempatan Tempat (SKPT) Anda.</p>
+      </div>
+
+      <div class="info-box">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <div>
+          Gunakan <b>Nomor Registrasi</b> (contoh: <code>REG-PIN-2026-XXXXXX</code>) dan <b>Token Pribadi</b> yang Anda peroleh saat selesai mengisi formulir pendaftaran.
+        </div>
+      </div>
+
+      <form id="statusForm" novalidate>
+        <div class="form-group">
+          <label for="registrationCode">Nomor Registrasi Pendaftaran</label>
+          <input id="registrationCode" type="text" placeholder="Contoh: REG-PIN-2026-FEB90X" maxlength="40" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label for="publicToken">Token Akses Pribadi</label>
+          <input id="publicToken" type="text" placeholder="Masukkan 32 karakter token akses Anda" maxlength="128" autocomplete="off" required>
+          <small>Jaga kerahasiaan token ini untuk melindungi keamanan data pribadi Anda.</small>
+        </div>
+
+        <p id="statusError" class="form-error" role="alert" hidden></p>
+        <button class="button primary status-btn" type="submit">Periksa Status Sekarang</button>
+      </form>
+
+      <!-- HASIL STATUS -->
+      <section id="statusResult" class="success-panel" style="margin-top: 24px;" hidden></section>
+
+      <!-- PANEL JAWABAN PERBAIKAN BERKAS -->
+      <section id="correctionPanel" class="form-step is-active" style="margin-top: 24px; padding: 22px; border: 1px solid #d0e2ff; background: #fbfdff; border-radius: 14px;" hidden>
+        <h2 style="font-size: 1.2rem; color: #06295d; margin-top: 0;">Kirim Jawaban Perbaikan Berkas</h2>
+        <p class="step-help" style="margin-bottom: 16px; font-size: 0.84rem;">Jawaban dan berkas baru tidak menimpa riwayat awal. Petugas admin akan memeriksa dokumen pembaruan Anda.</p>
+        
+        <form id="correctionForm">
+          <div class="form-group">
+            <label for="correctionSection">Bagian yang Perlu Diperbaiki</label>
+            <select id="correctionSection" required>
+              <option value="">-- Pilih Bagian Berkas --</option>
+              <option value="name" data-admin-section="IDENTITY">Identitas / Nama Pemohon</option>
+              <option value="phone" data-admin-section="IDENTITY">Nomor Telepon / WhatsApp</option>
+              <option value="business" data-admin-section="BUSINESS">Data Usaha & Komoditas</option>
+              <option value="location" data-admin-section="LOCATION">Lokasi Usaha Umum / Non-Pasar</option>
+              <option value="marketUnit" data-admin-section="MARKET_UNIT">Penempatan Fisik Unit Pasar</option>
+              <option value="document" data-admin-section="DOCUMENT">Foto KTP / Bukti Dokumen Pendukung</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="marketRouteWrap" hidden>
+            <label for="marketRoute">Tempat Pasar</label>
+            <select id="marketRoute"></select>
+          </div>
+
+          <div class="form-group">
+            <label for="correctionValue">Data Perbaikan atau Klarifikasi Lengkap</label>
+            <textarea id="correctionValue" maxlength="2000" rows="3" placeholder="Tuliskan data yang benar secara lengkap..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="correctionReason">Alasan / Penjelasan Dokumen Pendukung</label>
+            <textarea id="correctionReason" maxlength="500" rows="2" placeholder="Jelaskan alasan dan sumber bukti perbaikan..." required></textarea>
+          </div>
+
+          <p id="correctionMessage" class="form-error" role="alert" hidden></p>
+          <button class="button primary status-btn" type="submit">Kirim Jawaban Perbaikan</button>
+        </form>
+      </section>
+
+      <div class="footer-help">
+        Butuh bantuan atau nomor registrasi Anda hilang? Hubungi <a href="layanan.html">Pusat Layanan Disperindag Pinrang</a> atau datang langsung ke kantor pengelola pasar terdekat.
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/status-service.js"></script>
+  <script src="js/epasar/correction-service.js"></script>
+  <script src="js/epasar/status-ui.js"></script>
+  <script src="js/epasar/status-query.js"></script>
+</body>
+</html>

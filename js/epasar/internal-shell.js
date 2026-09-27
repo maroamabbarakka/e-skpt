@@ -3,6 +3,7 @@
   const path=location.pathname.split('/').pop()||'admin-epasar.html';
   const pageMap={
     'admin-epasar.html':['Dashboard','Utama'],
+    'database-pedagang.html':['Database Pedagang','Data & Laporan'],
     'admin-intake-review.html':['Review Pendaftaran','Pendataan'],
     'photo-editor.html':['Pengolah Foto','Pendataan'],
     'market-verification.html':['Verifikasi Unit','Pasar'],
@@ -16,6 +17,7 @@
   const icons={home:'<path d="M3 11 12 3l9 8v9h-6v-6H9v6H3z"/>',inbox:'<path d="M4 5h16v14H4zM4 14h5l2 2h2l2-2h5"/>',market:'<path d="M4 9h16l-2-5H6zM6 9v11h12V9M9 20v-6h6v6"/>',doc:'<path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h5"/>',calendar:'<path d="M4 6h16v14H4zM8 3v6M16 3v6M4 10h16"/>',swap:'<path d="m7 7 3-3m-3 3 3 3M17 17l-3 3m3-3-3-3M8 7h9v5M16 17H7v-5"/>',users:'<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21c.6-4.3 2.8-7 7-7s6.4 2.7 7 7M17 8a3 3 0 0 1 0 6M18 15c2.4.4 3.7 2.4 4 5"/>',profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-5 3.3-7 8-7s7.2 2 8 7"/>'};
   const menu=[
     ['UTAMA','admin-epasar.html','Dashboard','home',['ALL']],
+    ['DATA & LAPORAN','database-pedagang.html','Database Pedagang','users',['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']],
     ['PENDATAAN','admin-epasar.html#pendaftaran','Pendaftaran Masuk','inbox',['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN']],
     ['', 'admin-intake-review.html','Review Pendaftaran','inbox',['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN']],
     ['PASAR','market-verification.html','Verifikasi Unit','market',['SUPER_ADMIN','MARKET_HEAD']],

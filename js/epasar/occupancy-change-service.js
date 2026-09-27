@@ -4,6 +4,16 @@
   const clean = (value, max = 300) => String(value || '').trim().slice(0, max);
   const reviewers = ['KADIS', 'SUPER_ADMIN'];
   function database() { if (!window.db) throw new Error('Layanan data belum siap.'); return window.db; }
+  const directoryId = (marketId, traderId) => `${clean(marketId,100)}__${clean(traderId,100)}`.replaceAll('/', '_');
+
+  async function directoryByMarket(marketIds) {
+    const rows = [];
+    for (const marketId of marketIds || []) {
+      const snapshot = await database().collection('market_trader_directory').where('marketId', '==', marketId).limit(200).get();
+      snapshot.forEach(document => rows.push({ id: document.id, ...document.data() }));
+    }
+    return rows.filter(row => row.status === 'ACTIVE');
+  }
 
   async function listUnits(profile) {
     if (profile.role !== 'MARKET_HEAD') return [];
@@ -12,7 +22,10 @@
       const snapshot = await database().collection('market_units').where('marketId', '==', marketId).limit(50).get();
       snapshot.forEach(document => rows.push({ id: document.id, ...document.data() }));
     }
-    return rows.filter(unit => unit.status === 'OCCUPIED' && unit.currentTraderId && unit.currentOccupancyId);
+    const directory = await directoryByMarket(profile.marketIds);
+    const names = new Map(directory.map(row => [`${row.marketId}__${row.traderId}`, row.displayName || row.traderId]));
+    return rows.filter(unit => unit.status === 'OCCUPIED' && unit.currentTraderId && unit.currentOccupancyId)
+      .map(unit => ({ ...unit, currentTraderName: names.get(`${unit.marketId}__${unit.currentTraderId}`) || unit.currentTraderId }));
   }
 
   async function listPending(profile) {
@@ -30,6 +43,10 @@
     if (!reason) throw new Error('Alasan dan hasil pemeriksaan faktual wajib diisi.');
     if (action === 'TRANSFER' && !newTraderId) throw new Error('ID pedagang penerima wajib diisi untuk pengalihan.');
     if (action === 'TRANSFER' && newTraderId === unit.currentTraderId) throw new Error('Pedagang penerima sama dengan pemegang saat ini.');
+    if (action === 'TRANSFER') {
+      const target = await database().collection('market_trader_directory').where('marketId', '==', unit.marketId).where('traderId', '==', newTraderId).limit(1).get();
+      if (target.empty || target.docs[0].data().status !== 'ACTIVE') throw new Error('Pedagang penerima tidak terdaftar aktif pada pasar ini.');
+    }
     const reference = database().collection('correction_requests').doc();
     await reference.set({ requestType: 'OCCUPANCY_CHANGE', action, marketUnitId: unit.id, marketId: unit.marketId, currentOccupancyId: unit.currentOccupancyId, currentTraderId: unit.currentTraderId, newTraderId: action === 'TRANSFER' ? newTraderId : '', reason, status: 'PENDING_REVIEW', submittedBy: actor.uid, submittedRole: actor.role, submittedAt: stamp(), decidedBy: null, decidedAt: null, decisionNote: '', source: 'MARKET_HEAD_VERIFICATION', schemaVersion: 2 });
     return reference.id;
@@ -45,12 +62,7 @@
     const unitRef = db.collection('market_units').doc(request.marketUnitId);
     const oldOccupancyRef = db.collection('market_occupancies').doc(request.currentOccupancyId);
     const newOccupancyRef = db.collection('market_occupancies').doc();
-    let targetTraderRef = null;
-    if (request.action === 'TRANSFER') {
-      const traderQuery = await db.collection('traders').where('traderId', '==', request.newTraderId).limit(1).get();
-      if (traderQuery.empty) throw new Error('Pedagang penerima tidak ditemukan pada data master.');
-      targetTraderRef = traderQuery.docs[0].ref;
-    }
+    const targetTraderRef = request.action === 'TRANSFER' ? db.collection('market_trader_directory').doc(directoryId(request.marketId, request.newTraderId)) : null;
     await db.runTransaction(async transaction => {
       const reads = [transaction.get(requestRef), transaction.get(unitRef), transaction.get(oldOccupancyRef)];
       if (targetTraderRef) reads.push(transaction.get(targetTraderRef));
@@ -64,7 +76,7 @@
         transaction.update(requestRef, { status: 'REJECTED', decidedBy: actor.uid, decidedAt: stamp(), decisionNote });
         return;
       }
-      if (current.action === 'TRANSFER' && (!targetTraderSnapshot?.exists || targetTraderSnapshot.data().traderId !== current.newTraderId)) throw new Error('Data pedagang penerima berubah atau tidak tersedia.');
+      if (current.action === 'TRANSFER' && (!targetTraderSnapshot?.exists || targetTraderSnapshot.data().marketId !== current.marketId || targetTraderSnapshot.data().traderId !== current.newTraderId || targetTraderSnapshot.data().status !== 'ACTIVE')) throw new Error('Data pedagang penerima berubah, tidak aktif, atau tidak terdaftar pada pasar ini.');
       transaction.update(oldOccupancyRef, { status: 'CLOSED', endedAt: stamp(), endedBy: actor.uid, changeRequestId: request.id });
       if (current.action === 'TRANSFER') {
         transaction.set(newOccupancyRef, { occupancyId: newOccupancyRef.id, marketUnitId: request.marketUnitId, marketId: request.marketId, traderId: current.newTraderId, previousTraderId: current.currentTraderId, changeRequestId: request.id, status: 'ACTIVE', startedAt: stamp(), endedAt: null, createdBy: actor.uid, schemaVersion: 1 });
@@ -76,5 +88,5 @@
     });
   }
 
-  window.EPASAR_OCCUPANCY_CHANGE = { listUnits, listPending, submit, decide };
+  window.EPASAR_OCCUPANCY_CHANGE = { directoryByMarket, listUnits, listPending, submit, decide };
 }());

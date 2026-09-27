@@ -1,6 +1,156 @@
 <!doctype html>
 <html lang="id">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Verifikasi Dokumen SKPT</title><link rel="stylesheet" href="css/epasar.css"></head>
-<body><main class="form-shell"><header class="page-header"><p class="eyebrow">VERIFIKASI RESMI e-PASAR</p><h1>Verifikasi SKPT</h1><p class="intro">Halaman ini hanya menampilkan informasi dokumen yang aman untuk publik.</p></header><form id="verificationForm" novalidate><label>Token verifikasi dokumen<input id="verificationToken" maxlength="160" required></label><p id="verificationError" class="form-error" role="alert"></p><button class="button primary" type="submit">Verifikasi</button></form><section id="verificationResult" class="success-panel" hidden></section></main>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/public-verification.js"></script><script src="js/epasar/verification-ui.js"></script></body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Verifikasi Keabsahan Dokumen SKPT Resmi Dinas Perindag-ESDM Kabupaten Pinrang">
+  <title>Verifikasi Keabsahan Dokumen SKPT | e-PASAR Pinrang</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/form-wizard.css">
+  <style>
+    .verify-container {
+      max-width: 640px;
+      margin: 40px auto 80px;
+      padding: 0 16px;
+    }
+    .verify-card {
+      background: #ffffff;
+      border: 1px solid var(--form-line, #d5e2ee);
+      border-radius: 20px;
+      padding: 34px 28px;
+      box-shadow: 0 16px 42px rgba(14, 61, 111, 0.08);
+      text-align: center;
+    }
+    .badge-secure {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      background: #eef8eb;
+      color: #2b7713;
+      border: 1px solid #c2e6b5;
+      border-radius: 99px;
+      font-weight: 800;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 14px;
+    }
+    .verify-header h1 {
+      margin: 0 0 8px;
+      color: var(--form-navy, #06295d);
+      font-size: clamp(1.6rem, 5vw, 2.1rem);
+    }
+    .verify-header p {
+      color: var(--form-muted, #5f738c);
+      font-size: 0.92rem;
+      max-width: 480px;
+      margin: 0 auto 22px;
+    }
+    .scanner-tip {
+      background: #f7faff;
+      border: 1px dashed #adcce9;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 22px;
+      font-size: 0.82rem;
+      color: #255883;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+    .scanner-icon {
+      flex: 0 0 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      background: #e0effd;
+      border-radius: 8px;
+      color: #0d6efd;
+      font-size: 1.1rem;
+    }
+    .verify-form {
+      text-align: left;
+    }
+    .verify-form label {
+      display: block;
+      font-weight: 700;
+      color: var(--form-navy, #06295d);
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+    }
+    .verify-btn {
+      width: 100%;
+      height: 48px;
+      font-size: 0.95rem;
+      margin-top: 14px;
+    }
+    .footer-help {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #e5edf5;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body class="registration-page">
+
+  <!-- TOPBAR RESMI PORTAL -->
+  <header class="registration-topbar">
+    <a class="registration-brand" href="index.html">
+      <img src="logo_pinrang_opt.png" alt="Lambang Kabupaten Pinrang">
+      <span>
+        <b>e-PASAR</b>
+        <small>Dinas Perindag-ESDM Kabupaten Pinrang</small>
+      </span>
+    </a>
+    <a href="index.html" class="help-button" style="text-decoration:none;">
+      ← Kembali ke Beranda
+    </a>
+  </header>
+
+  <main class="verify-container">
+    <div class="verify-card">
+      <div class="badge-secure">
+        <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        Sistem Verifikasi Digital Terpadu
+      </div>
+
+      <div class="verify-header">
+        <h1>Verifikasi Keabsahan SKPT</h1>
+        <p>Periksa validitas dan keaslian dokumen Surat Keterangan Penempatan Tempat yang diterbitkan Pemerintah Kabupaten Pinrang.</p>
+      </div>
+
+      <div class="scanner-tip">
+        <div class="scanner-icon">🔍</div>
+        <div>
+          Jika Anda memindai kode QR pada sertifikat SKPT fisik, token verifikasi akan terisi otomatis. Anda juga dapat menyalin token secara manual di bawah ini.
+        </div>
+      </div>
+
+      <form id="verificationForm" class="verify-form" novalidate>
+        <label for="verificationToken">Token / Kode Hash Dokumen SKPT</label>
+        <input id="verificationToken" type="text" placeholder="Tempel token verifikasi dokumen di sini" maxlength="160" required autocomplete="off">
+        <p id="verificationError" class="form-error" role="alert" hidden></p>
+        <button class="button primary verify-btn" type="submit">Cek Keabsahan Dokumen</button>
+      </form>
+
+      <!-- HASIL VERIFIKASI -->
+      <section id="verificationResult" class="success-panel" style="margin-top: 24px; text-align: left;" hidden></section>
+
+      <div class="footer-help">
+        Halaman ini hanya menampilkan data legalitas resmi yang aman untuk publik. Seluruh data dilindungi tanda tangan elektronik tersertifikasi.
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/public-verification.js"></script>
+  <script src="js/epasar/verification-ui.js"></script>
+</body>
 </html>

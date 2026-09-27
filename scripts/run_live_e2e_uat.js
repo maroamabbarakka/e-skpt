@@ -15,8 +15,13 @@ fs.mkdirSync(out, { recursive: true });
 const photo = path.join(process.cwd(), 'assets', 'uat', 'pedagang-contoh-3x4.jpg');
 
 async function shot(page, order, label) {
-  await page.screenshot({ path: path.join(out, `${String(order).padStart(2, '0')}-${label}.png`), fullPage: true });
-  console.log(`PASS ${String(order).padStart(2, '0')} ${label}`);
+  const prefix = String(order).padStart(2, '0');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: path.join(out, `${prefix}-${label}-desktop.png`), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(out, `${prefix}-${label}-mobile.png`), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  console.log(`PASS ${prefix} ${label} desktop+mobile`);
 }
 async function login(page, email) {
   await page.goto(`${base}/login`, { waitUntil: 'domcontentloaded' });
@@ -40,36 +45,37 @@ async function login(page, email) {
   await page.locator('[name="birthPlace"]').fill('Pinrang');
   await page.locator('[name="birthDate"]').fill('1990-01-01');
   await page.locator('[name="phone"]').fill('081299990001');
-  await page.locator('[name="district"]').fill('Watang Sawitto');
-  await page.locator('[name="village"]').fill('Macorawalie');
+  await page.locator('[name="district"]').selectOption('Watang Sawitto');
+  await page.locator('[name="village"]').selectOption('Macorawalie');
   await page.locator('[name="address"]').fill('Alamat khusus pengujian internal e-PASAR');
   await shot(page, 1, 'pedagang-identitas');
   await page.getByRole('button', { name: 'Lanjut' }).click();
 
-  await page.locator('[name="businessName"]').fill('Warung Uji Internal');
-  await page.locator('[name="businessType"]').selectOption({ label: 'Warung/Kuliner' });
-  await page.locator('[name="businessGroup"]').selectOption({ label: 'Kuliner dan makanan siap saji' });
-  await page.locator('[name="businessCategory"]').fill('Makanan dan minuman');
-  await page.locator('[name="monthlyRevenue"]').fill('5000000');
-  await page.locator('[name="workerCount"]').fill('2');
-  await page.locator('[name="businessDistrict"]').fill('Watang Sawitto');
-  await page.locator('[name="businessVillage"]').fill('Macorawalie');
-  await page.locator('[name="businessAddress"]').fill('Area pengujian Pasar Sentral Pinrang');
+  await page.locator('[data-bind="0|b|||name"]').fill('Warung Uji Internal');
+  await page.locator('[data-bind="0|b|||type"]').selectOption({ label: 'Warung/Kuliner' });
+  await page.locator('[data-bind="0|b|||group"]').selectOption({ label: 'Kuliner dan makanan siap saji' });
+  await page.locator('[data-bind="0|b|||category"]').fill('Makanan dan minuman');
+  await page.locator('[data-bind="0|b|||monthlyRevenue"]').fill('5000000');
+  await page.locator('[data-bind="0|b|||workerCount"]').fill('2');
   await shot(page, 2, 'pedagang-usaha');
   await page.getByRole('button', { name: 'Lanjut' }).click();
 
-  await page.locator('[name="hasMarketUnit"][value="yes"]').check();
-  await page.locator('[name="marketName"]').fill('Pasar Sentral Pinrang');
-  await page.locator('[name="unitType"]').selectOption('KIOS');
-  await page.locator('[name="unitNumber"]').fill(unit);
-  await page.locator('[name="block"]').fill('UAT');
-  await page.locator('[name="floor"]').fill('1');
-  await page.locator('[name="areaM2"]').fill('6');
-  await page.locator('[name="locationHint"]').fill('Unit khusus pengujian internal');
+  await page.locator('[data-bind="0|l|0||type"]').selectOption('MARKET');
+  await page.locator('[data-bind="0|l|0||district"]').selectOption('Watang Sawitto');
+  await page.locator('[data-bind="0|l|0||village"]').selectOption('Macorawalie');
+  await page.locator('[data-bind="0|l|0||address"]').fill('Area pengujian Pasar Sentral Pinrang');
+  await page.getByRole('button', { name: '+ Tambah Tempat di Pasar' }).click();
+  await page.locator('[data-bind="0|p|0|0|marketId"]').selectOption('MKT-010');
+  await page.locator('[data-bind="0|p|0|0|unitType"]').selectOption('KIOS');
+  await page.locator('[data-bind="0|p|0|0|unitNumber"]').fill(unit);
+  await page.locator('[data-bind="0|p|0|0|block"]').fill('UAT');
+  await page.locator('[data-bind="0|p|0|0|floor"]').fill('1');
+  await page.locator('[data-bind="0|p|0|0|areaM2"]').fill('6');
+  await page.locator('[data-bind="0|p|0|0|locationHint"]').fill('Unit khusus pengujian internal');
   await shot(page, 3, 'pedagang-klaim-pasar');
   await page.getByRole('button', { name: 'Lanjut' }).click();
 
-  await page.locator('[name="applySkpt"][value="yes"]').check();
+  await page.locator('[data-bind="0|p|0|0|applySkpt"]').check();
   await page.locator('[name="religion"]').selectOption({ label: 'Islam' });
   await page.locator('[name="citizenship"]').fill('Indonesia');
   console.log('INFO memproses foto profil');
@@ -99,7 +105,6 @@ async function login(page, email) {
   const intakeId = new URL(reviewHref, base).searchParams.get('id');
   await page.goto(new URL(reviewHref, base).href, { waitUntil: 'domcontentloaded' });
   await page.locator('#reviewForm').waitFor({ state: 'visible', timeout: 20000 });
-  await page.locator('[name="marketId"]').fill('pasar-sentral-pinrang');
   await page.locator('#confirmReview').check();
   await shot(page, 8, 'admin-review-intake');
   await page.getByRole('button', { name: 'Bentuk data pedagang' }).click();

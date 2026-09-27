@@ -6,6 +6,7 @@ node_modules/
 *.log
 test-results/
 artifacts/
+scratch/
 __pycache__/
 *.pyc
 .env

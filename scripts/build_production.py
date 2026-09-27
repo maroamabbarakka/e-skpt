@@ -83,6 +83,7 @@ def validate() -> None:
         "js/epasar/admin-accounts.js",
         "js/epasar/profile.js",
         "js/epasar/workflow-service.js",
+        "js/epasar/market-workspace-service.js",
         "js/epasar/public-unit-verification.js",
         "js/epasar/skpt-pdf.js",
         "js/epasar/skpt-statement.js",
@@ -95,6 +96,9 @@ def validate() -> None:
         "js/epasar/occupancy-change-service.js",
         "js/epasar/occupancy-change.js",
         "js/epasar/portal.js",
+        "database-pedagang.html",
+        "css/database-pedagang.css",
+        "js/epasar/database-pedagang.js",
     ]
     missing = [path for path in required if not (DIST / path).is_file() or (DIST / path).stat().st_size == 0]
     if missing:

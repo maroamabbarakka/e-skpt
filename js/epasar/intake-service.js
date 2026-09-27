@@ -25,7 +25,15 @@
         return { draftId: String(place.id || ''), marketId: market.id, marketName: market.name, unitType: String(place.unitType || '').toUpperCase(), unitNumber: String(place.unitNumber || '').trim(), block: String(place.block || '').trim(), floor: String(place.floor || '').trim(), areaM2: place.areaM2 === '' || place.areaM2 == null ? null : Number(place.areaM2), locationHint: String(place.locationHint || '').trim(), applySkpt: Boolean(place.applySkpt) };
       }) }))
     })) : [];
+    const identityDistrict = String(data.district || '').trim();
+    const identityVillage = String(data.village || '').trim();
+    if (!window.EPASAR.DISTRICTS.includes(identityDistrict) || !window.EPASAR.villagesByDistrict(identityDistrict).includes(identityVillage)) throw new Error('Kecamatan atau desa/kelurahan identitas tidak sesuai master wilayah. Pilih ulang dari daftar.');
+    for (const business of businesses) for (const location of business.locations) {
+      if (!window.EPASAR.DISTRICTS.includes(location.district) || !window.EPASAR.villagesByDistrict(location.district).includes(location.village)) throw new Error('Kecamatan atau desa/kelurahan lokasi usaha tidak sesuai master wilayah. Pilih ulang dari daftar.');
+    }
     const places = businesses.flatMap(b => b.locations.flatMap(l => l.marketPlaces));
+    const maxMarketPlaces = Number(window.EPASAR.MAX_MARKET_PLACES || 25);
+    if (places.length > maxMarketPlaces) throw new Error(`Maksimal ${maxMarketPlaces} tempat pasar dalam satu pendaftaran. Pisahkan data tambahan ke proses penambahan lokasi.`);
     const applySkpt = places.some(place => place.applySkpt);
     const basicAcceptance = Boolean(data.truthAck && data.verificationAck);
     const completeAcceptance = Boolean(basicAcceptance && (!applySkpt || data.skptAck));
@@ -38,7 +46,7 @@
       status: 'SUBMITTED',
       identity: {
         name: String(data.name || '').trim(), phone: String(data.phone || '').trim(),
-        district: String(data.district || '').trim(), village: String(data.village || '').trim(),
+        district: identityDistrict, village: identityVillage,
         address: String(data.address || '').trim(), birthPlace: String(data.birthPlace || '').trim(), birthDate: String(data.birthDate || '').trim(),
         religion: String(data.religion || '').trim(), citizenship: String(data.citizenship || '').trim(), nik: String(data.nik || '').replace(/\s/g, '')
       },
@@ -55,7 +63,11 @@
   async function submit(data) {
     const document = payload(data);
     const reference = database().collection('trader_intake').doc();
-    await reference.set(document);
+    const statusReference = database().collection('public_status').doc(document.publicToken);
+    const batch = database().batch();
+    batch.set(reference, document);
+    batch.set(statusReference, { intakeId: reference.id, publicToken: document.publicToken, registrationCode: document.registrationCode, status: 'SUBMITTED', publicStatus: true, displayName: document.identity.name, traderId: '', businessType: '', marketName: '', marketRoutes: [], statementVersion: document.statement.version, statementAcceptedAt: document.statement.acceptedAt, photoMediaToken: '', reviewMessage: '', correctionSections: [], canResubmit: false, environment: 'UAT', isDemo: true, schemaVersion: 2, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp() });
+    await batch.commit();
     return { intakeId: reference.id, registrationCode: document.registrationCode, publicToken: document.publicToken };
   }
 

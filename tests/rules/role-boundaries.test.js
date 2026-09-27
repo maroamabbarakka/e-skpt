@@ -1,5 +1,5 @@
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { collection, doc, setDoc, getDoc, getDocs, query, where, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, documentId, limit, serverTimestamp, writeBatch } from 'firebase/firestore';
 import fs from 'node:fs';
 
 const projectId = 'demo-epasar';
@@ -8,22 +8,27 @@ const env = await initializeTestEnvironment({ projectId, firestore: { rules } })
 
 await env.withSecurityRulesDisabled(async context => {
   const db = context.firestore();
-  await setDoc(doc(db, 'users', 'market-head-1'), { status: 'ACTIVE', role: 'MARKET_HEAD', marketIds: ['M1'] });
-  await setDoc(doc(db, 'users', 'market-head-2'), { status: 'ACTIVE', role: 'MARKET_HEAD', marketIds: ['M2'] });
+  await setDoc(doc(db, 'users', 'market-head-1'), { status: 'ACTIVE', role: 'MARKET_HEAD', marketIds: ['M1'], marketDirectoryScoped: true });
+  await setDoc(doc(db, 'users', 'market-head-2'), { status: 'ACTIVE', role: 'MARKET_HEAD', marketIds: ['M2'], marketDirectoryScoped: true });
+  await setDoc(doc(db, 'users', 'market-head-legacy'), { status: 'ACTIVE', role: 'MARKET_HEAD', marketIds: ['M1'] });
   await setDoc(doc(db, 'users', 'kadis-1'), { status: 'ACTIVE', role: 'KADIS' });
   await setDoc(doc(db, 'users', 'admin-1'), { status: 'ACTIVE', role: 'DISPERINDAG_ADMIN' });
   await setDoc(doc(db, 'trader_intake', 'private-1'), { status: 'SUBMITTED' });
   await setDoc(doc(db, 'traders', 'target-trader-doc'), { traderId: 'TRD-ATOMIC-2', displayName: 'Penerima Uji', status: 'ACTIVE' });
-  await setDoc(doc(db, 'market_claims', 'claim-1'), { traderId: 'TRD-1', marketId: 'M1', verificationStatus: 'UNVERIFIED' });
-  await setDoc(doc(db, 'market_claims', 'claim-2'), { traderId: 'TRD-2', marketId: 'M2', verificationStatus: 'UNVERIFIED' });
+  await setDoc(doc(db, 'market_trader_directory', 'M1__TRD-1'), { marketId: 'M1', traderId: 'TRD-1', displayName: 'Pedagang Pasar Satu', status: 'ACTIVE' });
+  await setDoc(doc(db, 'market_trader_directory', 'M2__TRD-2'), { marketId: 'M2', traderId: 'TRD-2', displayName: 'Pedagang Pasar Dua', status: 'ACTIVE' });
+  await setDoc(doc(db, 'market_claims', 'claim-1'), { traderId: 'TRD-1', marketId: 'M1', verificationStatus: 'UNVERIFIED', createdAt: new Date('2026-09-25T00:00:00Z') });
+  await setDoc(doc(db, 'market_claims', 'claim-2'), { traderId: 'TRD-2', marketId: 'M2', verificationStatus: 'UNVERIFIED', createdAt: new Date('2026-09-25T00:00:00Z') });
+  await setDoc(doc(db, 'market_claims', 'claim-legacy'), { traderId: 'TRD-LEGACY', marketId: 'M1', status: 'MARKET_VERIFIED', createdAt: new Date('2026-09-24T00:00:00Z') });
   await setDoc(doc(db, 'market_claims', 'claim-e2e'), { traderId: 'TRD-E2E', marketId: 'M1', verificationStatus: 'UNVERIFIED', applicationId: 'app-e2e', claimedUnitType: 'KIOS', claimedUnitNumber: 'UAT-1' });
   await setDoc(doc(db, 'market_claims', 'claim-atomic'), { traderId: 'TRD-ATOMIC-1', marketId: 'M1', verificationStatus: 'UNVERIFIED' });
   await setDoc(doc(db, 'market_units', 'unit-1'), { marketId: 'M1', unitNumber: 'A-1' });
   await setDoc(doc(db, 'market_units', 'unit-2'), { marketId: 'M2', unitNumber: 'B-1' });
   await setDoc(doc(db, 'skpt_applications', 'app-1'), { traderId: 'PDG-1', claimId: 'claim-1', marketId: 'M1', status: 'MARKET_VERIFICATION' });
+  await setDoc(doc(db, 'skpt_applications', 'app-market-2'), { traderId: 'PDG-2', claimId: 'claim-2', marketId: 'M2', status: 'MARKET_VERIFICATION' });
   await setDoc(doc(db, 'skpt_applications', 'app-e2e'), { traderId: 'TRD-E2E', claimId: 'claim-e2e', marketId: 'M1', status: 'MARKET_VERIFICATION' });
   await setDoc(doc(db, 'public_status', 'status-token-1'), { publicToken: 'status-token-1', publicStatus: true, registrationCode: 'REG-PIN-2026-000001', status: 'ADMIN_REVIEW' });
-  await setDoc(doc(db, 'public_status', 's'.repeat(32)), { publicToken: 's'.repeat(32), publicStatus: true, registrationCode: 'REG-PIN-2026-MULTI01', status: 'MARKET_VERIFICATION', traderId: 'TRD-1' });
+  await setDoc(doc(db, 'public_status', 's'.repeat(32)), { publicToken: 's'.repeat(32), publicStatus: true, registrationCode: 'REG-PIN-2026-MULTI01', status: 'CORRECTION_REQUIRED', canResubmit: true, traderId: 'TRD-1' });
   await setDoc(doc(db, 'public_skpt_verification', 'verify-token-1'), { verificationToken: 'verify-token-1', status: 'ISSUED', number: 'SKPT-1' });
   await setDoc(doc(db, 'public_stats', 'summary'), { totalTraders: 2, totalIssuedSkpt: 1, totalBusinesses: 2, totalLocations: 2, totalCategories: 2, marketTraders: 1, nonMarketTraders: 1, topCategories: [{ label: 'TRADE', count: 1 }, { label: 'CRAFT', count: 1 }], updatedAt: new Date(), schemaVersion: 1 });
   await setDoc(doc(db, 'markets', 'MKT-001'), { marketId: 'MKT-001', name: 'Pasar Rakyat Bungi', status: 'ACTIVE', schemaVersion: 1, updatedAt: new Date() });
@@ -36,6 +41,7 @@ await env.withSecurityRulesDisabled(async context => {
 
 const marketHead = env.authenticatedContext('market-head-1').firestore();
 const otherMarketHead = env.authenticatedContext('market-head-2').firestore();
+const legacyMarketHead = env.authenticatedContext('market-head-legacy').firestore();
 const kadis = env.authenticatedContext('kadis-1').firestore();
 const admin = env.authenticatedContext('admin-1').firestore();
 const anonymous = env.unauthenticatedContext().firestore();
@@ -66,6 +72,13 @@ const validMultiIntake = {
   requirementsAcceptance: { version: 'SKPT-REQUIREMENTS-V1-PERDA6-2024', accepted: true, acceptedAt: serverTimestamp(), itemCodes: ['DATA_VERIFICATION','SEPARATE_APPLICATION_PER_PLACE','TWO_YEAR_VALIDITY','NOT_PROOF_OF_OWNERSHIP','SAME_LOCATION_LIMIT_REVIEW'] }
 };
 await assertSucceeds(setDoc(doc(anonymous, 'trader_intake', 'valid-multi-intake'), validMultiIntake));
+const initialToken = 'i'.repeat(32);
+const initialIntake = { ...validMultiIntake, publicToken: initialToken, registrationCode: 'REG-PIN-2026-INITIAL1' };
+const initialBatch = writeBatch(anonymous);
+initialBatch.set(doc(anonymous, 'trader_intake', 'initial-intake'), initialIntake);
+initialBatch.set(doc(anonymous, 'public_status', initialToken), { intakeId: 'initial-intake', publicToken: initialToken, registrationCode: initialIntake.registrationCode, status: 'SUBMITTED', publicStatus: true, displayName: initialIntake.identity.name, traderId: '', businessType: '', marketName: '', marketRoutes: [], statementVersion: initialIntake.statement.version, statementAcceptedAt: serverTimestamp(), photoMediaToken: '', reviewMessage: '', correctionSections: [], canResubmit: false, environment: 'UAT', isDemo: true, schemaVersion: 2, updatedAt: serverTimestamp() });
+await assertSucceeds(initialBatch.commit());
+await assertFails(setDoc(doc(anonymous, 'public_status', 'z'.repeat(32)), { intakeId: 'missing-intake', publicToken: 'z'.repeat(32), registrationCode: 'REG-PIN-2026-FORGED1', status: 'SUBMITTED', publicStatus: true, displayName: 'Palsu', traderId: '', businessType: '', marketName: '', marketRoutes: [], statementVersion: 'SKPT-STATEMENT-V3-PERDA6-2024', statementAcceptedAt: serverTimestamp(), photoMediaToken: '', reviewMessage: '', correctionSections: [], canResubmit: false, environment: 'UAT', isDemo: true, schemaVersion: 2, updatedAt: serverTimestamp() }));
 await assertSucceeds(setDoc(doc(anonymous, 'trader_intake', 'valid-multi-intake-without-skpt'), {
   ...validMultiIntake,
   publicToken: 'n'.repeat(32),
@@ -87,6 +100,7 @@ await assertFails(setDoc(doc(anonymous, 'trader_intake', 'invalid-multi-intake')
 const validMarketCorrection = { registrationCode: 'REG-PIN-2026-MULTI01', accessToken: 's'.repeat(32), createdAt: serverTimestamp(), status: 'PENDING_REVIEW', source: 'PUBLIC_FORM', schemaVersion: 2, publicToken: 'r'.repeat(32), section: 'marketUnit', value: 'Nomor yang benar A-2', reason: 'Hasil pemeriksaan ulang', marketId: 'M1', claimId: 'claim-1', routingRoles: ['MARKET_HEAD','DISPERINDAG_ADMIN'] };
 await assertSucceeds(setDoc(doc(anonymous, 'correction_requests', 'valid-market-correction-v2'), validMarketCorrection));
 await assertFails(setDoc(doc(anonymous, 'correction_requests', 'forged-market-correction-v2'), { ...validMarketCorrection, publicToken: 'q'.repeat(32), marketId: 'M2' }));
+await assertFails(setDoc(doc(anonymous, 'correction_requests', 'correction-when-not-requested'), { ...validMarketCorrection, accessToken: 'status-token-1', registrationCode: 'REG-PIN-2026-000001', publicToken: 'k'.repeat(32), section: 'business', marketId: '', claimId: '', routingRoles: ['DISPERINDAG_ADMIN'] }));
 await assertSucceeds(setDoc(doc(anonymous, 'trader_intake', 'valid-pelataran-intake'), {
   ...validPublicIntake,
   publicToken: 'p'.repeat(32),
@@ -112,6 +126,24 @@ await assertFails(setDoc(doc(marketHead, 'trader_intake', 'new-1'), { status: 'A
 await assertFails(setDoc(doc(kadis, 'trader_intake', 'new-2'), { status: 'APPROVED' }));
 await assertSucceeds(getDoc(doc(marketHead, 'market_claims', 'claim-1')));
 await assertFails(getDoc(doc(marketHead, 'market_claims', 'claim-2')));
+await assertSucceeds(getDoc(doc(marketHead, 'market_trader_directory', 'M1__TRD-1')));
+await assertFails(getDoc(doc(marketHead, 'market_trader_directory', 'M2__TRD-2')));
+await assertSucceeds(getDoc(doc(kadis, 'market_trader_directory', 'M1__TRD-1')));
+await assertFails(getDoc(doc(marketHead, 'traders', 'target-trader-doc')));
+await assertSucceeds(getDoc(doc(legacyMarketHead, 'traders', 'target-trader-doc')));
+await assertSucceeds(getDocs(query(collection(marketHead, 'market_trader_directory'), where('marketId', '==', 'M1'), where('traderId', 'in', ['TRD-1']))));
+await assertFails(getDocs(query(collection(marketHead, 'market_trader_directory'), where('traderId', 'in', ['TRD-1']))));
+await assertFails(setDoc(doc(marketHead, 'market_claims', 'claim-legacy'), {
+  verified: { marketId: 'M1', unitId: 'UNT-LEGACY', unitNumber: 'L-1', unitType: 'KIOS' },
+  verificationStatus: 'VERIFIED',
+  marketUnitId: 'UNT-LEGACY',
+  updatedAt: serverTimestamp()
+}, { merge: true }));
+await assertSucceeds(getDocs(query(collection(marketHead, 'market_claims'), where('marketId', '==', 'M1'), where('verificationStatus', '==', 'UNVERIFIED'), orderBy('createdAt', 'asc'), limit(25))));
+await assertSucceeds(getDocs(query(collection(marketHead, 'market_claims'), where('marketId', '==', 'M1'), orderBy(documentId(), 'asc'), limit(25))));
+await assertFails(getDocs(query(collection(marketHead, 'market_claims'), where('verificationStatus', '==', 'UNVERIFIED'), orderBy('createdAt', 'asc'), limit(25))));
+await assertSucceeds(getDoc(doc(marketHead, 'skpt_applications', 'app-1')));
+await assertFails(getDoc(doc(marketHead, 'skpt_applications', 'app-market-2')));
 await assertSucceeds(getDoc(doc(marketHead, 'market_units', 'unit-1')));
 await assertSucceeds(getDoc(doc(kadis, 'market_claims', 'claim-1')));
 await assertFails(getDoc(doc(marketHead, 'market_units', 'unit-2')));
@@ -187,6 +219,7 @@ await assertSucceeds(getDoc(doc(anonymous, 'trader_media', 'public-photo-token-1
 await assertFails(getDoc(doc(anonymous, 'trader_media', 'private-media-1')));
 await assertFails(getDocs(collection(anonymous, 'trader_media')));
 await assertSucceeds(getDocs(query(collection(kadis, 'trader_media'), where('ownerId','==','private-1'), where('mediaType','==','PROFILE'))));
+await assertSucceeds(getDocs(query(collection(marketHead, 'trader_media'), where('ownerId','==','private-1'), where('mediaType','==','PROFILE'))));
 await assertSucceeds(setDoc(doc(kadis, 'trader_media', 'new-public-photo-token'), { ownerType: 'PUBLIC_DOCUMENT', ownerId: 'new-public-photo-token', mediaType: 'PROFILE_PUBLIC', mime: 'image/webp', width: 600, height: 800, binaryBytes: 3, base64Bytes: 4, dataBase64: 'YWJj', status: 'PUBLIC', schemaVersion: 2, sourceMediaId: 'private-media-1', publishedAt: serverTimestamp() }));
 await assertFails(setDoc(doc(kadis, 'trader_media', 'mismatched-token'), { ownerType: 'PUBLIC_DOCUMENT', ownerId: 'different-token', mediaType: 'PROFILE_PUBLIC', mime: 'image/webp', width: 600, height: 800, binaryBytes: 3, base64Bytes: 4, dataBase64: 'YWJj', status: 'PUBLIC', schemaVersion: 2, sourceMediaId: 'private-media-1', publishedAt: serverTimestamp() }));
 const annualRef = doc(marketHead, 'public_skpt_verification', 'annual-token-1');

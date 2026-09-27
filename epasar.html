@@ -1,18 +1,452 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Pendataan Satu Data Pedagang Kabupaten Pinrang"><title>Pendaftaran Pedagang | e-PASAR</title><link rel="icon" href="favicon.png"><link rel="stylesheet" href="css/epasar.css"><link rel="stylesheet" href="css/form-wizard.css"></head><body class="registration-page">
-<header class="registration-topbar"><a class="registration-brand" href="index.html"><img src="logo_pinrang_opt.png" alt="Lambang Kabupaten Pinrang"><span><b>e-PASAR</b><small>Satu Data Pedagang Kabupaten Pinrang</small></span></a><button id="helpButton" class="help-button" type="button" aria-expanded="false">? <span>Bantuan</span></button></header>
-<aside id="helpPanel" class="help-panel" hidden><div><header><h2>Bantuan Pengisian</h2><button id="closeHelp" type="button" aria-label="Tutup bantuan">×</button></header><details><summary>Siapa yang dapat mendaftar?</summary><p>Pedagang dan pelaku usaha berbasis di Kabupaten Pinrang, baik di pasar maupun di luar pasar.</p></details><details><summary>Bagaimana jika tidak punya unit pasar?</summary><p>Pendataan tetap dapat diselesaikan. Pilih lokasi umum/non-pasar pada bagian lokasi usaha.</p></details><details><summary>Apa itu klaim awal?</summary><p>Nomor tempat yang Anda isi belum menjadi data resmi sampai diperiksa petugas pasar.</p></details><details><summary>Apakah wajib mengajukan e-SKPT?</summary><p>Tidak. Pendataan umum tetap dapat dikirim tanpa pengajuan e-SKPT.</p></details></div></aside>
-<main class="form-shell registration-shell"><header class="page-header"><p class="eyebrow">LAYANAN PENDATAAN PUBLIK</p><h1>Pendataan Pedagang</h1><p class="intro">Isi data identitas, usaha, dan lokasi berdagang. Proses pengisian sekitar 3–5 menit.</p><div id="draftNotice" class="draft-notice" hidden><span><b>Anda memiliki pendataan yang belum selesai.</b><small>Data aman tersimpan sementara di perangkat ini.</small></span><button id="discardDraft" type="button">Mulai Baru</button></div></header>
-<nav class="stepper" aria-label="Tahapan pendaftaran"><ol><li class="is-current" data-step-indicator="1"><span>1</span><b>Identitas</b></li><li data-step-indicator="2"><span>2</span><b>Usaha</b></li><li data-step-indicator="3"><span>3</span><b>Unit Pasar</b></li><li data-step-indicator="4"><span>4</span><b>Dokumen</b></li><li data-step-indicator="5"><span>5</span><b>Periksa</b></li></ol><div class="mobile-progress"><div><span id="stepLabel">Langkah 1 dari 5</span><strong id="mobileStepTitle">Identitas Pedagang</strong><em id="progressPercent">20%</em></div><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div></div></nav>
-<form id="traderForm" novalidate>
-<section class="form-step is-active" data-step="1"><div class="step-heading"><span class="step-icon">01</span><div><h2>Identitas Pedagang</h2><p class="step-help">Masukkan identitas sesuai KTP agar data mudah dicocokkan.</p></div></div><div class="privacy-note"><span>⌾</span><p><b>Data pribadi Anda dilindungi.</b>NIK digunakan untuk mencegah data ganda dan tidak ditampilkan kepada publik.</p></div><label>Nama lengkap sesuai KTP<input name="name" autocomplete="name" maxlength="100" required><small class="field-message">Masukkan nama tanpa gelar jika tidak tercantum pada KTP.</small></label><label>NIK<input name="nik" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="16 digit NIK" required><small class="field-message" data-validation-for="nik">NIK hanya digunakan untuk pencocokan internal.</small></label><label>Nomor WhatsApp/HP<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="08xxxxxxxxxx" required><small class="field-message" data-validation-for="phone">Nomor digunakan untuk informasi proses pendataan.</small></label><details class="more-fields" open><summary>Data alamat dan kelahiran</summary><div class="two-col"><label>Tempat lahir<input name="birthPlace" maxlength="80" required></label><label>Tanggal lahir<input name="birthDate" type="date" required></label></div><div class="two-col"><label>Kecamatan<input name="district" maxlength="60" required></label><label>Desa/Kelurahan<input name="village" maxlength="80" required></label></div><label>Alamat singkat<textarea name="address" maxlength="300" required></textarea></label></details></section>
-<section class="form-step" data-step="2"><div class="step-heading"><span class="step-icon">02</span><div><h2>Data Usaha</h2><p class="step-help">Catat setiap usaha secara terpisah. Anda dapat menambahkan maksimal lima usaha.</p></div></div><div id="businessList" class="entity-list"></div><button id="addBusiness" class="button add-entity" type="button">+ Tambah Usaha</button></section>
-<section class="form-step" data-step="3"><div class="step-heading"><span class="step-icon">03</span><div><h2>Lokasi & Unit Pasar</h2><p class="step-help">Satu usaha dapat memiliki beberapa lokasi dan beberapa tempat di pasar yang sama atau berbeda.</p></div></div><div id="locationWorkspace" class="entity-list"></div></section>
-<section class="form-step" data-step="4"><div class="step-heading"><span class="step-icon">04</span><div><h2>Dokumen & e-SKPT</h2><p class="step-help">Pilih tempat yang akan diajukan. Setiap tempat menghasilkan satu permohonan e-SKPT.</p></div></div><section class="document-group"><div class="group-title"><div><h3>Pengajuan e-SKPT</h3><p>Anda tetap dapat menyelesaikan pendataan tanpa mengajukan e-SKPT.</p></div><span class="tag optional-tag">PILIHAN</span></div><div id="skptPlaceChoices" class="entity-list"></div></section>
-<section class="document-group"><div class="group-title"><div><h3>Foto Pendukung</h3><p>Foto diperkecil dan dikompres otomatis di perangkat Anda.</p></div></div><div class="upload-grid"><label class="upload-box"><span class="upload-icon">◎</span><b>Foto penjual/selfie</b><small>Wajib hanya jika mengajukan e-SKPT</small><input id="profilePhoto" name="profilePhoto" type="file" accept="image/*" capture="user"><span class="upload-action">Ambil Foto atau Pilih Galeri</span><span id="profilePhotoStatus" class="media-status"></span><span class="preview-wrap"><img id="profilePhotoPreview" class="photo-preview" alt="Pratinjau foto" hidden></span></label><label class="upload-box"><span class="upload-icon">▧</span><b>Foto dagangan</b><span class="tag optional-tag">OPSIONAL</span><input id="businessPhoto" name="businessPhoto" type="file" accept="image/*" capture="environment"><span class="upload-action">Ambil Foto atau Pilih Galeri</span><span id="businessPhotoStatus" class="media-status"></span><span class="preview-wrap"><img id="businessPhotoPreview" class="photo-preview" alt="Pratinjau dagangan" hidden></span></label></div></section>
-<div id="skptOnlyAttachments" hidden><section class="document-group restricted"><div class="group-title"><div><h3>Data Khusus e-SKPT</h3><p>Bagian ini hanya muncul karena Anda memilih pengajuan e-SKPT.</p></div><span class="tag required-tag">WAJIB</span></div><label>Foto/pindai KTP<input id="identityKtpPhoto" name="identityKtpPhoto" type="file" accept="image/*" capture="environment"><small>Dokumen memiliki akses terbatas dan tidak ditampilkan kepada publik.</small><span id="identityKtpPhotoStatus" class="media-status"></span></label><label>Foto KK <span class="tag optional-tag">OPSIONAL</span><input id="identityKkPhoto" name="identityKkPhoto" type="file" accept="image/*" capture="environment"><span id="identityKkPhotoStatus" class="media-status"></span></label><div id="skptRequirements"><div class="two-col"><label>Agama<select name="religion"><option value="">Pilih</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Khonghucu</option><option>Kepercayaan terhadap Tuhan YME</option></select></label><label>Kewarganegaraan<input name="citizenship" maxlength="60" value="Indonesia"></label></div><div class="requirements-box"><strong>Persyaratan e-SKPT</strong><ul><li>Identitas dan kondisi tempat dapat diperiksa petugas.</li><li>e-SKPT berlaku dua tahun dan bukan bukti kepemilikan.</li><li>Setiap tempat diproses sebagai permohonan terpisah.</li></ul></div><label class="check"><input name="skptAck" type="checkbox"><span>Saya telah membaca dan menyetujui persyaratan pengajuan e-SKPT.</span></label></div></section></div>
-<div class="acknowledgements"><label class="check"><input name="truthAck" type="checkbox" required><span>Saya menyatakan data yang saya isi benar dan dapat dipertanggungjawabkan.</span></label><label class="check"><input name="verificationAck" type="checkbox" required><span>Saya memahami data tempat pasar merupakan klaim awal dan akan diperiksa petugas.</span></label></div></section>
-<section class="form-step" data-step="5"><div class="step-heading"><span class="step-icon">05</span><div><h2>Periksa Data</h2><p class="step-help">Pastikan seluruh informasi sudah benar sebelum dikirim.</p></div></div><div id="review" class="review-list"></div><div class="notice info-notice">Setelah dikirim, perubahan tidak langsung menimpa data. Gunakan fasilitas Ajukan Koreksi Data agar setiap perubahan tercatat.</div></section>
-<div id="formError" class="form-error" role="alert" aria-live="assertive" hidden></div><div class="form-actions"><button id="backButton" class="button secondary" type="button" hidden>Kembali</button><span class="autosave-state">✓ Draft tersimpan</span><button id="nextButton" class="button primary" type="button">Lanjut</button></div></form>
-<section id="successPanel" class="success-panel" hidden><div class="success-check">✓</div><p class="eyebrow">PENDATAAN SELESAI</p><h2>Pendataan Berhasil</h2><p>Data Anda telah diterima dan akan diperiksa oleh petugas.</p><div class="credential-card"><small>Nomor Registrasi</small><strong id="registrationCode"></strong><button type="button" data-copy="registrationCode">Salin nomor</button></div><div class="credential-card private"><small>Token Pribadi</small><strong id="privateToken" class="is-masked"></strong><div><button id="toggleToken" type="button">Tampilkan</button><button type="button" data-copy="privateToken">Salin token</button></div></div><p class="token-warning">Simpan nomor registrasi dan token ini. Jangan membagikan token kepada orang lain.</p><div class="success-actions"><a id="statusLink" class="button primary" href="epasar-status.html">Cek Status</a><a class="button secondary" href="index.html">Kembali ke Beranda</a></div></section>
-</main>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/constants.js"></script><script src="js/epasar/validators.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/image-compress.js"></script><script src="js/epasar/media-service.js"></script><script src="js/epasar/multi-entity-form.js"></script><script src="js/epasar/intake-service.js"></script><script src="js/epasar/correction-service.js"></script><script src="js/epasar/media-ui.js"></script><script src="js/epasar/trader-form.js"></script></body></html>
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Pendataan Satu Data Pedagang Kabupaten Pinrang"
+    />
+    <title>Pendaftaran Pedagang | e-PASAR</title>
+    <link rel="icon" href="favicon.png" />
+    <link rel="stylesheet" href="css/epasar.css" />
+    <link rel="stylesheet" href="css/form-wizard.css" />
+  </head>
+  <body class="registration-page">
+    <header class="registration-topbar">
+      <a class="registration-brand" href="index.html"
+        ><img src="logo_pinrang_opt.png" alt="Lambang Kabupaten Pinrang" /><span
+          ><b>e-PASAR</b
+          ><small>Satu Data Pedagang Kabupaten Pinrang</small></span
+        ></a
+      ><button
+        id="helpButton"
+        class="help-button"
+        type="button"
+        aria-expanded="false"
+      >
+        ? <span>Bantuan</span>
+      </button>
+    </header>
+    <aside id="helpPanel" class="help-panel" hidden>
+      <div>
+        <header>
+          <h2>Bantuan Pengisian</h2>
+          <button id="closeHelp" type="button" aria-label="Tutup bantuan">
+            ×
+          </button>
+        </header>
+        <details>
+          <summary>Siapa yang dapat mendaftar?</summary>
+          <p>
+            Pedagang dan pelaku usaha berbasis di Kabupaten Pinrang, baik di
+            pasar maupun di luar pasar.
+          </p>
+        </details>
+        <details>
+          <summary>Bagaimana jika tidak punya unit pasar?</summary>
+          <p>
+            Pendataan tetap dapat diselesaikan. Pilih lokasi umum/non-pasar pada
+            bagian lokasi usaha.
+          </p>
+        </details>
+        <details>
+          <summary>Apa itu klaim awal?</summary>
+          <p>
+            Nomor tempat yang Anda isi belum menjadi data resmi sampai diperiksa
+            petugas pasar.
+          </p>
+        </details>
+        <details>
+          <summary>Apakah wajib mengajukan e-SKPT?</summary>
+          <p>
+            Tidak. Pendataan umum tetap dapat dikirim tanpa pengajuan e-SKPT.
+          </p>
+        </details>
+      </div>
+    </aside>
+    <main class="form-shell registration-shell">
+      <header class="page-header">
+        <p class="eyebrow">LAYANAN PENDATAAN PUBLIK</p>
+        <h1>Pendataan Pedagang</h1>
+        <p class="intro">
+          Isi data identitas, usaha, dan lokasi berdagang. Proses pengisian
+          sekitar 3–5 menit.
+        </p>
+        <div id="draftNotice" class="draft-notice" hidden>
+          <span
+            ><b>Anda memiliki pendataan yang belum selesai.</b
+            ><small
+              >Data aman tersimpan sementara di perangkat ini.</small
+            ></span
+          ><button id="discardDraft" type="button">Mulai Baru</button>
+        </div>
+      </header>
+      <nav class="stepper" aria-label="Tahapan pendaftaran">
+        <ol>
+          <li class="is-current" data-step-indicator="1">
+            <span>1</span><b>Identitas</b>
+          </li>
+          <li data-step-indicator="2"><span>2</span><b>Usaha</b></li>
+          <li data-step-indicator="3"><span>3</span><b>Unit Pasar</b></li>
+          <li data-step-indicator="4"><span>4</span><b>Dokumen</b></li>
+          <li data-step-indicator="5"><span>5</span><b>Periksa</b></li>
+        </ol>
+        <div class="mobile-progress">
+          <div>
+            <span id="stepLabel">Langkah 1 dari 5</span
+            ><strong id="mobileStepTitle">Identitas Pedagang</strong
+            ><em id="progressPercent">20%</em>
+          </div>
+          <div class="progress-track">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+      </nav>
+      <form id="traderForm" novalidate>
+        <section class="form-step is-active" data-step="1">
+          <div class="step-heading">
+            <span class="step-icon">01</span>
+            <div>
+              <h2>Identitas Pedagang</h2>
+              <p class="step-help">
+                Masukkan identitas sesuai KTP agar data mudah dicocokkan.
+              </p>
+            </div>
+          </div>
+          <div class="privacy-note">
+            <span>⌾</span>
+            <p>
+              <b>Data pribadi Anda dilindungi.</b>NIK digunakan untuk mencegah
+              data ganda dan tidak ditampilkan kepada publik.
+            </p>
+          </div>
+          <label
+            >Nama lengkap sesuai KTP<input
+              name="name"
+              autocomplete="name"
+              maxlength="100"
+              required
+            /><small class="field-message"
+              >Masukkan nama tanpa gelar jika tidak tercantum pada KTP.</small
+            ></label
+          ><label
+            >NIK<input
+              name="nik"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="16"
+              placeholder="16 digit NIK"
+              required
+            /><small class="field-message" data-validation-for="nik"
+              >NIK hanya digunakan untuk pencocokan internal.</small
+            ></label
+          ><label
+            >Nomor WhatsApp/HP<input
+              name="phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              maxlength="20"
+              placeholder="08xxxxxxxxxx"
+              required
+            /><small class="field-message" data-validation-for="phone"
+              >Nomor digunakan untuk informasi proses pendataan.</small
+            ></label
+          >
+          <details class="more-fields" open>
+            <summary>Data alamat dan kelahiran</summary>
+            <div class="two-col">
+              <label
+                >Tempat lahir<input
+                  name="birthPlace"
+                  maxlength="80"
+                  required /></label
+              ><label
+                >Tanggal lahir<input name="birthDate" type="date" required
+              /></label>
+            </div>
+            <div class="two-col">
+              <label>Kecamatan<select id="identityDistrict" name="district" required><option value="">Pilih kecamatan</option></select></label>
+              <label>Desa/Kelurahan<select id="identityVillage" name="village" required disabled><option value="">Pilih kecamatan terlebih dahulu</option></select></label>
+            </div>
+            <label
+              >Alamat singkat<textarea
+                name="address"
+                maxlength="300"
+                required
+              ></textarea>
+            </label>
+          </details>
+        </section>
+        <section class="form-step" data-step="2">
+          <div class="step-heading">
+            <span class="step-icon">02</span>
+            <div>
+              <h2>Data Usaha</h2>
+              <p class="step-help">
+                Catat setiap usaha secara terpisah. Anda dapat menambahkan
+                maksimal lima usaha.
+              </p>
+            </div>
+          </div>
+          <div id="businessList" class="entity-list"></div>
+          <button id="addBusiness" class="button add-entity" type="button">
+            + Tambah Usaha
+          </button>
+        </section>
+        <section class="form-step" data-step="3">
+          <div class="step-heading">
+            <span class="step-icon">03</span>
+            <div>
+              <h2>Lokasi & Unit Pasar</h2>
+              <p class="step-help">
+                Satu usaha dapat memiliki beberapa lokasi dan beberapa tempat di
+                pasar yang sama atau berbeda.
+              </p>
+            </div>
+          </div>
+          <div id="locationWorkspace" class="entity-list"></div>
+        </section>
+        <section class="form-step" data-step="4">
+          <div class="step-heading">
+            <span class="step-icon">04</span>
+            <div>
+              <h2>Dokumen & e-SKPT</h2>
+              <p class="step-help">
+                Pilih tempat yang akan diajukan. Setiap tempat menghasilkan satu
+                permohonan e-SKPT.
+              </p>
+            </div>
+          </div>
+          <section class="document-group">
+            <div class="group-title">
+              <div>
+                <h3>Pengajuan e-SKPT</h3>
+                <p>
+                  Anda tetap dapat menyelesaikan pendataan tanpa mengajukan
+                  e-SKPT.
+                </p>
+              </div>
+              <span class="tag optional-tag">PILIHAN</span>
+            </div>
+            <div id="skptPlaceChoices" class="entity-list"></div>
+          </section>
+          <section class="document-group">
+            <div class="group-title">
+              <div>
+                <h3>Foto Pendukung</h3>
+                <p>Foto diperkecil dan dikompres otomatis di perangkat Anda.</p>
+              </div>
+            </div>
+            <div class="upload-grid">
+              <label class="upload-box"
+                ><span class="upload-icon">◎</span><b>Foto penjual/selfie</b
+                ><small>Wajib hanya jika mengajukan e-SKPT</small
+                ><input
+                  id="profilePhoto"
+                  name="profilePhoto"
+                  type="file"
+                  accept="image/*"
+                  capture="user" /><span class="upload-action"
+                  >Ambil Foto atau Pilih Galeri</span
+                ><span id="profilePhotoStatus" class="media-status"></span
+                ><span class="preview-wrap"
+                  ><img
+                    id="profilePhotoPreview"
+                    class="photo-preview"
+                    alt="Pratinjau foto"
+                    hidden /></span></label
+              ><label class="upload-box"
+                ><span class="upload-icon">▧</span><b>Foto dagangan</b
+                ><span class="tag optional-tag">OPSIONAL</span
+                ><input
+                  id="businessPhoto"
+                  name="businessPhoto"
+                  type="file"
+                  accept="image/*"
+                  capture="environment" /><span class="upload-action"
+                  >Ambil Foto atau Pilih Galeri</span
+                ><span id="businessPhotoStatus" class="media-status"></span
+                ><span class="preview-wrap"
+                  ><img
+                    id="businessPhotoPreview"
+                    class="photo-preview"
+                    alt="Pratinjau dagangan"
+                    hidden /></span
+              ></label>
+            </div>
+          </section>
+          <div id="skptOnlyAttachments" hidden>
+            <section class="document-group restricted">
+              <div class="group-title">
+                <div>
+                  <h3>Data Khusus e-SKPT</h3>
+                  <p>
+                    Bagian ini hanya muncul karena Anda memilih pengajuan
+                    e-SKPT.
+                  </p>
+                </div>
+                <span class="tag required-tag">WAJIB</span>
+              </div>
+              <label
+                >Foto/pindai KTP<input
+                  id="identityKtpPhoto"
+                  name="identityKtpPhoto"
+                  type="file"
+                  accept="image/*"
+                  capture="environment" /><small
+                  >Dokumen memiliki akses terbatas dan tidak ditampilkan kepada
+                  publik.</small
+                ><span
+                  id="identityKtpPhotoStatus"
+                  class="media-status"
+                ></span></label
+              ><label
+                >Foto KK <span class="tag optional-tag">OPSIONAL</span
+                ><input
+                  id="identityKkPhoto"
+                  name="identityKkPhoto"
+                  type="file"
+                  accept="image/*"
+                  capture="environment" /><span
+                  id="identityKkPhotoStatus"
+                  class="media-status"
+                ></span
+              ></label>
+              <div id="skptRequirements">
+                <div class="two-col">
+                  <label
+                    >Agama<select name="religion">
+                      <option value="">Pilih</option>
+                      <option>Islam</option>
+                      <option>Kristen</option>
+                      <option>Katolik</option>
+                      <option>Hindu</option>
+                      <option>Buddha</option>
+                      <option>Khonghucu</option>
+                      <option>Kepercayaan terhadap Tuhan YME</option>
+                    </select></label
+                  ><label
+                    >Kewarganegaraan<input
+                      name="citizenship"
+                      maxlength="60"
+                      value="Indonesia"
+                  /></label>
+                </div>
+                <div class="requirements-box">
+                  <strong>Persyaratan e-SKPT</strong>
+                  <ul>
+                    <li>
+                      Identitas dan kondisi tempat dapat diperiksa petugas.
+                    </li>
+                    <li>
+                      e-SKPT berlaku dua tahun dan bukan bukti kepemilikan.
+                    </li>
+                    <li>Setiap tempat diproses sebagai permohonan terpisah.</li>
+                  </ul>
+                </div>
+                <label class="check"
+                  ><input name="skptAck" type="checkbox" /><span
+                    >Saya telah membaca dan menyetujui persyaratan pengajuan
+                    e-SKPT.</span
+                  ></label
+                >
+              </div>
+            </section>
+          </div>
+          <div class="acknowledgements">
+            <label class="check"
+              ><input name="truthAck" type="checkbox" required /><span
+                >Saya menyatakan data yang saya isi benar dan dapat
+                dipertanggungjawabkan.</span
+              ></label
+            ><label class="check"
+              ><input name="verificationAck" type="checkbox" required /><span
+                >Saya memahami data tempat pasar merupakan klaim awal dan akan
+                diperiksa petugas.</span
+              ></label
+            >
+          </div>
+        </section>
+        <section class="form-step" data-step="5">
+          <div class="step-heading">
+            <span class="step-icon">05</span>
+            <div>
+              <h2>Periksa Data</h2>
+              <p class="step-help">
+                Pastikan seluruh informasi sudah benar sebelum dikirim.
+              </p>
+            </div>
+          </div>
+          <div id="review" class="review-list"></div>
+          <div class="notice info-notice">
+            Setelah dikirim, perubahan tidak langsung menimpa data. Gunakan
+            fasilitas Ajukan Koreksi Data agar setiap perubahan tercatat.
+          </div>
+        </section>
+        <div
+          id="formError"
+          class="form-error"
+          role="alert"
+          aria-live="assertive"
+          hidden
+        ></div>
+        <div class="form-actions">
+          <button id="backButton" class="button secondary" type="button" hidden>
+            Kembali</button
+          ><span class="autosave-state">✓ Draft tersimpan</span
+          ><button id="nextButton" class="button primary" type="button">
+            Lanjut
+          </button>
+        </div>
+      </form>
+      <section id="successPanel" class="success-panel" hidden>
+        <div class="success-check">✓</div>
+        <p class="eyebrow">PENDATAAN SELESAI</p>
+        <h2>Pendataan Berhasil</h2>
+        <p>Data Anda telah diterima dan akan diperiksa oleh petugas.</p>
+        <div class="credential-card">
+          <small>Nomor Registrasi</small><strong id="registrationCode"></strong
+          ><button type="button" data-copy="registrationCode">
+            Salin nomor
+          </button>
+        </div>
+        <div class="credential-card private">
+          <small>Token Pribadi</small
+          ><strong id="privateToken" class="is-masked"></strong>
+          <div>
+            <button id="toggleToken" type="button">Tampilkan</button
+            ><button type="button" data-copy="privateToken">Salin token</button>
+          </div>
+        </div>
+        <p class="token-warning">
+          Simpan nomor registrasi dan token ini. Jangan membagikan token kepada
+          orang lain.
+        </p>
+        <div class="success-actions">
+          <a id="statusLink" class="button primary" href="epasar-status.html"
+            >Cek Status</a
+          ><a class="button secondary" href="index.html">Kembali ke Beranda</a>
+        </div>
+      </section>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/epasar/firebase-config.local.js"></script>
+    <script src="js/epasar/constants.js"></script>
+    <script src="js/epasar/validators.js"></script>
+    <script src="js/epasar/config.js"></script>
+    <script src="js/epasar/image-compress.js"></script>
+    <script src="js/epasar/media-service.js"></script>
+    <script src="js/epasar/multi-entity-form.js"></script>
+    <script src="js/epasar/intake-service.js"></script>
+    <script src="js/epasar/correction-service.js"></script>
+    <script src="js/epasar/media-ui.js"></script>
+    <script src="js/epasar/trader-form.js"></script>
+  </body>
+</html>
