@@ -380,8 +380,14 @@
       signNipEl.textContent = 'NIP. ' + (currentProfile?.nip || '19820514 200801 1 012');
     } else {
       signRoleEl.textContent = 'Kepala Dinas Perindustrian, Perdagangan, ESDM\nKabupaten Pinrang';
-      signNameEl.textContent = 'H. HARTONO MEKKA, S.E., M.Si.';
-      signNipEl.textContent = 'NIP. 19681231 199403 1 025';
+      const kadisName = (currentProfile?.role === 'KADIS' && currentProfile?.displayName && currentProfile.displayName !== 'Kepala Dinas')
+        ? currentProfile.displayName
+        : 'MUHAMMAD YUSUF NUR, S.STP';
+      const kadisNip = (currentProfile?.role === 'KADIS' && currentProfile?.nip)
+        ? currentProfile.nip
+        : '19800326 200003 1 001';
+      signNameEl.textContent = kadisName;
+      signNipEl.textContent = 'NIP. ' + kadisNip;
     }
 
     window.print();
