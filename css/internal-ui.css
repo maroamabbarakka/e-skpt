@@ -429,16 +429,55 @@
 }
 
 .db-badge {
-  display: inline-block !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
   padding: 3px 8px !important;
-  border-radius: 99px !important;
+  border-radius: 6px !important;
+  font-size: 0.67rem !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+}
+.db-badge-success { background: #ebf7e2 !important; color: #2e6d0a !important; border: 1px solid #c8e8af !important; }
+.db-badge-warning { background: #fff8db !important; color: #854d0e !important; border: 1px solid #fae4ad !important; }
+.db-badge-danger { background: #fde8e8 !important; color: #9b1c1c !important; border: 1px solid #f6c8c4 !important; }
+.db-badge-info { background: #eaf4ff !important; color: #0861be !important; border: 1px solid #c2defc !important; }
+.db-badge-neutral { background: #edf2f7 !important; color: #475569 !important; border: 1px solid #dbe3ed !important; }
+
+.db-code-badge {
+  display: inline-block !important;
+  font-family: monospace !important;
+  font-size: 0.65rem !important;
+  font-weight: 750 !important;
+  color: #166534 !important;
+  background: #dcfce7 !important;
+  border: 1px solid #bbf7d0 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+}
+
+.db-sched-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
   font-size: 0.68rem !important;
   font-weight: 700 !important;
+  white-space: nowrap !important;
 }
-.db-badge-success { background: #e9f7dc !important; color: #2e6d0a !important; }
-.db-badge-warning { background: #fff8db !important; color: #854d0e !important; }
-.db-badge-danger { background: #fde8e8 !important; color: #9b1c1c !important; }
-.db-badge-neutral { background: #edf2f7 !important; color: #475569 !important; }
+.db-sched-pill.is-daily {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #bfdbfe !important;
+}
+.db-sched-pill.is-custom {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0 !important;
+}
 
 .db-btn-whatsapp {
   background: #25d366 !important;

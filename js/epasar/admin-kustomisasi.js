@@ -244,29 +244,30 @@
       tr.innerHTML = `
         <td style="text-align:center; font-weight:700; color:#64748b;">${idx + 1}</td>
         <td>
-          <span style="font-family:monospace; font-weight:800; color:#0369a1; background:#e0f2fe; padding:2px 7px; border-radius:6px; font-size:0.75rem;">${m.id}</span>
+          <span style="font-family:monospace; font-weight:800; color:#0369a1; background:#e0f2fe; padding:3px 8px; border-radius:6px; font-size:0.75rem; border:1px solid #bae6fd;">${m.id}</span>
         </td>
         <td>
-          <b style="font-size:0.85rem; color:#1e293b;">${escapeHtml(m.name)}</b>
+          <b style="font-size:0.86rem; color:#0f172a;">${escapeHtml(m.name)}</b>
         </td>
         <td>
-          <div class="market-type-toggle">
-            <label>
-              <input type="radio" name="mkt_type_${m.id}" value="daily" ${isDaily ? 'checked' : ''} class="radio-mkt-type">
-              Pasar Harian (Setiap Hari)
+          <div class="sched-pill-group">
+            <label class="sched-pill ${isDaily ? 'active' : ''}">
+              <input type="radio" name="mkt_type_${m.id}" value="daily" ${isDaily ? 'checked' : ''} class="radio-mkt-type visually-hidden-input">
+              <span>☀️ Pasar Harian (7 Hari)</span>
             </label>
-            <label style="margin-left: 12px;">
-              <input type="radio" name="mkt_type_${m.id}" value="custom" ${!isDaily ? 'checked' : ''} class="radio-mkt-type">
-              Hari Tertentu (Checklist)
+            <label class="sched-pill ${!isDaily ? 'active' : ''}">
+              <input type="radio" name="mkt_type_${m.id}" value="custom" ${!isDaily ? 'checked' : ''} class="radio-mkt-type visually-hidden-input">
+              <span>📅 Hari Tertentu (Checklist)</span>
             </label>
           </div>
-          <div class="market-days-grid" style="${isDaily ? 'display:none;' : 'display:flex;'}">
+          <div class="sched-days-wrap" style="${isDaily ? 'display:none;' : 'display:grid;'}">
             ${DAYS_LIST.map(d => {
               const isChecked = activeDays.includes(d);
               return `
-                <label class="day-chip-label">
-                  <input type="checkbox" value="${d}" class="chk-day" ${isChecked ? 'checked' : ''}>
-                  ${DAY_LABELS[d]}
+                <label class="day-chip-btn ${isChecked ? 'selected' : ''}">
+                  <input type="checkbox" value="${d}" class="chk-day visually-hidden-input" ${isChecked ? 'checked' : ''}>
+                  <span class="day-chip-check">${isChecked ? '✓' : ''}</span>
+                  <span class="day-chip-name">${DAY_LABELS[d]}</span>
                 </label>
               `;
             }).join('')}
@@ -274,20 +275,33 @@
         </td>
         <td>
           <span class="schedule-badge ${isDaily ? 'is-daily' : ''}">
-            🗓️ ${formatScheduleSummary(isDaily, activeDays)}
+            ${isDaily ? '☀️' : '📅'} ${formatScheduleSummary(isDaily, activeDays)}
           </span>
         </td>
       `;
 
-      // Event listener radio tipe pasar
+      // Event listener segmented control & chip checklist
       const radios = tr.querySelectorAll('.radio-mkt-type');
-      const daysGrid = tr.querySelector('.market-days-grid');
+      const daysGrid = tr.querySelector('.sched-days-wrap');
       const badge = tr.querySelector('.schedule-badge');
 
       const updateRowBadge = () => {
         const currentDaily = tr.querySelector(`input[name="mkt_type_${m.id}"]:checked`)?.value === 'daily';
-        daysGrid.style.display = currentDaily ? 'none' : 'flex';
-        
+
+        tr.querySelectorAll('.sched-pill').forEach(pill => {
+          const radio = pill.querySelector('input[type="radio"]');
+          pill.classList.toggle('active', radio.checked);
+        });
+
+        daysGrid.style.display = currentDaily ? 'none' : 'grid';
+
+        tr.querySelectorAll('.day-chip-btn').forEach(chip => {
+          const chk = chip.querySelector('input[type="checkbox"]');
+          chip.classList.toggle('selected', chk.checked);
+          const icon = chip.querySelector('.day-chip-check');
+          if (icon) icon.textContent = chk.checked ? '✓' : '';
+        });
+
         let currentDays = [];
         if (currentDaily) {
           currentDays = [...DAYS_LIST];
@@ -295,8 +309,9 @@
           tr.querySelectorAll('.chk-day:checked').forEach(c => currentDays.push(c.value));
         }
 
-        badge.className = `schedule-badge ${currentDaily ? 'is-daily' : ''}`;
-        badge.textContent = `🗓️ ${formatScheduleSummary(currentDaily, currentDays)}`;
+        const isEmpty = !currentDaily && currentDays.length === 0;
+        badge.className = `schedule-badge ${currentDaily ? 'is-daily' : ''} ${isEmpty ? 'is-empty' : ''}`;
+        badge.textContent = `${currentDaily ? '☀️' : '📅'} ${formatScheduleSummary(currentDaily, currentDays)}`;
       };
 
       radios.forEach(r => r.addEventListener('change', updateRowBadge));

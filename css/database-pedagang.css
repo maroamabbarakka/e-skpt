@@ -239,28 +239,28 @@
 
 .db-table {
   width: 100%;
-  min-width: 1100px;
+  min-width: 1060px;
   border-collapse: collapse;
   text-align: left;
 }
 
 .db-table th {
-  padding: 12px 14px;
-  background: #f0f5fa;
-  color: #254668;
-  font-size: 0.67rem;
+  padding: 11px 12px;
+  background: #f1f5fa;
+  color: #1e3a5f;
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid #dbe6f2;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #cbd5e1;
   white-space: nowrap;
 }
 
 .db-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #e9f0f6;
-  color: #203a58;
-  font-size: 0.75rem;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 0.74rem;
   vertical-align: middle;
 }
 
@@ -268,21 +268,257 @@
   background: #f6fafe;
 }
 
-.db-trader-meta {
+/* Komponen Sel Tabel Modern & Profesional */
+.db-cell-no {
+  font-weight: 750;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-family: monospace;
+}
+
+.db-trader-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-trader-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+.db-trader-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.db-trader-name {
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.db-trader-chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.db-chip-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.chip-lbl {
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.db-biz-cell {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.db-trader-meta strong {
-  color: var(--app-navy);
+.db-biz-title {
+  color: #1e293b;
   font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
-.db-trader-meta small {
-  color: var(--app-muted);
-  font-size: 0.66rem;
+.db-biz-category {
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.db-market-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.db-market-name {
+  color: #0f172a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.db-market-code {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
   font-family: monospace;
+  font-size: 0.63rem;
+  font-weight: 750;
+}
+
+.db-unit-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.db-unit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  font-family: monospace;
+  font-weight: 750;
+  font-size: 0.72rem;
+  color: #0f172a;
+}
+
+.db-unit-badge .unit-type {
+  color: #0284c7;
+  font-weight: 800;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+.db-unit-badge .unit-num {
+  color: #0f172a;
+}
+
+.db-unit-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  font-size: 0.67rem;
+}
+
+.db-unit-meta .meta-dot {
+  color: #cbd5e1;
+}
+
+.db-skpt-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.db-code-badge {
+  display: inline-block;
+  font-family: monospace;
+  font-size: 0.65rem;
+  font-weight: 750;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.db-sub-hint {
+  font-size: 0.64rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.db-sched-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.db-sched-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.db-sched-pill.is-daily {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.db-sched-pill.is-custom {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.db-sched-days {
+  font-size: 0.64rem;
+  color: #64748b;
+  font-weight: 600;
+  padding-left: 2px;
+}
+
+.db-btn-rincian {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #ffffff;
+  color: #094eb8;
+  border: 1px solid #bfdbfe;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(9, 78, 184, 0.08);
+  white-space: nowrap;
+}
+
+.db-btn-rincian:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #073b8c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(9, 78, 184, 0.15);
+}
+
+.db-btn-rincian:active {
+  transform: translateY(0);
 }
 
 .db-badge {
@@ -293,6 +529,7 @@
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .db-badge-success { background: #ebf7e2; color: #3f7b06; border: 1px solid #c8e8af; }
@@ -380,25 +617,30 @@
   position: relative;
   overflow: hidden;
 }
+.db-kpi-card small {
+  padding-right: 28px;
+}
 .db-kpi-card::after {
-  content: "Klik rincian 🔍";
+  content: "Lihat ↗";
   position: absolute;
-  top: 8px;
+  top: 10px;
   right: 10px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: #1978d2;
-  background: rgba(25, 120, 210, 0.08);
-  padding: 2px 7px;
-  border-radius: 99px;
+  font-size: 0.58rem;
+  font-weight: 750;
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  padding: 1px 6px;
+  border-radius: 4px;
   opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .db-kpi-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(10, 50, 100, 0.12);
-  border-color: #79aee4;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(10, 50, 100, 0.1);
+  border-color: #93c5fd;
 }
 .db-kpi-card:hover::after {
   opacity: 1;

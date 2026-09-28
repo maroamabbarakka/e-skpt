@@ -349,43 +349,106 @@
 
     tbody.innerHTML = pageRows.map((row, index) => {
       const no = start + index + 1;
-      let statusBadge = '<span class="db-badge db-badge-neutral">Belum diverifikasi</span>';
+      
+      // Status Verifikasi Fisik
+      let statusBadge = '<span class="db-badge db-badge-neutral">○ Belum Cek</span>';
       if (row.verificationStatus === 'VERIFIED') statusBadge = '<span class="db-badge db-badge-success">✓ Terverifikasi</span>';
-      else if (row.verificationStatus === 'CONFLICT') statusBadge = '<span class="db-badge db-badge-danger">⚠ Konflik Lapangan</span>';
+      else if (row.verificationStatus === 'CONFLICT') statusBadge = '<span class="db-badge db-badge-danger">⚠ Konflik</span>';
 
+      // Status e-SKPT & Nomor SKPT Resmi
       let skptBadge = '<span class="db-badge db-badge-neutral">Tanpa SKPT</span>';
-      if (row.hasSkpt) skptBadge = `<span class="db-badge db-badge-success">SKPT Aktif<br><small>${esc(row.skptNumber)}</small></span>`;
-      else if (row.skptStatus === 'KADIS_REVIEW' || row.skptStatus === 'TTE_PENDING') skptBadge = '<span class="db-badge db-badge-info">Proses Kadis</span>';
-      else if (row.skptStatus === 'MARKET_VERIFICATION') skptBadge = '<span class="db-badge db-badge-warning">Verifikasi Pasar</span>';
-      else if (row.skptStatus === 'REJECTED') skptBadge = '<span class="db-badge db-badge-danger">Ditolak</span>';
+      let skptDetail = '';
+      if (row.hasSkpt) {
+        skptBadge = '<span class="db-badge db-badge-success">✓ SKPT Terbit</span>';
+        skptDetail = `<span class="db-code-badge" title="Nomor SKPT">${esc(row.skptNumber)}</span>`;
+      } else if (row.skptStatus === 'KADIS_REVIEW' || row.skptStatus === 'TTE_PENDING') {
+        skptBadge = '<span class="db-badge db-badge-info">⏳ Proses Kadis</span>';
+        skptDetail = '<span class="db-sub-hint">Siap TTE</span>';
+      } else if (row.skptStatus === 'MARKET_VERIFICATION') {
+        skptBadge = '<span class="db-badge db-badge-warning">🔍 Verifikasi Pasar</span>';
+        skptDetail = '<span class="db-sub-hint">Cek Lapangan</span>';
+      } else if (row.skptStatus === 'REJECTED') {
+        skptBadge = '<span class="db-badge db-badge-danger">✕ Ditolak</span>';
+      }
 
-      const unitInfo = row.marketId === 'NON_MARKET' ? '—' : `${esc(row.unitType)} ${esc(row.unitNumber)}<br><small>Blok ${esc(row.block)} · Lt. ${esc(row.floor)} · ${row.areaM2} m²</small>`;
-      const scheduleInfo = row.marketId === 'NON_MARKET'
-        ? '<span class="db-badge db-badge-neutral" style="font-size:0.68rem;">Mandiri</span>'
-        : `<span class="db-badge db-badge-info" style="font-size:0.68rem; padding:3px 8px; white-space:nowrap;">🗓️ ${esc(row.operatingSchedule)}</span><br><small style="color:#64748b; font-size:0.68rem;">Intensitas Hari Aktif</small>`;
+      // Unit Penempatan
+      const unitInfo = row.marketId === 'NON_MARKET'
+        ? '<span class="db-badge db-badge-neutral">Non-Pasar</span>'
+        : `<div class="db-unit-cell">
+             <div class="db-unit-badge">
+               <span class="unit-type">${esc(row.unitType)}</span>
+               <span class="unit-num">${esc(row.unitNumber)}</span>
+             </div>
+             <div class="db-unit-meta">
+               <span>Blok ${esc(row.block)}</span>
+               <span class="meta-dot">·</span>
+               <span>Lt. ${esc(row.floor)}</span>
+               <span class="meta-dot">·</span>
+               <span>${row.areaM2} m²</span>
+             </div>
+           </div>`;
+
+      // Jadwal Operasional (Harian / Tertentu)
+      let scheduleInfo = '<span class="db-badge db-badge-neutral">Mandiri</span>';
+      if (row.marketId !== 'NON_MARKET') {
+        const rawSched = String(row.operatingSchedule || '').trim();
+        const isDaily = rawSched.toLowerCase().includes('harian') || rawSched.toLowerCase().includes('setiap');
+        if (isDaily) {
+          scheduleInfo = `<div class="db-sched-cell">
+            <span class="db-sched-pill is-daily">☀️ Harian</span>
+            <span class="db-sched-days">7 Hari / Minggu</span>
+          </div>`;
+        } else {
+          // Bersihkan teks "Pasar Mingguan (...)" agar ringkas
+          let cleanSched = rawSched.replace(/^pasar mingguan\s*\(/i, '').replace(/\)\s*-\s*\d+\s*hari.*$/i, '').replace(/\)\s*·.*$/i, '').replace(/\)$/, '');
+          scheduleInfo = `<div class="db-sched-cell">
+            <span class="db-sched-pill is-custom">📅 ${esc(cleanSched || rawSched)}</span>
+          </div>`;
+        }
+      }
+
+      const initialChar = row.displayName ? row.displayName.trim().charAt(0).toUpperCase() : 'P';
 
       return `<tr>
-        <td>${no}</td>
+        <td style="text-align:center;"><span class="db-cell-no">${no}</span></td>
         <td>
-          <div class="db-trader-meta">
-            <strong>${esc(row.displayName)}</strong>
-            <small>ID: ${esc(row.traderId)}</small>
-            <small>NIK: ${esc(row.nikMasked)}</small>
+          <div class="db-trader-cell">
+            <div class="db-trader-avatar">${esc(initialChar)}</div>
+            <div class="db-trader-info">
+              <strong class="db-trader-name">${esc(row.displayName)}</strong>
+              <div class="db-trader-chips">
+                <span class="db-chip-code" title="ID Pedagang"><span class="chip-lbl">ID</span>${esc(row.traderId)}</span>
+                <span class="db-chip-code" title="NIK Terdaftar"><span class="chip-lbl">NIK</span>${esc(row.nikMasked)}</span>
+              </div>
+            </div>
           </div>
         </td>
         <td>
-          <b>${esc(row.businessName)}</b><br>
-          <small>${esc(row.businessType)} · ${esc(row.businessCategory)}</small>
+          <div class="db-biz-cell">
+            <strong class="db-biz-title">${esc(row.businessName)}</strong>
+            <span class="db-biz-category">${esc(row.businessType)} · ${esc(row.businessCategory)}</span>
+          </div>
         </td>
         <td>
-          <strong>${esc(row.marketName)}</strong>
+          <div class="db-market-cell">
+            <strong class="db-market-name">${esc(row.marketName)}</strong>
+            ${row.marketId && row.marketId !== 'NON_MARKET' ? `<span class="db-market-code">${esc(row.marketId)}</span>` : ''}
+          </div>
         </td>
         <td>${unitInfo}</td>
-        <td>${skptBadge}</td>
+        <td>
+          <div class="db-skpt-cell">
+            ${skptBadge}
+            ${skptDetail}
+          </div>
+        </td>
         <td>${scheduleInfo}</td>
         <td>${statusBadge}</td>
-        <td class="no-print">
-          <button class="button secondary" style="min-height:32px;padding:4px 10px;font-size:0.7rem" onclick="window.EPASAR_DB.viewDetail('${esc(row.traderId)}', '${esc(row.claimId)}')">Rincian</button>
+        <td class="no-print" style="text-align:center;">
+          <button class="db-btn-rincian" type="button" onclick="window.EPASAR_DB.viewDetail('${esc(row.traderId)}', '${esc(row.claimId)}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Rincian</span>
+          </button>
         </td>
       </tr>`;
     }).join('');
