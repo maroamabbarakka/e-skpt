@@ -11,6 +11,7 @@
   function base() {
     const out = {};
     new FormData(form).forEach((value, key) => { if (!(value instanceof File)) out[key] = value; });
+    if (out.birthDate) out.birthDate = V.formatDateId(out.birthDate);
     out.businessDrafts = window.EPASAR_MULTI.collect();
     out.hasMarketUnit = window.EPASAR_MULTI.places().length > 0;
     out.applySkpt = window.EPASAR_MULTI.places().some(place => place.applySkpt);
@@ -64,6 +65,7 @@
       else if (!value) message = `${labelFor(field)} belum diisi.`;
       else if (field.name === 'nik' && !V.nik(value)) message = 'NIK harus terdiri dari 16 digit angka.';
       else if (field.name === 'phone' && !V.phone(value)) message = 'Masukkan nomor WhatsApp/HP yang benar, misalnya 0812xxxxxxx.';
+      else if (field.name === 'birthDate' && !V.isValidDateId(value)) message = 'Format tanggal lahir harus dd/mm/yyyy (contoh: 17/08/1990) dengan tanggal yang sah.';
       else if (field.type === 'number' && !field.validity.valid) message = `${labelFor(field)} belum sesuai batas angka yang diperbolehkan.`;
       if (message) { markInvalid(field, message); failures.push({ field, message }); }
     });
@@ -95,7 +97,15 @@
       Object.entries(draft).forEach(([key, value]) => {
         const field = form.elements[key];
         if (!field || field.type === 'file' || Array.isArray(value)) return;
-        if (field.type === 'checkbox') field.checked = Boolean(value); else field.value = value;
+        if (field.type === 'checkbox') {
+          field.checked = Boolean(value);
+        } else if (key === 'birthDate') {
+          field.value = V.formatDateId(value);
+          const helper = document.getElementById('nativeDatePickerHelper');
+          if (helper && V.isValidDateId(field.value)) helper.value = V.toIsoDate(field.value);
+        } else {
+          field.value = value;
+        }
       });
       if (draft.district) {
         syncIdentityVillage(false);
@@ -106,20 +116,42 @@
     } catch (_) {}
   }
   function validateIdentityInline() {
-    const nik = form.elements.nik, phone = form.elements.phone;
+    const nik = form.elements.nik, phone = form.elements.phone, birthDate = form.elements.birthDate;
     const nikMessage = document.querySelector('[data-validation-for="nik"]');
     const phoneMessage = document.querySelector('[data-validation-for="phone"]');
-    if (nik.value) {
+    const birthDateMessage = document.querySelector('[data-validation-for="birthDate"]');
+    if (nik && nik.value) {
       const valid = V.nik(nik.value);
       nik.setAttribute('aria-invalid', String(!valid));
-      nikMessage.textContent = valid ? '✓ Format NIK sesuai.' : 'NIK harus terdiri dari 16 digit angka.';
-      nikMessage.className = `field-message ${valid ? 'is-valid' : 'is-error'}`;
+      if (nikMessage) {
+        nikMessage.textContent = valid ? '✓ Format NIK sesuai.' : 'NIK harus terdiri dari 16 digit angka.';
+        nikMessage.className = `field-message ${valid ? 'is-valid' : 'is-error'}`;
+      }
     }
-    if (phone.value) {
+    if (phone && phone.value) {
       const valid = V.phone(phone.value);
       phone.setAttribute('aria-invalid', String(!valid));
-      phoneMessage.textContent = valid ? '✓ Nomor dapat digunakan.' : 'Nomor WhatsApp terlalu pendek atau belum valid.';
-      phoneMessage.className = `field-message ${valid ? 'is-valid' : 'is-error'}`;
+      if (phoneMessage) {
+        phoneMessage.textContent = valid ? '✓ Nomor dapat digunakan.' : 'Nomor WhatsApp terlalu pendek atau belum valid.';
+        phoneMessage.className = `field-message ${valid ? 'is-valid' : 'is-error'}`;
+      }
+    }
+    if (birthDate && birthDate.value) {
+      const val = birthDate.value.trim();
+      const valid = V.isValidDateId(val);
+      birthDate.setAttribute('aria-invalid', String(!valid));
+      if (birthDateMessage) {
+        if (valid) {
+          birthDateMessage.textContent = '✓ Format tanggal lahir sesuai (dd/mm/yyyy).';
+          birthDateMessage.className = 'field-message is-valid';
+        } else if (val.length === 10) {
+          birthDateMessage.textContent = 'Tanggal lahir tidak valid. Gunakan format dd/mm/yyyy (contoh: 17/08/1990).';
+          birthDateMessage.className = 'field-message is-error';
+        } else {
+          birthDateMessage.textContent = 'Format: hh/bb/tttt (contoh: 17/08/1990)';
+          birthDateMessage.className = 'field-message';
+        }
+      }
     }
   }
   function validate() {
@@ -221,18 +253,93 @@
     if (preserve && villages.includes(selected)) identityVillage.value = selected;
   };
   identityDistrict.addEventListener('change', () => { syncIdentityVillage(false); save(); });
+  function initBirthDatePicker() {
+    const birthInput = document.getElementById('birthDateInput');
+    const btnPicker = document.getElementById('btnBirthDatePicker');
+    const helperPicker = document.getElementById('nativeDatePickerHelper');
+    if (!birthInput) return;
+
+    let isDeleting = false;
+    birthInput.addEventListener('keydown', e => {
+      isDeleting = (e.key === 'Backspace' || e.key === 'Delete');
+    });
+
+    birthInput.addEventListener('input', () => {
+      let val = birthInput.value;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        birthInput.value = V.formatDateId(val);
+        if (helperPicker) helperPicker.value = val;
+        validateIdentityInline();
+        save();
+        return;
+      }
+
+      if (!isDeleting) {
+        const digits = val.replace(/\D/g, '').slice(0, 8);
+        let masked = '';
+        if (digits.length > 4) {
+          masked = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+        } else if (digits.length > 2) {
+          masked = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        } else {
+          masked = digits;
+        }
+        if (masked !== val) {
+          birthInput.value = masked;
+        }
+      }
+
+      if (helperPicker && V.isValidDateId(birthInput.value)) {
+        helperPicker.value = V.toIsoDate(birthInput.value);
+      }
+      validateIdentityInline();
+    });
+
+    if (btnPicker && helperPicker) {
+      btnPicker.addEventListener('click', () => {
+        if (V.isValidDateId(birthInput.value)) {
+          helperPicker.value = V.toIsoDate(birthInput.value);
+        }
+        if (typeof helperPicker.showPicker === 'function') {
+          try {
+            helperPicker.showPicker();
+          } catch (_) {
+            helperPicker.focus();
+            helperPicker.click();
+          }
+        } else {
+          helperPicker.focus();
+          helperPicker.click();
+        }
+      });
+
+      helperPicker.addEventListener('change', () => {
+        if (helperPicker.value) {
+          birthInput.value = V.formatDateId(helperPicker.value);
+          birthInput.classList.remove('is-invalid');
+          birthInput.removeAttribute('aria-invalid');
+          const host = birthInput.closest('label') || birthInput.parentElement;
+          host?.querySelector('.field-error')?.remove();
+          validateIdentityInline();
+          save();
+        }
+      });
+    }
+  }
+
   form.addEventListener('input', event => {
     const field = event.target;
-    if (field.name === 'nik' || field.name === 'phone') validateIdentityInline();
     if (field.matches('input, select, textarea')) {
       field.classList.remove('is-invalid');
       field.removeAttribute('aria-invalid');
       const host = field.closest('label') || field.parentElement;
       host?.querySelector('.field-error')?.remove();
     }
+    if (field.name === 'nik' || field.name === 'phone' || field.name === 'birthDate') validateIdentityInline();
     save();
   });
   document.addEventListener('epasar:entities-changed', save);
-  restore(); syncIdentityVillage(true); render();
+  initBirthDatePicker(); restore(); syncIdentityVillage(true); render();
   form.dataset.ready = 'true';
 }());
+

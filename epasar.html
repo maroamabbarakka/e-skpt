@@ -166,8 +166,23 @@
                   maxlength="80"
                   required /></label
               ><label
-                >Tanggal lahir<input name="birthDate" type="date" required
-              /></label>
+                >Tanggal lahir <span class="format-hint">(dd/mm/yyyy)</span>
+                <div class="date-input-group">
+                  <input
+                    name="birthDate"
+                    id="birthDateInput"
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="hh/bb/tttt (dd/mm/yyyy)"
+                    maxlength="10"
+                    autocomplete="bday"
+                    required
+                  />
+                  <button type="button" class="btn-date-picker" id="btnBirthDatePicker" title="Pilih tanggal dari kalender" aria-label="Buka kalender tanggal lahir">📅</button>
+                  <input type="date" id="nativeDatePickerHelper" tabindex="-1" aria-hidden="true" class="visually-hidden-picker" />
+                </div>
+                <small class="field-message" data-validation-for="birthDate">Format: hh/bb/tttt (contoh: 17/08/1990)</small>
+              </label>
             </div>
             <div class="two-col">
               <label>Kecamatan<select id="identityDistrict" name="district" required><option value="">Pilih kecamatan</option></select></label>

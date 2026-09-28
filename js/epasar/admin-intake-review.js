@@ -14,6 +14,14 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[character]));
   const maskNik = value => String(value || '').replace(/^(\d{6})\d{6}(\d{4})$/, '$1••••••$2');
+  const formatDateId = v => {
+    if (!v) return '';
+    const s = String(v).trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    return s;
+  };
 
   function notice(text, error) {
     message.hidden = false;
@@ -86,7 +94,7 @@
 
       summary(document.getElementById('identitySummary'), [
         ['Nama', identity.name], ['NIK', maskNik(identity.nik)],
-        ['Tempat/Tanggal lahir', [identity.birthPlace, identity.birthDate].filter(Boolean).join(', ')],
+        ['Tempat/Tanggal lahir', [identity.birthPlace, formatDateId(identity.birthDate)].filter(Boolean).join(', ')],
         ['WhatsApp', identity.phone], ['Wilayah', [identity.village, identity.district].filter(Boolean).join(', ')],
         ['Alamat', identity.address]
       ]);
