@@ -110,10 +110,12 @@
       // Ambil juga dokumen resmi SKPT yang sudah terbit (skpt_documents)
       const skptDocsByApp = new Map();
       const skptDocsByTrader = new Map();
+      const skptDocsById = new Map();
       try {
         const skptDocsSnap = await db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(300).get();
         skptDocsSnap.forEach(doc => {
           const sd = doc.data();
+          skptDocsById.set(doc.id, { id: doc.id, ...sd });
           if (sd.applicationId) skptDocsByApp.set(sd.applicationId, { id: doc.id, ...sd });
           if (sd.traderId) skptDocsByTrader.set(sd.traderId, { id: doc.id, ...sd });
         });
@@ -132,7 +134,7 @@
         const businesses = businessesByTrader.get(traderId) || [];
         const app = appsByClaim.get(claim.id) || appsByTrader.get(traderId) || {};
         const business = businesses[0] || {};
-        const skptDoc = skptDocsByApp.get(app.id) || skptDocsByTrader.get(traderId) || {};
+        const skptDoc = skptDocsByApp.get(app.id) || skptDocsByTrader.get(traderId) || (app.skptDocumentId ? skptDocsById.get(app.skptDocumentId) : {}) || {};
 
         processedTraderIds.add(traderId);
         const marketObj = window.EPASAR?.marketById(claim.marketId);
@@ -145,10 +147,13 @@
         const monthlyRevenue = business.monthlyRevenue || 10000000;
         const monthlyRetribution = calculateRetribution(unitType, areaM2);
 
-        const hasSkpt = app.status === 'ISSUED' || skptDoc.status === 'ISSUED';
-        const skptNumber = skptDoc.number || app.skptNumber || app.number || (hasSkpt ? `SKPT-PIN-${String(claim.marketId || '').slice(-3)}-${traderId.slice(-4)}` : '—');
+        const hasSkpt = Boolean(skptDoc.verificationToken || app.status === 'ISSUED' || skptDoc.status === 'ISSUED');
+        const skptNumber = skptDoc.number || app.skptNumber || app.number || (hasSkpt ? (skptDoc.number || `SKPT-PIN-${String(claim.marketId || '').slice(-3)}-${traderId.slice(-4)}`) : '—');
         const verificationToken = skptDoc.verificationToken || app.verificationToken || '';
+        const documentHash = skptDoc.documentHash || '';
         const publicToken = app.publicToken || trader.publicToken || claim.publicToken || trader.intakeId || '';
+        const registrationCode = trader.registrationCode || app.registrationCode || trader.code || '';
+        const validUntil = skptDoc.validUntil || '';
         const phone = trader.phone || app.applicantSnapshot?.phone || business.phone || '';
 
         records.push({
@@ -170,14 +175,18 @@
           areaM2,
           monthlyRetribution,
           verificationStatus: claim.verificationStatus || 'UNVERIFIED',
-          skptStatus: app.status || 'BELUM_PENGAJUAN',
+          skptStatus: app.status || (hasSkpt ? 'ISSUED' : 'BELUM_PENGAJUAN'),
           skptNumber,
           hasSkpt,
           verificationToken,
+          documentHash,
+          registrationCode,
           publicToken,
+          validUntil,
           phone,
           claimId: claim.id,
           applicationId: app.id || claim.applicationId || '',
+          skptDocumentId: app.skptDocumentId || skptDoc.id || '',
           registeredAt: claim.createdAt?.toDate ? claim.createdAt.toDate().toISOString() : new Date().toISOString()
         });
       });
@@ -542,17 +551,69 @@
   let activeWaRecord = null;
   let activeKpiType = 'traders';
 
-  function formatWaMessage(record) {
-    const origin = window.location.origin;
-    const skptUrl = record.verificationToken ? `${origin}/skpt-pdf.html?token=${encodeURIComponent(record.verificationToken)}` : `${origin}/verifikasi-skpt.html`;
-    const cardUrl = `${origin}/trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
-    const statusUrl = `${origin}/epasar-status.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+  async function resolveRecordLegalData(record) {
+    if (!record) return record;
+    const db = getDb();
+    if (!record.verificationToken || !record.documentHash || String(record.skptNumber || '').startsWith('SKPT-PIN-')) {
+      try {
+        if (record.skptDocumentId) {
+          const docSnap = await db.collection('skpt_documents').doc(record.skptDocumentId).get();
+          if (docSnap.exists) {
+            const sd = docSnap.data();
+            record.verificationToken = sd.verificationToken || record.verificationToken;
+            record.documentHash = sd.documentHash || record.documentHash;
+            record.skptNumber = sd.number || record.skptNumber;
+            record.validUntil = sd.validUntil || record.validUntil;
+          }
+        }
+        if (!record.verificationToken && record.traderId) {
+          const qTrd = await db.collection('skpt_documents').where('traderId', '==', record.traderId).limit(1).get();
+          if (!qTrd.empty) {
+            const sd = qTrd.docs[0].data();
+            record.verificationToken = sd.verificationToken || record.verificationToken;
+            record.documentHash = sd.documentHash || record.documentHash;
+            record.skptNumber = sd.number || record.skptNumber;
+            record.validUntil = sd.validUntil || record.validUntil;
+            record.skptDocumentId = qTrd.docs[0].id;
+          }
+        }
+      } catch (e) {
+        console.warn('Gagal resolve legal skpt_documents:', e);
+      }
+    }
 
-    return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${record.displayName}*,\nBerikut dokumen legalitas usaha pasar Anda yang telah resmi terdaftar dan disahkan:\n\n📋 *Nomor SKPT:* ${record.skptNumber}\n🏪 *Unit Pasar:* ${record.marketName} (${record.unitType} ${record.unitNumber})\n💼 *Usaha:* ${record.businessName} (${record.businessType})\n\nSilakan unduh dokumen digital resmi Anda:\n1. 📄 *Unduh Dokumen SKPT Resmi (PDF):*\n${skptUrl}\n\n2. 🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n3. 🔍 *Cek Status & Verifikasi Digital:*\n${statusUrl}\n\n_Dokumen ini sah, dilengkapi cryptographic QR Code resmi yang dapat diverifikasi publik melalui portal e-PASAR Kabupaten Pinrang._`;
+    if (!record.registrationCode && record.publicToken) {
+      try {
+        const psSnap = await db.collection('public_status').doc(record.publicToken).get();
+        if (psSnap.exists) {
+          const ps = psSnap.data();
+          record.registrationCode = ps.registrationCode || record.registrationCode;
+        }
+      } catch (e) {
+        console.warn('Gagal resolve public_status:', e);
+      }
+    }
+
+    return record;
   }
 
-  function sendSkptToWa(record) {
+  function formatWaMessage(record) {
+    const origin = window.location.origin;
+    const actualSkptToken = record.verificationToken || record.publicToken;
+    const skptUrl = actualSkptToken ? `${origin}/skpt-pdf.html?token=${encodeURIComponent(actualSkptToken)}` : `${origin}/verifikasi-skpt.html`;
+    const cardUrl = `${origin}/trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+    const statusUrl = `${origin}/epasar-status.html?code=${encodeURIComponent(record.registrationCode || '')}&token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+
+    const regCodeText = record.registrationCode ? `🔢 *Nomor Registrasi Pendaftaran:*\n${record.registrationCode}\n\n` : '';
+    const tokenText = record.publicToken ? `🔑 *Token Akses Pribadi:*\n${record.publicToken}\n\n` : '';
+    const hashText = record.documentHash ? `🛡️ *Kode Hash Dokumen SKPT (SHA-256):*\n${record.documentHash}\n\n` : '';
+
+    return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${record.displayName}*,\nBerikut rincian legalitas resmi izin pemakaian tempat usaha pasar Anda yang telah disahkan:\n\n📋 *Nomor SKPT:* ${record.skptNumber}\n${regCodeText}${tokenText}${hashText}🏪 *Unit Pasar:* ${record.marketName} (${record.unitType} ${record.unitNumber})\n💼 *Usaha:* ${record.businessName} (${record.businessType})\n\nSilakan unduh & simpan dokumen digital resmi Anda:\n1. 📄 *Unduh Dokumen SKPT Resmi (PDF):*\n${skptUrl}\n\n2. 🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n3. 🔍 *Cek Status & Verifikasi Digital:*\n${statusUrl}\n\n_Catatan Penting: Harap simpan Nomor Registrasi Pendaftaran dan Token Akses Pribadi ini dengan baik untuk keperluan pembukaan berkas, cetak ulang dokumen, verifikasi lapangan, maupun pengesahan tahunan / perpanjangan SKPT di portal resmi e-PASAR Kabupaten Pinrang._`;
+  }
+
+  async function sendSkptToWa(record) {
     activeWaRecord = record;
+    await resolveRecordLegalData(record);
     let phone = String(record.phone || '').trim().replace(/\D/g, '');
     if (phone.startsWith('0')) phone = '62' + phone.slice(1);
 
@@ -568,9 +629,11 @@
     }
   }
 
-  function viewDetail(traderId, claimId) {
+  async function viewDetail(traderId, claimId) {
     const record = filteredRecords.find(r => r.traderId === traderId && (!claimId || r.claimId === claimId)) || filteredRecords.find(r => r.traderId === traderId);
     if (!record) return;
+
+    await resolveRecordLegalData(record);
 
     const modal = document.getElementById('detailModal');
     document.getElementById('modalTraderName').textContent = record.displayName;
@@ -596,7 +659,15 @@
         const btnWa = document.getElementById('modalBtnSendWa');
 
         if (btnSkpt) {
-          btnSkpt.href = `skpt-pdf.html?token=${encodeURIComponent(record.verificationToken || record.publicToken)}`;
+          const skptTok = record.verificationToken || record.publicToken;
+          btnSkpt.href = `skpt-pdf.html?token=${encodeURIComponent(skptTok)}`;
+          btnSkpt.onclick = async (e) => {
+            if (!record.verificationToken) {
+              e.preventDefault();
+              await resolveRecordLegalData(record);
+              window.open(`skpt-pdf.html?token=${encodeURIComponent(record.verificationToken || record.publicToken)}`, '_blank');
+            }
+          };
         }
         if (btnCard) {
           btnCard.href = `trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
@@ -781,7 +852,10 @@
     viewDetail,
     printReport,
     exportCsv,
-    exportJson
+    exportJson,
+    getRecord: (id) => allRecords.find(r => r.traderId === id || r.claimId === id),
+    formatWaMessage,
+    resolveRecordLegalData
   };
 
   boot();

@@ -419,23 +419,56 @@
   let currentKpiType = '';
   let activeAdminWaRecord = null;
 
+  async function resolveAdminRecordLegalData(record) {
+    if (!record) return record;
+    const db = window.db;
+    if (!db) return record;
+    if (!record.registrationCode && record.applicationId) {
+      try {
+        const appSnap = await db.collection('skpt_applications').doc(record.applicationId).get();
+        if (appSnap.exists) {
+          const ad = appSnap.data();
+          record.publicToken = record.publicToken || ad.publicToken;
+          record.registrationCode = record.registrationCode || ad.registrationCode;
+          record.phone = record.phone || ad.applicantSnapshot?.phone;
+        }
+      } catch (_) {}
+    }
+    if (!record.registrationCode && record.publicToken) {
+      try {
+        const psSnap = await db.collection('public_status').doc(record.publicToken).get();
+        if (psSnap.exists) {
+          const ps = psSnap.data();
+          record.registrationCode = record.registrationCode || ps.registrationCode;
+        }
+      } catch (_) {}
+    }
+    return record;
+  }
+
   function formatAdminWaMessage(record) {
     const origin = window.location.origin;
-    const name = record.displayName || record.applicantSnapshot?.displayName || 'Pedagang';
+    const name = record.displayName || record.applicantSnapshot?.displayName || record.documentSnapshot?.displayName || 'Pedagang';
     const skptNumber = record.number || record.skptNumber || '—';
     const market = record.documentSnapshot?.marketName || record.applicantSnapshot?.marketName || record.marketName || 'Pasar Rakyat Pinrang';
     const unit = `${record.documentSnapshot?.unitType || record.applicantSnapshot?.claimedUnitType || 'Unit'} ${record.documentSnapshot?.unitNumber || record.applicantSnapshot?.claimedUnitNumber || ''}`;
     const business = record.documentSnapshot?.businessType || record.applicantSnapshot?.businessName || 'Usaha Pasar';
 
-    const skptUrl = record.verificationToken ? `${origin}/skpt-pdf.html?token=${encodeURIComponent(record.verificationToken)}` : `${origin}/verifikasi-skpt.html`;
+    const actualToken = record.verificationToken || record.publicToken;
+    const skptUrl = actualToken ? `${origin}/skpt-pdf.html?token=${encodeURIComponent(actualToken)}` : `${origin}/verifikasi-skpt.html`;
     const cardUrl = `${origin}/trader-card.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
-    const statusUrl = `${origin}/epasar-status.html?token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
+    const statusUrl = `${origin}/epasar-status.html?code=${encodeURIComponent(record.registrationCode || '')}&token=${encodeURIComponent(record.publicToken || record.verificationToken)}`;
 
-    return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${name}*,\nBerikut dokumen legalitas usaha pasar Anda yang telah resmi terdaftar dan disahkan:\n\n📋 *Nomor SKPT:* ${skptNumber}\n🏪 *Unit Pasar:* ${market} (${unit})\n💼 *Usaha:* ${business}\n\nSilakan unduh dokumen digital resmi Anda:\n1. 📄 *Unduh Dokumen SKPT Resmi (PDF):*\n${skptUrl}\n\n2. 🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n3. 🔍 *Cek Status & Verifikasi Digital:*\n${statusUrl}\n\n_Dokumen ini sah, dilengkapi cryptographic QR Code resmi yang dapat diverifikasi publik melalui portal e-PASAR Kabupaten Pinrang._`;
+    const regCodeText = record.registrationCode ? `🔢 *Nomor Registrasi Pendaftaran:*\n${record.registrationCode}\n\n` : '';
+    const tokenText = record.publicToken ? `🔑 *Token Akses Pribadi:*\n${record.publicToken}\n\n` : '';
+    const hashText = record.documentHash ? `🛡️ *Kode Hash Dokumen SKPT (SHA-256):*\n${record.documentHash}\n\n` : '';
+
+    return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${name}*,\nBerikut rincian legalitas resmi izin pemakaian tempat usaha pasar Anda yang telah disahkan:\n\n📋 *Nomor SKPT:* ${skptNumber}\n${regCodeText}${tokenText}${hashText}🏪 *Unit Pasar:* ${market} (${unit})\n💼 *Usaha:* ${business}\n\nSilakan unduh & simpan dokumen digital resmi Anda:\n1. 📄 *Unduh Dokumen SKPT Resmi (PDF):*\n${skptUrl}\n\n2. 🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n3. 🔍 *Cek Status & Verifikasi Digital:*\n${statusUrl}\n\n_Catatan Penting: Harap simpan Nomor Registrasi Pendaftaran dan Token Akses Pribadi ini dengan baik untuk keperluan pembukaan berkas, cetak ulang dokumen, verifikasi lapangan, maupun pengesahan tahunan / perpanjangan SKPT di portal resmi e-PASAR Kabupaten Pinrang._`;
   }
 
-  function sendAdminWa(record) {
+  async function sendAdminWa(record) {
     activeAdminWaRecord = record;
+    await resolveAdminRecordLegalData(record);
     let phone = String(record.phone || record.applicantSnapshot?.phone || '').trim().replace(/\D/g, '');
     if (phone.startsWith('0')) phone = '62' + phone.slice(1);
 
@@ -541,8 +574,8 @@
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar & Unit</th><th>Nomor SKPT</th><th>Aksi Legalitas</th></tr></thead><tbody>${
         matching.map((r, i) => {
           const snap = r.documentSnapshot || {};
-          const token = r.verificationToken || '';
-          const pToken = r.photoMediaToken || token;
+          const token = r.verificationToken || r.publicToken || '';
+          const pToken = r.publicToken || r.photoMediaToken || token;
           return `<tr>
             <td>${i + 1}</td>
             <td><b>${esc(snap.displayName || r.displayName || r.traderId)}</b><br><small>${esc(snap.businessType || 'Usaha Pasar')}</small></td>

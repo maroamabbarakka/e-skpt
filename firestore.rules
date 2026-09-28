@@ -407,7 +407,7 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /skpt_documents/{id} {
-      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.documentSnapshot.marketId);
+      allow read: if activeStaff();
       allow create: if kadis()
         && request.resource.data.skptId == id
         && request.resource.data.applicationId is string
