@@ -306,3 +306,150 @@
   }
 }
 
+/* ==========================================================================
+   POPUP MODAL RESPONSIF INTERNAL (DASHBOARD & DATABASE)
+   ========================================================================== */
+.db-modal-overlay {
+  position: fixed !important;
+  z-index: 1000 !important;
+  inset: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px !important;
+  background: rgba(3, 19, 45, 0.6) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+}
+.db-modal-overlay[hidden] {
+  display: none !important;
+}
+
+.db-modal-box {
+  width: min(880px, 100%) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  border: 1px solid #d8e4f0 !important;
+  box-shadow: 0 30px 80px rgba(0, 20, 60, 0.35) !important;
+  padding: 28px !important;
+  animation: dbModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes dbModalPop {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.db-modal-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 16px !important;
+  padding-bottom: 14px !important;
+  border-bottom: 1px solid #e6edf5 !important;
+}
+
+.db-modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  border: 1px solid #d0dbe7 !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+}
+.db-modal-close:hover {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+  transform: rotate(90deg) !important;
+}
+
+.db-popup-toolbar {
+  margin-bottom: 12px !important;
+}
+.db-popup-toolbar input[type="search"] {
+  width: 100% !important;
+  min-height: 42px !important;
+  border-radius: 9px !important;
+  font-size: 0.85rem !important;
+  padding: 8px 14px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f8fafc !important;
+  outline: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+.db-popup-toolbar input[type="search"]:focus {
+  border-color: #033bd4 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(3, 59, 212, 0.12) !important;
+}
+
+.db-popup-list-wrap {
+  max-height: 440px !important;
+  overflow-y: auto !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+.db-popup-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 0.76rem !important;
+}
+.db-popup-table th {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  font-weight: 750 !important;
+  padding: 10px 12px !important;
+  text-align: left !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+}
+.db-popup-table td {
+  padding: 9px 12px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #1e293b !important;
+}
+.db-popup-table tr:hover {
+  background: #f8fafc !important;
+}
+
+.db-badge {
+  display: inline-block !important;
+  padding: 3px 8px !important;
+  border-radius: 99px !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+}
+.db-badge-success { background: #e9f7dc !important; color: #2e6d0a !important; }
+.db-badge-warning { background: #fff8db !important; color: #854d0e !important; }
+.db-badge-danger { background: #fde8e8 !important; color: #9b1c1c !important; }
+.db-badge-neutral { background: #edf2f7 !important; color: #475569 !important; }
+
+.db-btn-whatsapp {
+  background: #25d366 !important;
+  color: #fff !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+.db-btn-whatsapp:hover {
+  background: #1ebc59 !important;
+  transform: translateY(-1px) !important;
+}

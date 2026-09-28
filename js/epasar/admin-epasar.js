@@ -5,6 +5,7 @@
   let currentCursor = null;
   const cursorHistory = [];
   let currentHasMore = false;
+  let currentProfile = null;
 
   const message = document.getElementById('adminMessage');
   const workspace = document.getElementById('adminWorkspace');
@@ -17,6 +18,7 @@
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[character]));
   }
+  const esc = escapeHtml;
 
   function setMessage(text, isError) {
     message.hidden = false;
@@ -32,6 +34,7 @@
   }
 
   async function renderRoleWorkspace(profile) {
+    currentProfile = profile;
     const isMarket = profile.role === 'MARKET_HEAD';
     const isKadis = profile.role === 'KADIS';
     const name = profile.displayName || profile.position || profile.role;
@@ -640,7 +643,7 @@
           };
         });
       } else if (type === 'kpiPage') {
-        currentKpiData = [{ id: 'page-info', page: pageCursor, totalQueue: rawIntakeList.length }];
+        currentKpiData = [{ id: 'page-info', page: currentPage, totalQueue: rawIntakeList.length }];
       }
 
       filterAndRenderAdminKpi();
@@ -816,6 +819,17 @@
   }
 
   function setupKpiInteractions() {
+    // Global delegation klik card KPI untuk semua role (Super Admin, Kepala Pasar, Kepala Dinas)
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-admin-kpi], [data-market-kpi], [data-kadis-kpi]');
+      if (!card) return;
+      const type = card.dataset.adminKpi || card.dataset.marketKpi || card.dataset.kadisKpi;
+      if (type) {
+        e.preventDefault();
+        openAdminKpi(type);
+      }
+    });
+
     const kpis = [
       { id: 'kpiTotalTraders', type: 'kpiTotalTraders' },
       { id: 'kpiSubmitted', type: 'kpiSubmitted' },
@@ -831,6 +845,7 @@
       const el = document.getElementById(item.id);
       const article = el?.closest('.kpi');
       if (article) {
+        article.style.cursor = 'pointer';
         article.addEventListener('click', () => openAdminKpi(item.type));
       }
     });
@@ -900,6 +915,7 @@
     try {
       if (window.EPASAR_FIREBASE_INIT) window.EPASAR_FIREBASE_INIT();
       const profile = await window.EPASAR_AUTH.requireStaff(['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']);
+      currentProfile = profile;
       window.EPASAR_INTERNAL_UI?.setProfile(profile);
       setupIntakeFilterEvents();
       setupKpiInteractions();
