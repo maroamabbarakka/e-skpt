@@ -13,7 +13,6 @@ EXCLUDED_ASSETS = {
     "Mengenal e-SKPT.mp4",
     "Panduan Pendataan Pedagang.mp4",
     "pasar-pinrang-editorial.png",
-    "pedagang-contoh-transparan.png",
 }
 
 
