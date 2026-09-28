@@ -22,7 +22,8 @@
       rank: 'Pembina Tingkat I (IV/b)',
       position: 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral',
       authority: 'a.n. BUPATI PINRANG',
-      tteMode: 'UAT_SIMULATED',
+      tteMode: 'UAT_SIMULATED', // 'UAT_SIMULATED', 'BSRE_OFFICIAL', 'MANUAL_UPLOAD'
+      manualSignatureImage: null, // base64 string jika upload manual
       tteNotice: 'Telah ditandatangani secara elektronik menggunakan sertifikat digital terverifikasi'
     },
     cardDesign: {
@@ -45,24 +46,19 @@
       serviceHours: 'Senin s.d. Jumat (08.00 - 15.30 WITA)',
       contactEmail: 'disperindag@pinrangkab.go.id'
     },
+    // MASTER 11 PASAR RESMI KABUPATEN PINRANG SESUAI REGULASI & LAMPIRAN
     marketsSchedule: {
-      'MKT-010': 'Pasar Harian (Setiap Hari)',
-      'pasar-sentral-pinrang': 'Pasar Harian (Setiap Hari)',
-      'MKT-001': 'Pasar Mingguan (Senin & Kamis)',
-      'pasar-kariango': 'Pasar Mingguan (Senin & Kamis)',
-      'MKT-002': 'Pasar Mingguan (Minggu & Rabu)',
-      'pasar-pekkabata': 'Pasar Mingguan (Minggu & Rabu)',
-      'MKT-003': 'Pasar Mingguan (Selasa & Jumat)',
-      'pasar-batulappa': 'Pasar Mingguan (Selasa & Jumat)',
-      'MKT-004': 'Pasar Mingguan (Rabu & Sabtu)',
-      'pasar-bungi': 'Pasar Mingguan (Rabu & Sabtu)',
-      'MKT-005': 'Pasar Mingguan (Kamis & Minggu)',
-      'pasar-teppo': 'Pasar Mingguan (Rabu & Sabtu)',
-      'pasar-paria': 'Pasar Mingguan (Senin & Kamis)',
-      'pasar-tadokkai': 'Pasar Mingguan (Minggu & Rabu)',
-      'pasar-marawi': 'Pasar Mingguan (Kamis & Minggu)',
-      'pasar-suppa': 'Pasar Mingguan (Selasa & Sabtu)',
-      'pasar-langnga': 'Pasar Mingguan (Rabu & Minggu)'
+      'MKT-001': { marketId: 'MKT-001', marketName: 'Pasar Rakyat Bungi', isDaily: false, activeDays: ['RABU', 'SABTU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Rabu & Sabtu)' },
+      'MKT-002': { marketId: 'MKT-002', marketName: 'Pasar Rakyat Cempa', isDaily: false, activeDays: ['SELASA', 'JUMAT'], daysCount: 2, scheduleText: 'Pasar Mingguan (Selasa & Jumat)' },
+      'MKT-003': { marketId: 'MKT-003', marketName: 'Pasar Rakyat Kampung Jaya', isDaily: false, activeDays: ['SENIN', 'KAMIS'], daysCount: 2, scheduleText: 'Pasar Mingguan (Senin & Kamis)' },
+      'MKT-004': { marketId: 'MKT-004', marketName: 'Pasar Rakyat Kariango', isDaily: false, activeDays: ['SENIN', 'KAMIS'], daysCount: 2, scheduleText: 'Pasar Mingguan (Senin & Kamis)' },
+      'MKT-005': { marketId: 'MKT-005', marketName: 'Pasar Rakyat Langnga', isDaily: false, activeDays: ['RABU', 'MINGGU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Rabu & Minggu)' },
+      'MKT-006': { marketId: 'MKT-006', marketName: 'Pasar Rakyat Lanrisang', isDaily: false, activeDays: ['SELASA', 'SABTU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Selasa & Sabtu)' },
+      'MKT-007': { marketId: 'MKT-007', marketName: 'Pasar Rakyat Leppangang', isDaily: false, activeDays: ['KAMIS', 'MINGGU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Kamis & Minggu)' },
+      'MKT-008': { marketId: 'MKT-008', marketName: 'Pasar Rakyat Marawi', isDaily: false, activeDays: ['KAMIS', 'MINGGU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Kamis & Minggu)' },
+      'MKT-009': { marketId: 'MKT-009', marketName: 'Pasar Rakyat Pekkabata', isDaily: false, activeDays: ['MINGGU', 'RABU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Minggu & Rabu)' },
+      'MKT-010': { marketId: 'MKT-010', marketName: 'Pasar Rakyat Sentral Pinrang', isDaily: true, activeDays: ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'], daysCount: 7, scheduleText: 'Pasar Harian (Setiap Hari)' },
+      'MKT-011': { marketId: 'MKT-011', marketName: 'Pasar Rakyat Teppo', isDaily: false, activeDays: ['RABU', 'SABTU'], daysCount: 2, scheduleText: 'Pasar Mingguan (Rabu & Sabtu)' }
     },
     legalBasis: {
       perdaMarket: 'Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024 tentang Pengelolaan Pasar Rakyat',
@@ -131,26 +127,38 @@
     return cachedSettings;
   }
 
+  function extractScheduleText(val) {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') {
+      if (val.scheduleText) return val.scheduleText;
+      if (val.isDaily) return 'Pasar Harian (Setiap Hari)';
+      if (Array.isArray(val.activeDays) && val.activeDays.length > 0) {
+        return `Pasar Mingguan (${val.activeDays.join(' & ')})`;
+      }
+      return 'Pasar Berkala';
+    }
+    return String(val);
+  }
+
   function getMarketSchedule(marketId, marketName, currentSettings) {
     const settings = currentSettings || cachedSettings || DEFAULT_SETTINGS;
     const map = settings.marketsSchedule || DEFAULT_SETTINGS.marketsSchedule;
 
-    const idNorm = String(marketId || '').toLowerCase().trim();
+    const idNorm = String(marketId || '').toUpperCase().trim();
     const nameNorm = String(marketName || '').toLowerCase().trim();
 
-    // 1. Coba lookup langsung ID
-    if (map[marketId]) return map[marketId];
-    if (map[idNorm]) return map[idNorm];
+    if (map[idNorm]) return extractScheduleText(map[idNorm]);
+    if (map[marketId]) return extractScheduleText(map[marketId]);
 
-    // 2. Coba lookup dari nama
     for (const [k, v] of Object.entries(map)) {
-      const kNorm = k.toLowerCase().replace(/^pasar-/, '').replace(/^mkt-/, '');
-      if (nameNorm.includes(kNorm) || idNorm.includes(kNorm)) {
-        return v;
+      const kNorm = k.toLowerCase().replace(/^mkt-/, '').replace(/^pasar-/, '');
+      if (nameNorm.includes(kNorm) || idNorm.toLowerCase().includes(kNorm)) {
+        return extractScheduleText(v);
       }
     }
 
-    if (idNorm === 'non_market' || nameNorm.includes('luar') || nameNorm.includes('mandiri')) {
+    if (idNorm === 'NON_MARKET' || nameNorm.includes('luar') || nameNorm.includes('mandiri')) {
       return 'Usaha Mandiri Non-Pasar';
     }
 
@@ -161,10 +169,53 @@
     return 'Pasar Berkala / Mingguan';
   }
 
+  function getMarketScheduleDetails(marketId, marketName, currentSettings) {
+    const settings = currentSettings || cachedSettings || DEFAULT_SETTINGS;
+    const map = settings.marketsSchedule || DEFAULT_SETTINGS.marketsSchedule;
+    const idNorm = String(marketId || '').toUpperCase().trim();
+    const nameNorm = String(marketName || '').toLowerCase().trim();
+
+    let found = map[idNorm] || map[marketId];
+    if (!found) {
+      for (const [k, v] of Object.entries(map)) {
+        const kNorm = k.toLowerCase().replace(/^mkt-/, '').replace(/^pasar-/, '');
+        if (nameNorm.includes(kNorm) || idNorm.toLowerCase().includes(kNorm)) {
+          found = v;
+          break;
+        }
+      }
+    }
+
+    if (found && typeof found === 'object') {
+      const isDaily = Boolean(found.isDaily);
+      const activeDays = Array.isArray(found.activeDays) ? found.activeDays : [];
+      return {
+        marketId: found.marketId || marketId,
+        marketName: found.marketName || marketName,
+        isDaily,
+        activeDays,
+        daysCount: Number(found.daysCount || (isDaily ? 7 : (activeDays.length || 2))),
+        scheduleText: extractScheduleText(found)
+      };
+    }
+
+    const text = extractScheduleText(found) || (nameNorm.includes('sentral') ? 'Pasar Harian (Setiap Hari)' : 'Pasar Mingguan');
+    const isDaily = text.toLowerCase().includes('harian') || text.toLowerCase().includes('setiap hari');
+    return {
+      marketId: marketId || '',
+      marketName: marketName || '',
+      isDaily,
+      activeDays: isDaily ? ['SENIN','SELASA','RABU','KAMIS','JUMAT','SABTU','MINGGU'] : ['RABU','SABTU'],
+      daysCount: isDaily ? 7 : 2,
+      scheduleText: text
+    };
+  }
+
   return {
     DEFAULT_SETTINGS,
     getSettings,
     saveSettings,
-    getMarketSchedule
+    getMarketSchedule,
+    getMarketScheduleDetails
   };
 }));

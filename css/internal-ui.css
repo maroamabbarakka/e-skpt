@@ -34,11 +34,275 @@
 .validation-timeline{display:flex;align-items:center;margin:18px 0;padding:14px 16px;border:1px solid var(--internal-border);border-radius:14px;background:#f8fbff}.validation-timeline span{display:flex;flex-direction:column;gap:2px;font-weight:800;color:var(--internal-ink)}.validation-timeline span.done{color:#167446}.validation-timeline small{font-weight:500;color:var(--internal-muted)}.validation-timeline i{height:3px;flex:1;margin:0 14px;border-radius:99px;background:linear-gradient(90deg,#38a968,#bad5ed)}
 @media(max-width:560px){.change-comparison{grid-template-columns:1fr}.change-comparison>b{transform:rotate(90deg)}}
 .auth-brand a{color:#fff;text-decoration:none}.auth-brand a:hover{text-decoration:none}.legacy-admin-actions[hidden]{display:none!important}#pendaftaran>.form-actions{position:static!important;inset:auto!important;margin-top:18px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
-.dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr))!important}.dashboard-kpis .kpi:nth-child(even){background:linear-gradient(145deg,#fff,#f5faee)}.dashboard-kpis .kpi:nth-child(odd){background:linear-gradient(145deg,#fff,#f2f8ff)}
-.dashboard-kpis .kpi{cursor:pointer!important;position:relative!important;transition:transform .22s cubic-bezier(0.16,1,0.3,1),box-shadow .22s cubic-bezier(0.16,1,0.3,1),border-color .2s ease!important}
-.dashboard-kpis .kpi::after{content:"Klik rincian 🔍";position:absolute;top:8px;right:10px;font-size:.6rem;font-weight:700;color:#0b57d0;background:rgba(11,87,208,.08);padding:2px 7px;border-radius:99px;opacity:0;transform:translateY(-3px);transition:all .2s ease}
-.dashboard-kpis .kpi:hover{transform:translateY(-5px)!important;box-shadow:0 14px 28px rgba(11,87,208,.16)!important;border-color:#60a5fa!important}
-.dashboard-kpis .kpi:hover::after{opacity:1;transform:translateY(0)}
-@media(max-width:900px){.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:480px){.dashboard-kpis{grid-template-columns:1fr!important}}
+/* PALET WARNA SOFT BERBEDA & MENARIK UNTUK CARD DASHBOARD SEMUA ROLE */
+.dashboard-kpis {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+.dashboard-kpis .kpi {
+  cursor: pointer !important;
+  position: relative !important;
+  padding: 18px 20px !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+}
+
+.dashboard-kpis .kpi::after {
+  content: "Buka Data 🔍";
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 99px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.22s ease;
+  pointer-events: none;
+}
+
+.dashboard-kpis .kpi:hover {
+  transform: translateY(-4px) !important;
+}
+
+.dashboard-kpis .kpi:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dashboard-kpis .kpi small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.dashboard-kpis .kpi strong {
+  display: block;
+  font-size: 2.15rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.03em !important;
+  margin: 6px 0 4px !important;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-kpis .kpi:hover strong {
+  transform: scale(1.03);
+}
+
+.dashboard-kpis .kpi p {
+  margin: 4px 0 0 !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+/* 1. SOFT AZURE / OCEAN (Biru Langit Sejuk) */
+.kpi-soft-blue,
+.dashboard-kpis .kpi:nth-child(8n+1) {
+  background: linear-gradient(145deg, #ffffff 15%, #f0f7ff 65%, #e0f2fe 100%) !important;
+  border-color: #bae6fd !important;
+  border-top: 3.5px solid #0284c7 !important;
+}
+.kpi-soft-blue small,
+.dashboard-kpis .kpi:nth-child(8n+1) small { color: #0369a1 !important; }
+.kpi-soft-blue strong,
+.dashboard-kpis .kpi:nth-child(8n+1) strong { color: #0284c7 !important; }
+.kpi-soft-blue p,
+.dashboard-kpis .kpi:nth-child(8n+1) p { color: #075985 !important; }
+.kpi-soft-blue::after,
+.dashboard-kpis .kpi:nth-child(8n+1)::after {
+  background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+}
+.kpi-soft-blue:hover,
+.dashboard-kpis .kpi:nth-child(8n+1):hover {
+  box-shadow: 0 12px 24px rgba(2, 132, 199, 0.16) !important;
+  border-color: #7dd3fc !important;
+}
+
+/* 2. SOFT AMBER / HONEY (Kuning Keemasan Lembut) */
+.kpi-soft-amber,
+.dashboard-kpis .kpi:nth-child(8n+2) {
+  background: linear-gradient(145deg, #ffffff 15%, #fffbeb 65%, #fef3c7 100%) !important;
+  border-color: #fde68a !important;
+  border-top: 3.5px solid #d97706 !important;
+}
+.kpi-soft-amber small,
+.dashboard-kpis .kpi:nth-child(8n+2) small { color: #b45309 !important; }
+.kpi-soft-amber strong,
+.dashboard-kpis .kpi:nth-child(8n+2) strong { color: #d97706 !important; }
+.kpi-soft-amber p,
+.dashboard-kpis .kpi:nth-child(8n+2) p { color: #92400e !important; }
+.kpi-soft-amber::after,
+.dashboard-kpis .kpi:nth-child(8n+2)::after {
+  background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
+}
+.kpi-soft-amber:hover,
+.dashboard-kpis .kpi:nth-child(8n+2):hover {
+  box-shadow: 0 12px 24px rgba(217, 119, 6, 0.16) !important;
+  border-color: #fcd34d !important;
+}
+
+/* 3. SOFT MINT / EMERALD (Hijau Segar Daun Pinrang) */
+.kpi-soft-green,
+.dashboard-kpis .kpi:nth-child(8n+3) {
+  background: linear-gradient(145deg, #ffffff 15%, #f0fdf4 65%, #dcfce7 100%) !important;
+  border-color: #bbf7d0 !important;
+  border-top: 3.5px solid #059669 !important;
+}
+.kpi-soft-green small,
+.dashboard-kpis .kpi:nth-child(8n+3) small { color: #047857 !important; }
+.kpi-soft-green strong,
+.dashboard-kpis .kpi:nth-child(8n+3) strong { color: #059669 !important; }
+.kpi-soft-green p,
+.dashboard-kpis .kpi:nth-child(8n+3) p { color: #065f46 !important; }
+.kpi-soft-green::after,
+.dashboard-kpis .kpi:nth-child(8n+3)::after {
+  background: #dcfce7; color: #047857; border: 1px solid #bbf7d0;
+}
+.kpi-soft-green:hover,
+.dashboard-kpis .kpi:nth-child(8n+3):hover {
+  box-shadow: 0 12px 24px rgba(5, 150, 105, 0.16) !important;
+  border-color: #86efac !important;
+}
+
+/* 4. SOFT CORAL / ROSE (Merah Karang Lembut) */
+.kpi-soft-rose,
+.dashboard-kpis .kpi:nth-child(8n+4) {
+  background: linear-gradient(145deg, #ffffff 15%, #fff1f2 65%, #ffe4e6 100%) !important;
+  border-color: #fecdd3 !important;
+  border-top: 3.5px solid #e11d48 !important;
+}
+.kpi-soft-rose small,
+.dashboard-kpis .kpi:nth-child(8n+4) small { color: #be123c !important; }
+.kpi-soft-rose strong,
+.dashboard-kpis .kpi:nth-child(8n+4) strong { color: #e11d48 !important; }
+.kpi-soft-rose p,
+.dashboard-kpis .kpi:nth-child(8n+4) p { color: #9f1239 !important; }
+.kpi-soft-rose::after,
+.dashboard-kpis .kpi:nth-child(8n+4)::after {
+  background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3;
+}
+.kpi-soft-rose:hover,
+.dashboard-kpis .kpi:nth-child(8n+4):hover {
+  box-shadow: 0 12px 24px rgba(225, 29, 72, 0.16) !important;
+  border-color: #fda4af !important;
+}
+
+/* 5. SOFT LAVENDER / PURPLE (Ungu Lembut Elegan) */
+.kpi-soft-purple,
+.dashboard-kpis .kpi:nth-child(8n+5) {
+  background: linear-gradient(145deg, #ffffff 15%, #faf5ff 65%, #f3e8ff 100%) !important;
+  border-color: #e9d5ff !important;
+  border-top: 3.5px solid #7c3aed !important;
+}
+.kpi-soft-purple small,
+.dashboard-kpis .kpi:nth-child(8n+5) small { color: #6d28d9 !important; }
+.kpi-soft-purple strong,
+.dashboard-kpis .kpi:nth-child(8n+5) strong { color: #7c3aed !important; }
+.kpi-soft-purple p,
+.dashboard-kpis .kpi:nth-child(8n+5) p { color: #5b21b6 !important; }
+.kpi-soft-purple::after,
+.dashboard-kpis .kpi:nth-child(8n+5)::after {
+  background: #f3e8ff; color: #6d28d9; border: 1px solid #e9d5ff;
+}
+.kpi-soft-purple:hover,
+.dashboard-kpis .kpi:nth-child(8n+5):hover {
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.16) !important;
+  border-color: #d8b4fe !important;
+}
+
+/* 6. SOFT TEAL / AQUA (Toska Modern) */
+.kpi-soft-teal,
+.dashboard-kpis .kpi:nth-child(8n+6) {
+  background: linear-gradient(145deg, #ffffff 15%, #f0fdfa 65%, #ccfbf1 100%) !important;
+  border-color: #99f6e4 !important;
+  border-top: 3.5px solid #0d9488 !important;
+}
+.kpi-soft-teal small,
+.dashboard-kpis .kpi:nth-child(8n+6) small { color: #0f766e !important; }
+.kpi-soft-teal strong,
+.dashboard-kpis .kpi:nth-child(8n+6) strong { color: #0d9488 !important; }
+.kpi-soft-teal p,
+.dashboard-kpis .kpi:nth-child(8n+6) p { color: #115e59 !important; }
+.kpi-soft-teal::after,
+.dashboard-kpis .kpi:nth-child(8n+6)::after {
+  background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4;
+}
+.kpi-soft-teal:hover,
+.dashboard-kpis .kpi:nth-child(8n+6):hover {
+  box-shadow: 0 12px 24px rgba(13, 148, 136, 0.16) !important;
+  border-color: #5eead4 !important;
+}
+
+/* 7. SOFT INDIGO / SKY (Indigo Menawan) */
+.kpi-soft-indigo,
+.dashboard-kpis .kpi:nth-child(8n+7) {
+  background: linear-gradient(145deg, #ffffff 15%, #eef2ff 65%, #e0e7ff 100%) !important;
+  border-color: #c7d2fe !important;
+  border-top: 3.5px solid #4f46e5 !important;
+}
+.kpi-soft-indigo small,
+.dashboard-kpis .kpi:nth-child(8n+7) small { color: #4338ca !important; }
+.kpi-soft-indigo strong,
+.dashboard-kpis .kpi:nth-child(8n+7) strong { color: #4f46e5 !important; }
+.kpi-soft-indigo p,
+.dashboard-kpis .kpi:nth-child(8n+7) p { color: #3730a3 !important; }
+.kpi-soft-indigo::after,
+.dashboard-kpis .kpi:nth-child(8n+7)::after {
+  background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe;
+}
+.kpi-soft-indigo:hover,
+.dashboard-kpis .kpi:nth-child(8n+7):hover {
+  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.16) !important;
+  border-color: #a5b4fc !important;
+}
+
+/* 8. SOFT SLATE / PEARL (Abu Mutiara Lembut) */
+.kpi-soft-slate,
+.dashboard-kpis .kpi:nth-child(8n+8) {
+  background: linear-gradient(145deg, #ffffff 15%, #f8fafc 65%, #f1f5f9 100%) !important;
+  border-color: #cbd5e1 !important;
+  border-top: 3.5px solid #475569 !important;
+}
+.kpi-soft-slate small,
+.dashboard-kpis .kpi:nth-child(8n+8) small { color: #334155 !important; }
+.kpi-soft-slate strong,
+.dashboard-kpis .kpi:nth-child(8n+8) strong { color: #475569 !important; }
+.kpi-soft-slate p,
+.dashboard-kpis .kpi:nth-child(8n+8) p { color: #1e293b !important; }
+.kpi-soft-slate::after,
+.dashboard-kpis .kpi:nth-child(8n+8)::after {
+  background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;
+}
+.kpi-soft-slate:hover,
+.dashboard-kpis .kpi:nth-child(8n+8):hover {
+  box-shadow: 0 12px 24px rgba(71, 85, 105, 0.16) !important;
+  border-color: #94a3b8 !important;
+}
+
+@media(max-width:1100px){
+  .dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media(max-width:540px){
+  .dashboard-kpis {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
 

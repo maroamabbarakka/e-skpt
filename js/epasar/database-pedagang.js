@@ -253,11 +253,17 @@
     const assignedIds = (isMarketHead && Array.isArray(profile.marketIds)) ? profile.marketIds : [];
 
     const markets = window.EPASAR?.MARKETS || [
+      { id: 'MKT-001', name: 'Pasar Rakyat Bungi' },
+      { id: 'MKT-002', name: 'Pasar Rakyat Cempa' },
+      { id: 'MKT-003', name: 'Pasar Rakyat Kampung Jaya' },
+      { id: 'MKT-004', name: 'Pasar Rakyat Kariango' },
+      { id: 'MKT-005', name: 'Pasar Rakyat Langnga' },
+      { id: 'MKT-006', name: 'Pasar Rakyat Lanrisang' },
+      { id: 'MKT-007', name: 'Pasar Rakyat Leppangang' },
+      { id: 'MKT-008', name: 'Pasar Rakyat Marawi' },
+      { id: 'MKT-009', name: 'Pasar Rakyat Pekkabata' },
       { id: 'MKT-010', name: 'Pasar Rakyat Sentral Pinrang' },
-      { id: 'MKT-001', name: 'Pasar Rakyat Kariango' },
-      { id: 'MKT-002', name: 'Pasar Rakyat Pekkabata' },
-      { id: 'MKT-003', name: 'Pasar Rakyat Batulappa' },
-      { id: 'MKT-004', name: 'Pasar Rakyat Bungi' }
+      { id: 'MKT-011', name: 'Pasar Rakyat Teppo' }
     ];
 
     marketSelect.innerHTML = isMarketHead ? '' : '<option value="">Semua Pasar se-Kabupaten Pinrang</option>';

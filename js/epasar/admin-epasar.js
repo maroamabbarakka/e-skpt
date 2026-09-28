@@ -47,10 +47,10 @@
     if (isMarket) {
       workspace.innerHTML = `
         <div class="kpi-grid dashboard-kpis" style="margin-bottom: 24px;">
-          <article class="kpi"><small>Pedagang Terdaftar</small><strong id="kpiMarketTraders">...</strong><p>${marketNames || 'Pasar Penugasan'}</p></article>
-          <article class="kpi"><small>Menunggu Verifikasi</small><strong id="kpiMarketPending" style="color:#033bd4">...</strong><p>Klaim perlu ke lapangan</p></article>
-          <article class="kpi"><small>Unit Sah Terverifikasi</small><strong id="kpiMarketVerified" style="color:#2b7713">...</strong><p>Kios/Los/Lapak aktif</p></article>
-          <article class="kpi"><small>Konflik / Sengketa</small><strong id="kpiMarketConflict" style="color:#b42318">...</strong><p>Perlu mediasi</p></article>
+          <article class="kpi kpi-soft-blue" data-market-kpi="kpiMarketTraders" title="Klik untuk rincian pedagang di pasar ini"><small>Pedagang Terdaftar</small><strong id="kpiMarketTraders">...</strong><p>${marketNames || 'Pasar Penugasan'}</p></article>
+          <article class="kpi kpi-soft-amber" data-market-kpi="kpiMarketPending" title="Klik untuk klaim menunggu verifikasi fisik"><small>Menunggu Verifikasi</small><strong id="kpiMarketPending">...</strong><p>Klaim perlu ke lapangan</p></article>
+          <article class="kpi kpi-soft-green" data-market-kpi="kpiMarketVerified" title="Klik untuk unit tempat sah terverifikasi"><small>Unit Sah Terverifikasi</small><strong id="kpiMarketVerified">...</strong><p>Kios/Los/Lapak aktif</p></article>
+          <article class="kpi kpi-soft-rose" data-market-kpi="kpiMarketConflict" title="Klik untuk sengketa unit tempat"><small>Konflik / Sengketa</small><strong id="kpiMarketConflict">...</strong><p>Perlu mediasi</p></article>
         </div>
 
         <div class="command-grid" style="margin-bottom: 24px;">
@@ -132,6 +132,14 @@
         document.getElementById('kpiMarketVerified').textContent = verified;
         document.getElementById('kpiMarketConflict').textContent = conflict;
 
+        // Pasang event listener klik interaktif untuk kartu Kepala Pasar
+        document.querySelectorAll('[data-market-kpi]').forEach(card => {
+          card.addEventListener('click', () => {
+            const kpiType = card.dataset.marketKpi;
+            openAdminKpi(kpiType, { assignedIds, marketNames });
+          });
+        });
+
         const recent = claims.slice(0, 8);
         const rowsEl = document.getElementById('marketRecentRows');
         if (recent.length === 0) {
@@ -155,10 +163,10 @@
     } else if (isKadis) {
       workspace.innerHTML = `
         <div class="kpi-grid dashboard-kpis" style="margin-bottom: 24px;">
-          <article class="kpi"><small>Total Pedagang Terdata</small><strong id="kpiKadisTraders">...</strong><p>17 Pasar se-Kab. Pinrang</p></article>
-          <article class="kpi"><small>Menunggu Persetujuan Kadis</small><strong id="kpiKadisPending" style="color:#d97706">...</strong><p>Siap diputuskan & TTE</p></article>
-          <article class="kpi"><small>SKPT Resmi Diterbitkan</small><strong id="kpiKadisIssued" style="color:#2563eb">...</strong><p>Tervalidasi TTE Elektronik</p></article>
-          <article class="kpi"><small>Unit Pasar Terkelola</small><strong id="kpiKadisMarkets" style="color:#16a34a">17 Pasar</strong><p>Jadwal Operasional Dinamis</p></article>
+          <article class="kpi kpi-soft-blue" data-kadis-kpi="kpiKadisTraders" title="Klik untuk rincian sebaran pedagang di 11 pasar"><small>Total Pedagang Terdata</small><strong id="kpiKadisTraders">...</strong><p>11 Pasar se-Kab. Pinrang</p></article>
+          <article class="kpi kpi-soft-amber" data-kadis-kpi="kpiKadisPending" title="Klik untuk berkas menunggu persetujuan Kadis"><small>Menunggu Persetujuan Kadis</small><strong id="kpiKadisPending">...</strong><p>Siap diputuskan & TTE</p></article>
+          <article class="kpi kpi-soft-green" data-kadis-kpi="kpiKadisIssued" title="Klik untuk SKPT resmi yang telah diterbitkan"><small>SKPT Resmi Diterbitkan</small><strong id="kpiKadisIssued">...</strong><p>Tervalidasi TTE Elektronik</p></article>
+          <article class="kpi kpi-soft-purple" data-kadis-kpi="kpiKadisMarkets" title="Klik untuk direktori 11 pasar resmi & jadwal aktif"><small>Unit Pasar Resmi Terkelola</small><strong id="kpiKadisMarkets">11 Pasar</strong><p>Jadwal Operasional Dinamis</p></article>
         </div>
 
         <div class="command-grid" style="margin-bottom: 24px;">
@@ -230,7 +238,15 @@
         document.getElementById('kpiKadisPending').textContent = pendingCount;
         document.getElementById('kpiKadisIssued').textContent = issuedCount;
         const kpiMarketsEl = document.getElementById('kpiKadisMarkets');
-        if (kpiMarketsEl) kpiMarketsEl.textContent = '17 Pasar';
+        if (kpiMarketsEl) kpiMarketsEl.textContent = '11 Pasar';
+
+        // Pasang event listener klik interaktif untuk kartu Kepala Dinas
+        document.querySelectorAll('[data-kadis-kpi]').forEach(card => {
+          card.addEventListener('click', () => {
+            const kpiType = card.dataset.kadisKpi;
+            openAdminKpi(kpiType);
+          });
+        });
 
         const pendingList = [];
         pendingAppsSnap.forEach(d => pendingList.push({ id: d.id, ...d.data() }));
@@ -267,11 +283,17 @@
     const marketSelect = document.getElementById('intakeMarketFilter');
     if (!marketSelect || marketSelect.children.length > 1) return;
     const markets = window.EPASAR?.MARKETS || [
+      { id: 'MKT-001', name: 'Pasar Rakyat Bungi' },
+      { id: 'MKT-002', name: 'Pasar Rakyat Cempa' },
+      { id: 'MKT-003', name: 'Pasar Rakyat Kampung Jaya' },
+      { id: 'MKT-004', name: 'Pasar Rakyat Kariango' },
+      { id: 'MKT-005', name: 'Pasar Rakyat Langnga' },
+      { id: 'MKT-006', name: 'Pasar Rakyat Lanrisang' },
+      { id: 'MKT-007', name: 'Pasar Rakyat Leppangang' },
+      { id: 'MKT-008', name: 'Pasar Rakyat Marawi' },
+      { id: 'MKT-009', name: 'Pasar Rakyat Pekkabata' },
       { id: 'MKT-010', name: 'Pasar Rakyat Sentral Pinrang' },
-      { id: 'MKT-001', name: 'Pasar Rakyat Kariango' },
-      { id: 'MKT-002', name: 'Pasar Rakyat Pekkabata' },
-      { id: 'MKT-003', name: 'Pasar Rakyat Batulappa' },
-      { id: 'MKT-004', name: 'Pasar Rakyat Bungi' }
+      { id: 'MKT-011', name: 'Pasar Rakyat Teppo' }
     ];
     markets.forEach(m => {
       const opt = document.createElement('option');
@@ -484,7 +506,7 @@
     }
   }
 
-  async function openAdminKpi(type) {
+  async function openAdminKpi(type, context = {}) {
     currentKpiType = type;
     const modal = document.getElementById('adminKpiModal');
     const titleEl = document.getElementById('adminKpiTitle');
@@ -498,13 +520,22 @@
     bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;">Memuat data rincian…</div>';
 
     const titles = {
-      kpiTotalTraders: { title: 'Daftar Master Pedagang Aktif', subtitle: 'SATU DATA PEDAGANG PINRANG' },
-      kpiSubmitted: { title: 'Antrean Pendaftaran Baru', subtitle: 'PENDAFTARAN MENUNGGU TINJAUAN ADMIN' },
+      kpiTotalTraders: { title: 'Daftar Master Pedagang Aktif', subtitle: 'SATU DATA PEDAGANG KABUPATEN PINRANG' },
+      kpiSubmitted: { title: 'Antrean Pendaftaran Baru Masuk', subtitle: 'PENDAFTARAN MENUNGGU TINJAUAN ADMIN' },
       kpiMarket: { title: 'Klaim Menunggu Verifikasi Fisik Pasar', subtitle: 'PEMERIKSAAN KEPALA PASAR' },
       kpiConflict: { title: 'Daftar Unit Tercatat Konflik', subtitle: 'PENANGANAN & KOREKSI LAPANGAN' },
       kpiKadis: { title: 'Permohonan Siap Pengesahan Kadis', subtitle: 'KEPUTUSAN KEPALA DINAS' },
       kpiIssued: { title: 'Dokumen SKPT Resmi Diterbitkan', subtitle: 'DOKUMEN LEGALITAS AKTIF' },
-      kpiAnnual: { title: 'Pemeriksaan & Validasi Tahunan', subtitle: 'MONITORING SKPT DUA TAHUN' }
+      kpiAnnual: { title: 'Pemeriksaan & Validasi Tahunan', subtitle: 'MONITORING SKPT DUA TAHUN' },
+      kpiPage: { title: 'Informasi Paginasi & Navigasi Antrean', subtitle: 'KONTROL ANTREAN PENDAFTARAN' },
+      kpiMarketTraders: { title: `Daftar Pedagang di ${context.marketNames || 'Pasar Penugasan'}`, subtitle: 'DATA UNIT PASAR KEPALA PASAR' },
+      kpiMarketPending: { title: 'Klaim Menunggu Verifikasi Fisik Lapangan', subtitle: 'ANTREAN VERIFIKASI KEPALA PASAR' },
+      kpiMarketVerified: { title: 'Unit Kios, Los & Lapak Sah Terverifikasi', subtitle: 'STATUS HAK PEMAKAIAN SAH' },
+      kpiMarketConflict: { title: 'Daftar Kasus Konflik / Sengketa Tempat Usaha', subtitle: 'MEDIASI & TINDAK LANJUT LAPANGAN' },
+      kpiKadisTraders: { title: 'Sebaran Pedagang di 11 Pasar Rakyat Resmi', subtitle: 'MONITORING EKSEKUTIF KEPALA DINAS' },
+      kpiKadisPending: { title: 'Permohonan SKPT Menunggu Persetujuan Kadis', subtitle: 'BERKAS SIAP TTE ELEKTRONIK' },
+      kpiKadisIssued: { title: 'SKPT Resmi Terbit & Tersertifikasi Digital', subtitle: 'LEGALITAS RESMI PEMERINTAH KABUPATEN PINRANG' },
+      kpiKadisMarkets: { title: 'Direktori 11 Pasar Rakyat Resmi & Jadwal Operasional Aktif', subtitle: 'MASTER DATABASE RETRIBUSI PASAR PINRANG' }
     };
 
     const cfg = titles[type] || { title: 'Rincian Data', subtitle: 'DASHBOARD METRIK' };
@@ -512,8 +543,8 @@
     subtitleEl.textContent = cfg.subtitle;
 
     try {
-      if (type === 'kpiIssued') {
-        const snap = await window.db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(80).get();
+      if (type === 'kpiIssued' || type === 'kpiKadisIssued') {
+        const snap = await window.db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(100).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
       } else if (type === 'kpiSubmitted') {
@@ -528,19 +559,90 @@
         const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'CONFLICT').limit(80).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
-      } else if (type === 'kpiKadis') {
-        const snap = await window.db.collection('skpt_applications').where('status', '==', 'KADIS_REVIEW').limit(80).get();
+      } else if (type === 'kpiKadis' || type === 'kpiKadisPending') {
+        const snap = await window.db.collection('skpt_applications').where('status', '==', 'KADIS_REVIEW').limit(100).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
-      } else if (type === 'kpiTotalTraders') {
-        const snap = await window.db.collection('traders').where('status', '==', 'ACTIVE').limit(80).get();
+      } else if (type === 'kpiTotalTraders' || type === 'kpiKadisTraders') {
+        const snap = await window.db.collection('traders').limit(150).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
       } else if (type === 'kpiAnnual') {
         const snap = await window.db.collection('skpt_annual_validations').limit(80).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+      } else if (type === 'kpiMarketTraders' || type === 'kpiMarketPending' || type === 'kpiMarketVerified' || type === 'kpiMarketConflict') {
+        const assignedIds = context.assignedIds || (currentProfile?.marketIds ? currentProfile.marketIds : (currentProfile?.marketId ? [currentProfile.marketId] : []));
+        let claims = [];
+        if (assignedIds.length > 0) {
+          const snaps = await Promise.all(assignedIds.map(mId => window.db.collection('market_claims').where('marketId', '==', mId).limit(100).get()));
+          snaps.forEach(snap => snap.forEach(d => claims.push({ id: d.id, ...d.data() })));
+        } else {
+          const snap = await window.db.collection('market_claims').limit(80).get();
+          snap.forEach(d => claims.push({ id: d.id, ...d.data() }));
+        }
+        if (type === 'kpiMarketPending') {
+          currentKpiData = claims.filter(c => c.verificationStatus === 'UNVERIFIED');
+        } else if (type === 'kpiMarketVerified') {
+          currentKpiData = claims.filter(c => c.verificationStatus === 'VERIFIED');
+        } else if (type === 'kpiMarketConflict') {
+          currentKpiData = claims.filter(c => c.verificationStatus === 'CONFLICT');
+        } else {
+          currentKpiData = claims;
+        }
+      } else if (type === 'kpiKadisMarkets') {
+        let schedMap = {};
+        try {
+          if (window.EPASAR_CONFIG_SERVICE) {
+            const s = await window.EPASAR_CONFIG_SERVICE.getSettings();
+            schedMap = s?.marketsSchedule || {};
+          }
+        } catch (_) {}
+
+        const officialList = [
+          { id: 'MKT-001', name: 'Pasar Rakyat Bungi' },
+          { id: 'MKT-002', name: 'Pasar Rakyat Cempa' },
+          { id: 'MKT-003', name: 'Pasar Rakyat Kampung Jaya' },
+          { id: 'MKT-004', name: 'Pasar Rakyat Kariango' },
+          { id: 'MKT-005', name: 'Pasar Rakyat Langnga' },
+          { id: 'MKT-006', name: 'Pasar Rakyat Lanrisang' },
+          { id: 'MKT-007', name: 'Pasar Rakyat Leppangang' },
+          { id: 'MKT-008', name: 'Pasar Rakyat Marawi' },
+          { id: 'MKT-009', name: 'Pasar Rakyat Pekkabata' },
+          { id: 'MKT-010', name: 'Pasar Rakyat Sentral Pinrang' },
+          { id: 'MKT-011', name: 'Pasar Rakyat Teppo' }
+        ];
+
+        currentKpiData = officialList.map(m => {
+          const s = schedMap[m.id];
+          let isDaily = true;
+          let activeDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+          let scheduleText = 'Setiap Hari (Pasar Harian)';
+          let daysCount = 7;
+
+          if (typeof s === 'string') {
+            scheduleText = s;
+            isDaily = s.toLowerCase().includes('setiap');
+          } else if (s && typeof s === 'object') {
+            isDaily = s.isDaily !== false;
+            activeDays = Array.isArray(s.activeDays) && s.activeDays.length ? s.activeDays : (isDaily ? ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'] : []);
+            daysCount = isDaily ? 7 : activeDays.length;
+            scheduleText = isDaily ? 'Setiap Hari (Pasar Harian)' : (activeDays.join(', ') || 'Belum diatur');
+          }
+
+          return {
+            id: m.id,
+            name: m.name,
+            isDaily,
+            activeDays,
+            daysCount,
+            scheduleText
+          };
+        });
+      } else if (type === 'kpiPage') {
+        currentKpiData = [{ id: 'page-info', page: pageCursor, totalQueue: rawIntakeList.length }];
       }
+
       filterAndRenderAdminKpi();
     } catch (err) {
       console.error(err);
@@ -556,11 +658,12 @@
     const matching = currentKpiData.filter(item => {
       if (!term) return true;
       const snap = item.documentSnapshot || item.applicantSnapshot || {};
-      const name = String(item.displayName || snap.displayName || item.traderDisplayName || '').toLowerCase();
-      const num = String(item.number || item.registrationCode || item.traderId || '').toLowerCase();
-      const mName = String(snap.marketName || item.marketName || item.marketId || '').toLowerCase();
-      const uNum = String(snap.unitNumber || snap.claimedUnitNumber || item.unitNumber || item.submittedUnit || '').toLowerCase();
-      return name.includes(term) || num.includes(term) || mName.includes(term) || uNum.includes(term);
+      const name = String(item.displayName || snap.displayName || item.traderDisplayName || item.name || '').toLowerCase();
+      const num = String(item.number || item.registrationCode || item.traderId || item.id || '').toLowerCase();
+      const mName = String(snap.marketName || item.marketName || item.marketId || item.name || '').toLowerCase();
+      const uNum = String(snap.unitNumber || snap.claimedUnitNumber || item.unitNumber || item.claimedUnitNumber || item.submittedUnit || '').toLowerCase();
+      const sch = String(item.scheduleText || '').toLowerCase();
+      return name.includes(term) || num.includes(term) || mName.includes(term) || uNum.includes(term) || sch.includes(term);
     });
 
     countEl.textContent = `Menampilkan ${matching.length} dari ${currentKpiData.length} data`;
@@ -570,7 +673,7 @@
       return;
     }
 
-    if (currentKpiType === 'kpiIssued') {
+    if (currentKpiType === 'kpiIssued' || currentKpiType === 'kpiKadisIssued') {
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar & Unit</th><th>Nomor SKPT</th><th>Aksi Legalitas</th></tr></thead><tbody>${
         matching.map((r, i) => {
           const snap = r.documentSnapshot || {};
@@ -609,28 +712,95 @@
           <td><a href="#pendaftaran" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;" onclick="document.getElementById('adminKpiModal').hidden=true;">Periksa Berkas →</a></td>
         </tr>`).join('')
       }</tbody></table>`;
-    } else if (currentKpiType === 'kpiMarket') {
+    } else if (currentKpiType === 'kpiMarket' || currentKpiType === 'kpiMarketPending') {
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID Pedagang</th><th>Pasar</th><th>Unit Diklaim</th><th>Status Verifikasi</th><th>Aksi</th></tr></thead><tbody>${
         matching.map((r, i) => `<tr>
           <td>${i + 1}</td>
-          <td><b>${esc(r.traderDisplayName || r.traderId)}</b><br><small>Klaim ID: ${esc(r.id)}</small></td>
+          <td><b>${esc(r.traderDisplayName || r.traderId)}</b><br><small>Usaha: ${esc(r.businessName || 'Perdagangan')}</small></td>
           <td>${esc(r.marketId)}</td>
-          <td>${esc(r.claimedUnitType || r.unitType)} ${esc(r.claimedUnitNumber || r.submittedUnit)}</td>
-          <td><span class="db-badge db-badge-warning">${esc(r.verificationStatus)}</span></td>
+          <td>${esc(r.claimedUnitType || r.unitType || 'KIOS')} ${esc(r.claimedUnitNumber || r.unitNumber || '—')}</td>
+          <td><span class="db-badge db-badge-warning">${esc(r.verificationStatus || 'UNVERIFIED')}</span></td>
           <td><a href="market-verification.html" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Buka Verifikasi →</a></td>
         </tr>`).join('')
       }</tbody></table>`;
-    } else if (currentKpiType === 'kpiKadis') {
-      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID Permohonan</th><th>Pemohon</th><th>Pasar & Unit</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${
+    } else if (currentKpiType === 'kpiMarketVerified') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Unit Usaha</th><th>Luas</th><th>Status Tempat</th><th>Aksi</th></tr></thead><tbody>${
+        matching.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><b>${esc(r.traderDisplayName || r.traderId)}</b><br><small>${esc(r.businessName || 'Usaha Sah')}</small></td>
+          <td>${esc(r.claimedUnitType || r.unitType || 'KIOS')} ${esc(r.claimedUnitNumber || r.unitNumber || '—')}</td>
+          <td>${esc(r.claimedAreaM2 || r.areaM2 || '8')} m²</td>
+          <td><span class="db-badge db-badge-success">VERIFIED · SAH</span></td>
+          <td><a href="market-verification.html" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Rincian Fisik →</a></td>
+        </tr>`).join('')
+      }</tbody></table>`;
+    } else if (currentKpiType === 'kpiConflict' || currentKpiType === 'kpiMarketConflict') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Unit Sengketa</th><th>Pedagang Pengklaim</th><th>Pasar</th><th>Status</th><th>Aksi Mediasi</th></tr></thead><tbody>${
+        matching.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><b>${esc(r.claimedUnitType || r.unitType || 'Unit')} ${esc(r.claimedUnitNumber || r.unitNumber || '—')}</b></td>
+          <td>${esc(r.traderDisplayName || r.traderId)}<br><small>Klaim ID: ${esc(r.id)}</small></td>
+          <td>${esc(r.marketId)}</td>
+          <td><span class="db-badge db-badge-danger" style="background:#fee2e2;color:#991b1b;">SENGKETA / KONFLIK</span></td>
+          <td><a href="market-verification.html" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Tindak Lanjuti →</a></td>
+        </tr>`).join('')
+      }</tbody></table>`;
+    } else if (currentKpiType === 'kpiKadis' || currentKpiType === 'kpiKadisPending') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID Permohonan</th><th>Pemohon</th><th>Pasar & Unit</th><th>Status</th><th>Aksi Pengesahan</th></tr></thead><tbody>${
         matching.map((r, i) => `<tr>
           <td>${i + 1}</td>
           <td><b>${esc(r.id)}</b><br><small>Pedagang: ${esc(r.traderId)}</small></td>
-          <td>${esc(r.applicantSnapshot?.displayName || 'Pemohon')}<br><small>${esc(r.applicantSnapshot?.businessName || '')}</small></td>
-          <td>${esc(r.applicantSnapshot?.marketName || r.marketId)}<br><small>${esc(r.applicantSnapshot?.claimedUnitType)} ${esc(r.applicantSnapshot?.claimedUnitNumber)}</small></td>
+          <td>${esc(r.applicantSnapshot?.displayName || r.traderDisplayName || 'Pemohon')}<br><small>${esc(r.applicantSnapshot?.businessName || '')}</small></td>
+          <td>${esc(r.applicantSnapshot?.marketName || r.marketId)}<br><small>${esc(r.applicantSnapshot?.claimedUnitType || r.unitType)} ${esc(r.applicantSnapshot?.claimedUnitNumber || r.unitNumber)}</small></td>
           <td><span class="db-badge db-badge-info">SIAP KEPUTUSAN</span></td>
-          <td><a href="kadis-approval.html" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Buka Ruang Kadis →</a></td>
+          <td><a href="kadis-approval.html?id=${encodeURIComponent(r.id)}" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Tinjau & Setujui Kadis →</a></td>
         </tr>`).join('')
       }</tbody></table>`;
+    } else if (currentKpiType === 'kpiKadisMarkets') {
+      bodyEl.innerHTML = `
+        <div style="margin-bottom:12px; font-size:0.78rem; color:#475569; background:#f0f9ff; border:1px solid #bae6fd; padding:10px 14px; border-radius:10px;">
+          🏢 <b>Master 11 Pasar Resmi Kabupaten Pinrang</b> — Data hari pasar aktif tersimpan secara terstruktur (checklist) sebagai basis penarikan retribusi daerah ke depan.
+        </div>
+        <table class="db-popup-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Kode Pasar</th>
+              <th>Nama Pasar Rakyat</th>
+              <th>Pola Operasional</th>
+              <th>Hari Pasar Aktif</th>
+              <th>Hari/Pekan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${matching.map((r, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><span style="font-family:monospace; font-weight:700; color:#0369a1;">${esc(r.id)}</span></td>
+                <td><b>${esc(r.name)}</b></td>
+                <td><span class="db-badge ${r.isDaily ? 'db-badge-success' : 'db-badge-info'}">${r.isDaily ? 'PASAR HARIAN' : 'HARI TERTENTU'}</span></td>
+                <td><span style="font-size:0.78rem; font-weight:600; color:#1e293b;">${esc(r.scheduleText)}</span></td>
+                <td><b style="color:#0284c7;">${r.daysCount} Hari</b><br><small style="color:#64748b;">per minggu</small></td>
+                <td><a href="admin-kustomisasi.html" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">⚙️ Kelola Jadwal</a></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    } else if (currentKpiType === 'kpiPage') {
+      bodyEl.innerHTML = `
+        <div style="padding:20px; text-align:center;">
+          <div style="font-size:2.5rem; margin-bottom:10px;">📑</div>
+          <h3 style="margin:0 0 8px; color:#1e3a5f;">Navigasi Antrean Pendaftaran Pedagang</h3>
+          <p style="color:#64748b; font-size:0.85rem; max-width:480px; margin:0 auto 16px;">
+            Saat ini Anda berada di halaman antrean pendaftaran pedagang baru. Sistem menampilkan data berkas secara bertahap (pagination) untuk efisiensi koneksi jaringan.
+          </p>
+          <div style="display:flex; justify-content:center; gap:10px;">
+            <button class="button primary" type="button" onclick="document.getElementById('adminKpiModal').hidden=true; document.getElementById('pendaftaran').scrollIntoView({behavior:'smooth'});">Buka Antrean Berkas Pendaftaran ↓</button>
+          </div>
+        </div>
+      `;
     } else {
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID</th><th>Nama</th><th>Pasar</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${
         matching.map((r, i) => `<tr>
@@ -653,7 +823,8 @@
       { id: 'kpiConflict', type: 'kpiConflict' },
       { id: 'kpiKadis', type: 'kpiKadis' },
       { id: 'kpiIssued', type: 'kpiIssued' },
-      { id: 'kpiAnnual', type: 'kpiAnnual' }
+      { id: 'kpiAnnual', type: 'kpiAnnual' },
+      { id: 'kpiPage', type: 'kpiPage' }
     ];
 
     kpis.forEach(item => {

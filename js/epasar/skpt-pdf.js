@@ -121,9 +121,23 @@
       const issueYear = new Date(d.issueDate).getFullYear();
       const number = String(d.number || '-');
       const verificationUrl = `${location.origin}/verifikasi-skpt.html?token=${encodeURIComponent(actualToken)}`;
-      const tteLabel = d.tteStatus === 'SIGNED' ? 'DITANDATANGANI ELEKTRONIK' : d.tteStatus === 'UAT_SIMULATED' ? 'UJI COBA · TTE SIMULASI' : d.tteStatus === 'NOT_INTEGRATED' ? 'PERSETUJUAN KADIS TERCATAT · TTE BELUM TERINTEGRASI' : d.tteStatus === 'REGISTERED_MANUAL' ? 'TERDAFTAR · PENGESAHAN MANUAL' : 'MENUNGGU PENGESAHAN';
+      const isManualMode = configSigner.tteMode === 'MANUAL_UPLOAD' || d.tteStatus === 'REGISTERED_MANUAL';
+      const manualSigImg = configSigner.manualSignatureImage || null;
+      const tteLabel = isManualMode
+        ? 'DITANDATANGANI SECARA RESMI / PENGESAHAN KEPALA DINAS'
+        : (d.tteStatus === 'SIGNED' ? 'DITANDATANGANI ELEKTRONIK' : d.tteStatus === 'UAT_SIMULATED' ? 'UJI COBA · TTE SIMULASI' : d.tteStatus === 'NOT_INTEGRATED' ? 'PERSETUJUAN KADIS TERCATAT · TTE BELUM TERINTEGRASI' : d.tteStatus === 'REGISTERED_MANUAL' ? 'TERDAFTAR · PENGESAHAN MANUAL' : 'MENUNGGU PENGESAHAN');
       const isTrainingDocument = d.isDemo === true || ['TEST','INTERNAL_UAT','TRAINING','DEMO'].includes(String(d.environment || '').toUpperCase());
       const dummyTte = isTrainingDocument ? `<div class="dummy-tte" aria-label="QR simulasi tanda tangan elektronik Kepala Dinas"><div id="dummyTteQr" class="dummy-tte-qr branded-qr"></div><div class="dummy-tte-copy"><strong>SIMULASI TTE</strong><span>${esc(signer.name)}</span><small>Kepala Dinas · Dokumen latihan</small><small>Ref. ${esc(d.officialReference || actualToken.slice(0,16))}</small></div></div>` : '';
+      
+      let signatureAreaHtml = '';
+      if (isManualMode && manualSigImg) {
+        signatureAreaHtml = `<div class="official-manual-signature" style="text-align:center; padding: 2px 0;"><img src="${manualSigImg}" alt="Tanda Tangan & Stempel Dinas" style="max-height: 80px; max-width: 230px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"></div>`;
+      } else if (dummyTte) {
+        signatureAreaHtml = dummyTte;
+      } else {
+        signatureAreaHtml = '<div style="height: 60px;"></div>';
+      }
+
       const annual = Array.isArray(d.annualValidations) ? d.annualValidations : [{year:issueYear,status:'INITIAL_ISSUE'},{year:issueYear+1,status:'DUE'}];
       const annualCell = (item, fallbackYear) => { const labels = {VALIDATED:'DISAHKAN',INITIAL_ISSUE:'PENERBITAN AWAL',DUE:'MENUNGGU PEMERIKSAAN',RETURNED:'DIKEMBALIKAN'}; const status = labels[item?.status] || 'BELUM TERCATAT'; return `<span>Tahun ${esc(item?.year || fallbackYear)}<small class="annual-status ${item?.status === 'DUE' || item?.status === 'RETURNED' ? 'due' : ''}">${status}</small></span>`; };
       const photoUrl = await publicPhoto(d.photoMediaToken, s.photoUrl || (d.isDemo ? 'assets/uat/pedagang-contoh-3x4.jpg' : ''));
@@ -141,7 +155,7 @@
           <p><b>D.</b> Pelanggaran terhadap Pasal 20, Pasal 22, dan Pasal 27 ayat (1) dapat dikenai sanksi administratif sesuai Pasal 30 Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024.</p>
           <p><b>E.</b> SKPT berlaku selama 2 (dua) tahun sejak ${dateId(d.issueDate)} sampai dengan ${dateId(d.validUntil)} dan dapat diperpanjang melalui permohonan periode berikutnya sesuai prosedur yang berlaku.</p>
         </section>
-        <section class="document-footer-grid"><div class="register-box"><b>CATATAN<br>ADMINISTRASI DIGITAL</b>${annualCell(annual[0],issueYear)}${annualCell(annual[1],issueYear+1)}</div><div class="signature-block"><div>Pinrang, ${dateId(d.issueDate)}</div><div>${esc(signer.authority)}<br>${esc(signer.position)}</div><div class="signature-space">${dummyTte}</div><b><u>${esc(signer.name)}</u></b><br>${esc(signer.rank)}<br>NIP. ${esc(signer.nip)}</div></section>
+        <section class="document-footer-grid"><div class="register-box"><b>CATATAN<br>ADMINISTRASI DIGITAL</b>${annualCell(annual[0],issueYear)}${annualCell(annual[1],issueYear+1)}</div><div class="signature-block"><div>Pinrang, ${dateId(d.issueDate)}</div><div>${esc(signer.authority)}<br>${esc(signer.position)}</div><div class="signature-space">${signatureAreaHtml}</div><b><u>${esc(signer.name)}</u></b><br>${esc(signer.rank)}<br>NIP. ${esc(signer.nip)}</div></section>
         <section class="document-verification"><div id="qr" class="document-qr-code branded-qr"></div><div class="document-verification-details"><span class="document-status">${esc(tteLabel)}</span><br><b>Verifikasi dokumen</b><br>Nomor: ${esc(number)}<br><span class="document-hash">SHA-256: ${esc(dHash)}</span><br>Referensi: ${esc(d.officialReference || actualToken.slice(0,16))}<br>Berlaku sampai: ${dateId(d.validUntil)}</div>${photoBlock}</section>
         <p class="document-disclaimer">SKPT ini merupakan keterangan administratif pemakaian tempat usaha dan bukan bukti kepemilikan hak atas tanah atau bangunan. Keaslian dan status dokumen diperiksa melalui QR resmi e-PASAR.</p>`;
       if (window.QRCode) {
