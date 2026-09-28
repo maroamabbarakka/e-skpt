@@ -18,18 +18,19 @@
     el.hidden = !text;
   }
 
-  // Menghitung estimasi retribusi bulanan sesuai jenis unit (Simulasi Tarif Perda Pinrang No. 6 Tahun 2024)
-  function calculateRetribution(unitType, areaM2) {
-    const type = String(unitType || '').toUpperCase();
-    let dailyRate = 1000;
-    if (type === 'KIOS') dailyRate = 2500;
-    else if (type === 'LOS') dailyRate = 1500;
-    else if (type === 'LAPAK') dailyRate = 1000;
-    else if (type === 'PELATARAN') dailyRate = 500;
-    
-    // Faktor luas jika tersedia
-    if (areaM2 && areaM2 > 10) dailyRate += Math.round((areaM2 - 10) * 100);
-    return dailyRate * 30; // 30 hari operasional
+  // Mendapatkan jadwal operasional pasar dinamis dari konfigurasi sistem
+  function getMarketSchedule(marketId, marketName) {
+    if (window.EPASAR_CONFIG_SERVICE && typeof window.EPASAR_CONFIG_SERVICE.getMarketSchedule === 'function') {
+      return window.EPASAR_CONFIG_SERVICE.getMarketSchedule(marketId, marketName, currentAppSettings);
+    }
+    const name = String(marketName || '').toLowerCase();
+    if (name.includes('sentral')) return 'Pasar Harian (Setiap Hari)';
+    if (name.includes('kariango')) return 'Pasar Mingguan (Senin & Kamis)';
+    if (name.includes('pekkabata')) return 'Pasar Mingguan (Minggu & Rabu)';
+    if (name.includes('teppo')) return 'Pasar Mingguan (Rabu & Sabtu)';
+    if (name.includes('batulappa')) return 'Pasar Mingguan (Selasa & Jumat)';
+    if (name.includes('bungi')) return 'Pasar Mingguan (Rabu & Sabtu)';
+    return 'Pasar Berkala / Mingguan';
   }
 
   const getDb = () => {
@@ -38,8 +39,15 @@
     throw new Error('Koneksi Firestore belum siap.');
   };
 
+  let currentAppSettings = null;
+
   async function loadDatabase(profile) {
     notice('Mengumpulkan master database pedagang dan lokasi pasar…');
+    if (window.EPASAR_CONFIG_SERVICE && typeof window.EPASAR_CONFIG_SERVICE.getSettings === 'function') {
+      try {
+        currentAppSettings = await window.EPASAR_CONFIG_SERVICE.getSettings();
+      } catch (_) {}
+    }
     const isMarketHead = profile.role === 'MARKET_HEAD';
     let assignedIds = [];
     if (isMarketHead) {
@@ -145,7 +153,7 @@
         const floor = claim.claimedFloor || claim.floor || '1';
         const areaM2 = claim.claimedAreaM2 ?? claim.areaM2 ?? 8;
         const monthlyRevenue = business.monthlyRevenue || 10000000;
-        const monthlyRetribution = calculateRetribution(unitType, areaM2);
+        const operatingSchedule = getMarketSchedule(claim.marketId, marketName);
 
         const hasSkpt = Boolean(skptDoc.verificationToken || app.status === 'ISSUED' || skptDoc.status === 'ISSUED');
         const skptNumber = skptDoc.number || app.skptNumber || app.number || (hasSkpt ? (skptDoc.number || `SKPT-PIN-${String(claim.marketId || '').slice(-3)}-${traderId.slice(-4)}`) : '—');
@@ -173,7 +181,7 @@
           block,
           floor,
           areaM2,
-          monthlyRetribution,
+          operatingSchedule,
           verificationStatus: claim.verificationStatus || 'UNVERIFIED',
           skptStatus: app.status || (hasSkpt ? 'ISSUED' : 'BELUM_PENGAJUAN'),
           skptNumber,
@@ -214,7 +222,7 @@
               block: '—',
               floor: '—',
               areaM2: 0,
-              monthlyRetribution: 0,
+              operatingSchedule: 'Mandiri (Luar Kawasan Pasar)',
               verificationStatus: 'TERDATA',
               skptStatus: 'TIDAK_MEMERLUKAN',
               skptNumber: '—',
@@ -308,13 +316,16 @@
     const totalUnits = filteredRecords.filter(r => r.marketId !== 'NON_MARKET').length;
     const totalArea = filteredRecords.reduce((sum, r) => sum + (Number(r.areaM2) || 0), 0);
     const totalOmzet = filteredRecords.reduce((sum, r) => sum + (Number(r.monthlyRevenue) || 0), 0);
-    const totalRetribusi = filteredRecords.reduce((sum, r) => sum + (Number(r.monthlyRetribution) || 0), 0);
+    const marketCount = new Set(filteredRecords.map(r => r.marketId).filter(id => id !== 'NON_MARKET')).size;
 
     document.getElementById('kpiTraders').textContent = totalTraders.toLocaleString('id-ID');
     document.getElementById('kpiUnits').textContent = totalUnits.toLocaleString('id-ID');
     document.getElementById('kpiArea').textContent = totalArea.toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' m²';
     document.getElementById('kpiOmzet').textContent = formatRupiah(totalOmzet);
-    document.getElementById('kpiRetribusi').textContent = formatRupiah(totalRetribusi);
+    const scheduleEl = document.getElementById('kpiSchedule') || document.getElementById('kpiRetribusi');
+    if (scheduleEl) {
+      scheduleEl.textContent = `${marketCount} Pasar`;
+    }
   }
 
   function renderTable() {
@@ -343,7 +354,9 @@
       else if (row.skptStatus === 'REJECTED') skptBadge = '<span class="db-badge db-badge-danger">Ditolak</span>';
 
       const unitInfo = row.marketId === 'NON_MARKET' ? '—' : `${esc(row.unitType)} ${esc(row.unitNumber)}<br><small>Blok ${esc(row.block)} · Lt. ${esc(row.floor)} · ${row.areaM2} m²</small>`;
-      const retributionInfo = row.marketId === 'NON_MARKET' ? '—' : `<b>${formatRupiah(row.monthlyRetribution)}</b><br><small>per bulan</small>`;
+      const scheduleInfo = row.marketId === 'NON_MARKET'
+        ? '<span class="db-badge db-badge-neutral" style="font-size:0.68rem;">Mandiri</span>'
+        : `<span class="db-badge db-badge-info" style="font-size:0.68rem; padding:3px 8px; white-space:nowrap;">🗓️ ${esc(row.operatingSchedule)}</span><br><small style="color:#64748b; font-size:0.68rem;">Intensitas Hari Aktif</small>`;
 
       return `<tr>
         <td>${no}</td>
@@ -363,7 +376,7 @@
         </td>
         <td>${unitInfo}</td>
         <td>${skptBadge}</td>
-        <td>${retributionInfo}</td>
+        <td>${scheduleInfo}</td>
         <td>${statusBadge}</td>
         <td class="no-print">
           <button class="button secondary" style="min-height:32px;padding:4px 10px;font-size:0.7rem" onclick="window.EPASAR_DB.viewDetail('${esc(row.traderId)}', '${esc(row.claimId)}')">Rincian</button>
@@ -449,7 +462,7 @@
       'Blok',
       'Lantai',
       'Luas (m2)',
-      'Estimasi Retribusi Bulanan (Rp)',
+      'Jadwal Operasional Pasar',
       'Status Verifikasi Fisik',
       'Status SKPT',
       'Nomor SKPT',
@@ -472,7 +485,7 @@
       `"${r.block}"`,
       `"${r.floor}"`,
       r.areaM2,
-      r.monthlyRetribution,
+      `"${r.operatingSchedule}"`,
       `"${r.verificationStatus}"`,
       `"${r.skptStatus}"`,
       `"${r.skptNumber}"`,
@@ -492,7 +505,7 @@
     URL.revokeObjectURL(url);
   }
 
-  // EKSPOR KE JSON (UNTUK PEMETAAN SPASIAL / RETRIBUSI)
+  // EKSPOR KE JSON (UNTUK PEMETAAN SPASIAL / GIS)
   function exportJson() {
     if (!filteredRecords.length) {
       alert('Tidak ada data pedagang yang dapat diekspor.');
@@ -525,7 +538,8 @@
           blok: r.block,
           lantai: r.floor,
           luasM2: r.areaM2,
-          retribusiBulananEstimasi: r.monthlyRetribution
+          jadwalOperasional: r.operatingSchedule,
+          ketentuanRetribusi: 'Mengikuti intensitas hari pasar aktif sesuai Perda Pajak & Retribusi Daerah'
         },
         legalitasSkpt: {
           status: r.skptStatus,
@@ -541,7 +555,7 @@
     const link = document.createElement('a');
     const timeStamp = new Date().toISOString().slice(0, 10);
     link.href = url;
-    link.setAttribute('download', `SPASIAL_RETRIBUSI_PEDAGANG_${timeStamp}.json`);
+    link.setAttribute('download', `SPASIAL_PEDAGANG_PINRANG_${timeStamp}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -645,7 +659,10 @@
     document.getElementById('modalUnit').textContent = `${record.unitType} ${record.unitNumber} (Blok ${record.block}, Lt. ${record.floor})`;
     document.getElementById('modalArea').textContent = `${record.areaM2} m²`;
     document.getElementById('modalRevenue').textContent = formatRupiah(record.monthlyRevenue);
-    document.getElementById('modalRetribution').textContent = `${formatRupiah(record.monthlyRetribution)} / bulan (Perda No. 6/2024)`;
+    const modalDaysEl = document.getElementById('modalMarketDays');
+    if (modalDaysEl) modalDaysEl.textContent = record.operatingSchedule || 'Jadwal Reguler';
+    const modalRetEl = document.getElementById('modalRetribution');
+    if (modalRetEl) modalRetEl.textContent = 'Mengikuti intensitas hari pasar aktif sesuai Perda Pajak & Retribusi Daerah';
     document.getElementById('modalSkpt').textContent = record.hasSkpt ? record.skptNumber : record.skptStatus;
     document.getElementById('modalVerification').textContent = record.verificationStatus;
 
@@ -697,7 +714,7 @@
       units: { title: 'Sebaran Unit Tempat Usaha', subtitle: 'INVENTARIS FISIK PASAR' },
       area: { title: 'Pemanfaatan Luas Area Produktif', subtitle: 'ANALISIS SPASIAL PASAR' },
       omzet: { title: 'Estimasi Perputaran Omzet Pedagang', subtitle: 'INDIKATOR EKONOMI DAERAH' },
-      retribusi: { title: 'Proyeksi Pendapatan Asli Daerah (Retribusi)', subtitle: 'TARGET PERDA NO. 6 TAHUN 2024' }
+      schedule: { title: 'Sebaran Jadwal Hari Operasional Pasar', subtitle: 'HARI PASAR AKTIF KABUPATEN PINRANG' }
     };
 
     const cfg = titles[type] || titles.traders;
@@ -731,9 +748,9 @@
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar</th><th>Unit</th><th>Blok / Lt</th><th>Luas</th><th>Status Tempat</th></tr></thead><tbody>${
         matching.slice(0, 100).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.displayName)}</b><br><small>${esc(r.traderId)}</small></td><td>${esc(r.marketName)}</td><td><span class="db-badge db-badge-info">${esc(r.unitType)} ${esc(r.unitNumber)}</span></td><td>Blok ${esc(r.block)} · Lt. ${esc(r.floor)}</td><td>${r.areaM2} m²</td><td><span class="db-badge ${r.verificationStatus === 'VERIFIED' ? 'db-badge-success' : 'db-badge-warning'}">${esc(r.verificationStatus)}</span></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">Tidak ada data yang cocok.</td></tr>'
       }</tbody></table>`;
-    } else if (activeKpiType === 'retribusi') {
-      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar</th><th>Unit</th><th>Tarif Bulanan</th><th>Legalitas SKPT</th><th>Aksi</th></tr></thead><tbody>${
-        matching.slice(0, 100).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.displayName)}</b><br><small>${esc(r.businessName)}</small></td><td>${esc(r.marketName)}</td><td>${esc(r.unitType)} ${esc(r.unitNumber)} (${r.areaM2} m²)</td><td><b style="color:#094eb8;">${formatRupiah(r.monthlyRetribution)}</b>/bln</td><td><span class="db-badge ${r.hasSkpt ? 'db-badge-success' : 'db-badge-neutral'}">${r.hasSkpt ? 'SKPT Terbit' : 'Belum Ada'}</span></td><td><button class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;" onclick="window.EPASAR_DB.viewDetail('${esc(r.traderId)}', '${esc(r.claimId)}')">Detail</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">Tidak ada data yang cocok.</td></tr>'
+    } else if (activeKpiType === 'schedule') {
+      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar</th><th>Unit</th><th>Jadwal Operasional</th><th>Legalitas SKPT</th><th>Aksi</th></tr></thead><tbody>${
+        matching.slice(0, 100).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.displayName)}</b><br><small>${esc(r.businessName)}</small></td><td>${esc(r.marketName)}</td><td>${esc(r.unitType)} ${esc(r.unitNumber)} (${r.areaM2} m²)</td><td><span class="db-badge db-badge-info" style="font-size:0.68rem; padding:3px 8px;">🗓️ ${esc(r.operatingSchedule)}</span></td><td><span class="db-badge ${r.hasSkpt ? 'db-badge-success' : 'db-badge-neutral'}">${r.hasSkpt ? 'SKPT Terbit' : 'Belum Ada'}</span></td><td><button class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;" onclick="window.EPASAR_DB.viewDetail('${esc(r.traderId)}', '${esc(r.claimId)}')">Detail</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">Tidak ada data yang cocok.</td></tr>'
       }</tbody></table>`;
     } else {
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Nama Pedagang</th><th>Usaha & Komoditas</th><th>Pasar</th><th>Unit</th><th>Legalitas e-SKPT</th><th>Aksi</th></tr></thead><tbody>${
@@ -782,7 +799,7 @@
     if (kpiCards[1]) kpiCards[1].addEventListener('click', () => openKpiModal('units'));
     if (kpiCards[2]) kpiCards[2].addEventListener('click', () => openKpiModal('area'));
     if (kpiCards[3]) kpiCards[3].addEventListener('click', () => openKpiModal('omzet'));
-    if (kpiCards[4]) kpiCards[4].addEventListener('click', () => openKpiModal('retribusi'));
+    if (kpiCards[4]) kpiCards[4].addEventListener('click', () => openKpiModal('schedule'));
 
     // Modal KPI Controls
     const closeKpiModal = () => { document.getElementById('kpiModal').hidden = true; };

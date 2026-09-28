@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Kustomisasi Sistem | e-PASAR Pinrang</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/internal-ui.css">
+  <style>
+    .custom-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding-bottom: 60px;
+    }
+    .custom-tabs {
+      display: flex;
+      gap: 6px;
+      background: #e2e8f0;
+      padding: 6px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .custom-tab-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #475569;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .custom-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.6);
+      color: #0f172a;
+    }
+    .custom-tab-btn.active {
+      background: #ffffff;
+      color: #094eb8;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .custom-tab-pane {
+      display: none;
+    }
+    .custom-tab-pane.active {
+      display: block;
+    }
+    .custom-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+    }
+    .custom-section-head {
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .custom-section-head h2 {
+      margin: 0 0 4px;
+      font-size: 1.25rem;
+      color: #0f172a;
+    }
+    .custom-section-head p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: #64748b;
+    }
+    .custom-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px 24px;
+    }
+    .custom-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .custom-field.full-width {
+      grid-column: 1 / -1;
+    }
+    .custom-field label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    .custom-field small {
+      font-size: 0.7rem;
+      color: #64748b;
+    }
+    .custom-field input, .custom-field select, .custom-field textarea {
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #0f172a;
+      transition: border-color 0.2s;
+    }
+    .custom-field input:focus, .custom-field select:focus, .custom-field textarea:focus {
+      outline: none;
+      border-color: #094eb8;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(9, 78, 184, 0.12);
+    }
+    
+    /* Live Card Preview Box */
+    .card-preview-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      align-items: flex-start;
+      margin-top: 14px;
+    }
+    .card-preview-stage {
+      flex: 1;
+      min-width: 320px;
+      background: #f1f5f9;
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #cbd5e1;
+    }
+    .live-trader-card {
+      width: 340px;
+      min-height: 200px;
+      border-radius: 12px;
+      padding: 16px 18px;
+      color: #ffffff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      position: relative;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+    .theme-navy {
+      background: linear-gradient(135deg, #094eb8 0%, #032b69 100%);
+    }
+    .theme-emerald {
+      background: linear-gradient(135deg, #059669 0%, #064e3b 100%);
+    }
+    .theme-gold {
+      background: linear-gradient(135deg, #d97706 0%, #78350f 100%);
+    }
+    .theme-dark {
+      background: linear-gradient(135deg, #334155 0%, #0f172a 100%);
+    }
+    .live-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .live-card-head img {
+      width: 32px;
+      height: 38px;
+      object-fit: contain;
+    }
+    .live-card-head div strong {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+    }
+    .live-card-head div small {
+      font-size: 0.62rem;
+      opacity: 0.85;
+    }
+    .live-card-body {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .live-card-photo {
+      width: 58px;
+      height: 72px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      text-align: center;
+    }
+    .live-card-info {
+      flex: 1;
+    }
+    .live-card-info h4 {
+      margin: 0 0 2px;
+      font-size: 0.95rem;
+    }
+    .live-card-info p {
+      margin: 0;
+      font-size: 0.7rem;
+      opacity: 0.9;
+    }
+    .live-card-qr {
+      width: 48px;
+      height: 48px;
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0f172a;
+      font-size: 0.55rem;
+      font-weight: 700;
+    }
+    .theme-picker-grid {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .theme-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.2s;
+    }
+    .theme-swatch:hover {
+      transform: scale(1.08);
+    }
+    .theme-swatch.active {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 2px #ffffff;
+    }
+
+    /* Tabel Jadwal Pasar Dinamis */
+    .market-schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 10px;
+    }
+    .market-schedule-table th {
+      background: #f8fafc;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid #e2e8f0;
+      color: #475569;
+    }
+    .market-schedule-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .btn-action-icon {
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: #ef4444;
+      transition: all 0.2s;
+    }
+    .btn-action-icon:hover {
+      background: #fee2e2;
+      border-color: #f87171;
+    }
+
+    /* Fixed Action Bar di Bawah */
+    .custom-action-bar {
+      position: sticky;
+      bottom: 20px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+      z-index: 50;
+      margin-top: 30px;
+    }
+    .custom-status-msg {
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+<main class="admin-shell">
+  <div class="custom-container">
+    <header class="admin-head" style="margin-bottom: 20px;">
+      <div>
+        <p class="eyebrow">PENGATURAN TINGKAT TINGGI · SUPER ADMIN & KADIS</p>
+        <h1>Kustomisasi Sistem & Aplikasi</h1>
+        <p class="admin-user">Kelola seluruh parameter dinamis aplikasi tanpa perlu merubah kode pemrograman: Pejabat & TTE Kadis, Desain Kartu Pedagang, Frontpage Publik, dan Pengaturan Jadwal Hari Pasar.</p>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="btnReloadConfig" class="button secondary" type="button" style="min-height:38px;">🔄 Muat Ulang</button>
+        <button id="btnSaveConfigTop" class="button primary" type="button" style="min-height:38px;">💾 Simpan Pengaturan</button>
+      </div>
+    </header>
+
+    <div id="customNotice" class="admin-message" hidden></div>
+
+    <!-- TAB NAVIGASI KUSTOMISASI -->
+    <nav class="custom-tabs" aria-label="Tab Pengaturan Kustomisasi">
+      <button class="custom-tab-btn active" data-tab="tab-kadis" type="button">
+        ✒️ Pejabat & TTE Kadis
+      </button>
+      <button class="custom-tab-btn" data-tab="tab-card" type="button">
+        🪪 Desain Kartu Pedagang
+      </button>
+      <button class="custom-tab-btn" data-tab="tab-frontpage" type="button">
+        🌐 Edit Frontpage Portal
+      </button>
+      <button class="custom-tab-btn" data-tab="tab-markets" type="button">
+        🗓️ Jadwal Operasional Pasar
+      </button>
+      <button class="custom-tab-btn" data-tab="tab-legal" type="button">
+        ⚖️ Regulasi & Dasar Hukum
+      </button>
+    </nav>
+
+    <form id="customForm">
+
+      <!-- TAB 1: PEJABAT & TTE KADIS -->
+      <section id="tab-kadis" class="custom-section custom-tab-pane active">
+        <div class="custom-section-head">
+          <h2>Pejabat Penandatangan & TTE Kepala Dinas</h2>
+          <p>Data pejabat berwenang yang akan dicantumkan secara otomatis pada Surat Keterangan Pemakaian Tempat (SKPT) dan dokumen resmi.</p>
+        </div>
+        <div class="custom-form-grid">
+          <div class="custom-field">
+            <label for="kadisName">Nama Lengkap & Gelar Kepala Dinas</label>
+            <input id="kadisName" type="text" required placeholder="MUHAMMAD YUSUF NUR, S.STP">
+            <small>Nama lengkap beserta gelar akademik/kedinasan.</small>
+          </div>
+          <div class="custom-field">
+            <label for="kadisNip">Nomor Induk Pegawai (NIP)</label>
+            <input id="kadisNip" type="text" required placeholder="19800326 200003 1 001">
+            <small>Format 18 digit NIP resmi aparatur sipil negara.</small>
+          </div>
+          <div class="custom-field">
+            <label for="kadisRank">Pangkat / Golongan Ruang</label>
+            <input id="kadisRank" type="text" placeholder="Pembina Tingkat I (IV/b)">
+            <small>Contoh: Pembina Tk. I (IV/b), Pembina Utama Muda (IV/c)</small>
+          </div>
+          <div class="custom-field">
+            <label for="kadisPosition">Jabatan Kedinasan</label>
+            <input id="kadisPosition" type="text" required placeholder="Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral">
+            <small>Jabatan resmi pimpinan instansi penerbit SKPT.</small>
+          </div>
+          <div class="custom-field">
+            <label for="kadisAuthority">Kewenangan Penandatanganan (Atas Nama)</label>
+            <input id="kadisAuthority" type="text" placeholder="a.n. BUPATI PINRANG">
+            <small>Frasa pelimpahan wewenang tanda tangan dari Bupati.</small>
+          </div>
+          <div class="custom-field">
+            <label for="tteMode">Mode Sertifikasi Tanda Tangan Elektronik (TTE)</label>
+            <select id="tteMode">
+              <option value="UAT_SIMULATED">Simulasi Sertifikasi BSrE (UAT Sandbox)</option>
+              <option value="BSRE_INTEGRATED">Integrasi Balai Sertifikasi Elektronik (BSSN / BSrE)</option>
+              <option value="REGISTERED_DIGITAL">Sertifikasi TTE Terdaftar Dinas (Cryptographic QR)</option>
+            </select>
+            <small>Pilih arsitektur pengesahan tanda tangan elektronik aktif.</small>
+          </div>
+          <div class="custom-field full-width">
+            <label for="tteNotice">Frasa Notifikasi TTE pada Dokumen</label>
+            <input id="tteNotice" type="text" placeholder="Telah ditandatangani secara elektronik menggunakan sertifikat digital terverifikasi">
+            <small>Keterangan resmi yang dicetak pada cap TTE digital.</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: DESAIN KARTU PEDAGANG -->
+      <section id="tab-card" class="custom-section custom-tab-pane" style="display:none;">
+        <div class="custom-section-head">
+          <h2>Kustomisasi Desain Kartu Identitas Pedagang</h2>
+          <p>Sesuaikan tampilan visual kartu pedagang resmi Kabupaten Pinrang dengan pratinjau langsung (Live Preview).</p>
+        </div>
+        <div class="card-preview-wrap">
+          <div style="flex: 1.2; min-width: 300px;">
+            <div class="custom-form-grid">
+              <div class="custom-field full-width">
+                <label>Tema Warna Kartu</label>
+                <div class="theme-picker-grid">
+                  <div class="theme-swatch theme-navy active" data-theme="navy" title="Navy Elegan Pemda"></div>
+                  <div class="theme-swatch theme-emerald" data-theme="emerald" title="Emerald Hijau Pinrang"></div>
+                  <div class="theme-swatch theme-gold" data-theme="gold" title="Gold Mewah Eksklusif"></div>
+                  <div class="theme-swatch theme-dark" data-theme="dark" title="Modern Midnight Dark"></div>
+                </div>
+                <input id="cardThemeValue" type="hidden" value="navy">
+              </div>
+              <div class="custom-field full-width">
+                <label for="cardHeaderTitle">Judul Utama Kartu</label>
+                <input id="cardHeaderTitle" type="text" value="KARTU IDENTITAS PEDAGANG RESMI">
+              </div>
+              <div class="custom-field full-width">
+                <label for="cardHeaderSubtitle">Instansi Pemerintah</label>
+                <input id="cardHeaderSubtitle" type="text" value="PEMERINTAH KABUPATEN PINRANG">
+              </div>
+              <div class="custom-field full-width">
+                <label for="cardAgencyName">Dinas Pengelola</label>
+                <input id="cardAgencyName" type="text" value="DINAS PERINDAG ESDM PINRANG">
+              </div>
+              <div class="custom-field full-width">
+                <label>Elemen yang Ditampilkan pada Kartu</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;">
+                  <label style="font-weight: normal; font-size:0.8rem; display:flex; align-items:center; gap:6px;">
+                    <input id="cardShowPhoto" type="checkbox" checked> Foto Pedagang
+                  </label>
+                  <label style="font-weight: normal; font-size:0.8rem; display:flex; align-items:center; gap:6px;">
+                    <input id="cardShowQr" type="checkbox" checked> QR Code Verifikasi
+                  </label>
+                  <label style="font-weight: normal; font-size:0.8rem; display:flex; align-items:center; gap:6px;">
+                    <input id="cardShowNik" type="checkbox" checked> Masking NIK
+                  </label>
+                  <label style="font-weight: normal; font-size:0.8rem; display:flex; align-items:center; gap:6px;">
+                    <input id="cardShowExpiry" type="checkbox" checked> Masa Berlaku
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-preview-stage">
+            <span style="font-size: 0.72rem; font-weight: 700; color: #64748b; margin-bottom: 12px; text-transform: uppercase;">Pratinjau Langsung Kartu (Live Preview)</span>
+            <div id="liveCard" class="live-trader-card theme-navy">
+              <div class="live-card-head">
+                <img src="logo_pinrang_opt.png" alt="Logo Pinrang">
+                <div>
+                  <strong id="prevCardTitle">KARTU IDENTITAS PEDAGANG RESMI</strong>
+                  <small id="prevCardSubtitle">PEMERINTAH KABUPATEN PINRANG</small>
+                </div>
+              </div>
+              <div class="live-card-body">
+                <div id="prevPhotoBox" class="live-card-photo">FOTO 3x4</div>
+                <div class="live-card-info">
+                  <h4>Siti Aminah</h4>
+                  <p id="prevAgencyName">DINAS PERINDAG ESDM PINRANG</p>
+                  <p>Pasar Rakyat Sentral Pinrang · Kios A-19</p>
+                  <p style="font-family: monospace; font-size: 0.65rem; margin-top: 4px; opacity: 0.8;">PDG-PIN-26-001</p>
+                </div>
+                <div id="prevQrBox" class="live-card-qr">QR CODE</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: EDIT FRONTPAGE PORTAL -->
+      <section id="tab-frontpage" class="custom-section custom-tab-pane" style="display:none;">
+        <div class="custom-section-head">
+          <h2>Edit Frontpage & Portal Publik</h2>
+          <p>Atur pesan sambutan, teks pengumuman penting (running ticker), nomor WhatsApp helpdesk, dan informasi kontak publik.</p>
+        </div>
+        <div class="custom-form-grid">
+          <div class="custom-field full-width">
+            <label for="frontHeroTitle">Judul Utama Halaman Beranda (Hero Title)</label>
+            <input id="frontHeroTitle" type="text" placeholder="Satu Data Pedagang, Satu Layanan yang Lebih Mudah">
+            <small>Judul beranda utama yang menyambut pengunjung portal e-PASAR.</small>
+          </div>
+          <div class="custom-field full-width">
+            <label for="frontHeroSubtitle">Sub-judul Halaman Beranda (Hero Subtitle)</label>
+            <textarea id="frontHeroSubtitle" rows="2" placeholder="Pendataan terpadu, penataan ruang pasar, dan penerbitan legalitas e-SKPT resmi Kabupaten Pinrang."></textarea>
+          </div>
+          <div class="custom-field full-width">
+            <label for="frontAnnouncement">Teks Pengumuman Dinas (Running Ticker / Pengumuman Penting)</label>
+            <textarea id="frontAnnouncement" rows="2" placeholder="PEMBERITAHUAN RESMI: Seluruh pedagang pasar tradisional di Kabupaten Pinrang berhak memperoleh e-SKPT dan Kartu Pedagang Resmi melalui verifikasi unit pasar tanpa perantara."></textarea>
+            <small>Pengumuman ini tampil di bagian pengumuman portal untuk seluruh pedagang dan masyarakat.</small>
+          </div>
+          <div class="custom-field">
+            <label for="frontWaHelpdesk">Nomor WhatsApp Layanan & Pengaduan Pedagang</label>
+            <input id="frontWaHelpdesk" type="tel" placeholder="081242334455">
+            <small>Nomor resmi helpdesk dinas untuk konsultasi perizinan pasar.</small>
+          </div>
+          <div class="custom-field">
+            <label for="frontContactEmail">Alamat Email Pengaduan</label>
+            <input id="frontContactEmail" type="email" placeholder="disperindag@pinrangkab.go.id">
+          </div>
+          <div class="custom-field">
+            <label for="frontServiceHours">Jam Layanan Pelayanan</label>
+            <input id="frontServiceHours" type="text" placeholder="Senin s.d. Jumat (08.00 - 15.30 WITA)">
+          </div>
+          <div class="custom-field full-width">
+            <label for="frontOfficeAddress">Alamat Resmi Kantor Dinas</label>
+            <input id="frontOfficeAddress" type="text" placeholder="Jalan Bintang No. 1, Manding, Kec. Watang Sawitto, Kabupaten Pinrang, Sulawesi Selatan 91212">
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: JADWAL OPERASIONAL PASAR -->
+      <section id="tab-markets" class="custom-section custom-tab-pane" style="display:none;">
+        <div class="custom-section-head" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2>Manajemen Jadwal Operasional & Hari Pasar</h2>
+            <p>Setiap pasar memiliki karakteristik berbeda: ada pasar harian dan pasar berkala (misal: Rabu & Sabtu). Sesuaikan jadwal di sini agar informasi operasional pedagang selalu tepat.</p>
+          </div>
+          <button id="btnAddMarketRow" class="button secondary" type="button" style="font-size:0.8rem; min-height:36px;">+ Tambah Unit Pasar</button>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:0.78rem; color:#475569;">
+          💡 <b>Mengapa Retribusi Tidak Dicantumkan Statis?</b> Karena intensitas hari operasional setiap pasar berbeda. Nilai retribusi daerah dipungut berdasarkan hari pasar aktif masing-masing unit pasar sesuai Peraturan Daerah Kabupaten Pinrang Nomor 1 Tahun 2024 tentang Pajak Daerah dan Retribusi Daerah.
+        </div>
+
+        <div class="table-wrap">
+          <table class="market-schedule-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Kode / ID Pasar</th>
+                <th>Nama Unit Pasar Rakyat</th>
+                <th>Jadwal / Hari Pasar Aktif</th>
+                <th style="width: 70px; text-align:center;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="marketScheduleRows">
+              <!-- Baris pasar dirender secara dinamis -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 5: REGULASI & DASAR HUKUM -->
+      <section id="tab-legal" class="custom-section custom-tab-pane" style="display:none;">
+        <div class="custom-section-head">
+          <h2>Regulasi, Dasar Hukum & Parameter Sistem</h2>
+          <p>Ketetapan Peraturan Daerah dan masa berlaku dokumen yang menjadi konsideran hukum penerbitan e-SKPT.</p>
+        </div>
+        <div class="custom-form-grid">
+          <div class="custom-field full-width">
+            <label for="legalPerdaMarket">Peraturan Daerah Pengelolaan Pasar Rakyat</label>
+            <input id="legalPerdaMarket" type="text" value="Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024 tentang Pengelolaan Pasar Rakyat">
+            <small>Rujukan hukum utama hak, kewajiban, dan sanksi pemakaian tempat usaha.</small>
+          </div>
+          <div class="custom-field full-width">
+            <label for="legalPerdaTax">Peraturan Daerah Pajak & Retribusi Daerah</label>
+            <input id="legalPerdaTax" type="text" value="Peraturan Daerah Kabupaten Pinrang Nomor 1 Tahun 2024 tentang Pajak Daerah dan Retribusi Daerah">
+            <small>Rujukan hukum pemungutan kewajiban retribusi pelayanan pasar.</small>
+          </div>
+          <div class="custom-field">
+            <label for="legalValidityYears">Masa Berlaku SKPT (Tahun)</label>
+            <input id="legalValidityYears" type="number" min="1" max="10" value="2">
+            <small>Default masa berlaku perizinan tempat usaha sejak tanggal pengesahan.</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACTION BAR BAWAH -->
+      <div class="custom-action-bar">
+        <div class="custom-status-msg" id="customStatusBar">
+          <span style="color:#094eb8;">ℹ️</span>
+          <span>Seluruh perubahan berlaku seketika ke seluruh modul aplikasi setelah disimpan.</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button id="btnResetDefault" class="button secondary" type="button" style="min-height:38px;">Standar Awal</button>
+          <button id="btnSaveConfig" class="button primary" type="submit" style="min-height:38px; padding:0 22px;">💾 Simpan Pengaturan Sistem</button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</main>
+
+<!-- FIREBASE & LOGIKA KUSTOMISASI -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/epasar/firebase-config.local.js"></script>
+<script src="js/epasar/constants.js"></script>
+<script src="js/epasar/config.js"></script>
+<script src="js/epasar/app-config-service.js"></script>
+<script src="js/epasar/auth-service.js"></script>
+<script src="js/epasar/internal-shell.js"></script>
+<script src="js/epasar/admin-kustomisasi.js"></script>
+</body>
+</html>

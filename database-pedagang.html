@@ -51,9 +51,9 @@
           <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
           Unduh Excel (CSV)
         </button>
-        <button id="btnExportJson" class="db-btn db-btn-json" type="button" title="Format JSON untuk pemetaan spasial GIS & integrasi retribusi">
+        <button id="btnExportJson" class="db-btn db-btn-json" type="button" title="Format JSON untuk pemetaan spasial GIS dan sebaran pedagang">
           <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-          Data GIS & Retribusi
+          Data Spasial GIS
         </button>
         <button id="btnRefresh" class="button secondary" type="button" title="Segarkan Data">
           🔄 Muat Ulang
@@ -86,9 +86,9 @@
         <p>Omzet bulanan agregat</p>
       </article>
       <article class="db-kpi-card highlight-5">
-        <small>📋 Potensi Retribusi</small>
-        <strong id="kpiRetribusi">—</strong>
-        <p>Target Perda No. 6/2024</p>
+        <small>🗓️ Jadwal Operasional</small>
+        <strong id="kpiSchedule">—</strong>
+        <p>Hari Pasar Harian & Berkala</p>
       </article>
     </section>
 
@@ -157,7 +157,7 @@
               <th>Lokasi Pasar</th>
               <th>Penempatan Unit</th>
               <th>Status e-SKPT</th>
-              <th>Estimasi Retribusi</th>
+              <th>Jadwal Operasional</th>
               <th>Verifikasi Fisik</th>
               <th class="no-print" style="width: 80px;">Aksi</th>
             </tr>
@@ -264,8 +264,12 @@
             <strong id="modalRevenue">—</strong>
           </div>
           <div class="db-modal-item">
-            <small>Tarif Retribusi Pasar (Perda 6/2024)</small>
-            <strong id="modalRetribution">—</strong>
+            <small>Jadwal Operasional Pasar</small>
+            <strong id="modalMarketDays">—</strong>
+          </div>
+          <div class="db-modal-item">
+            <small>Kewajiban Retribusi Daerah</small>
+            <strong id="modalRetributionRule" style="font-size:0.75rem; font-weight:600; color:#1d4ed8;">Mengikuti intensitas hari pasar aktif sesuai Perda Retribusi</strong>
           </div>
           <div class="db-modal-item">
             <small>Nomor & Legalitas SKPT</small>
@@ -341,6 +345,7 @@
   <script src="js/epasar/firebase-config.local.js"></script>
   <script src="js/epasar/constants.js"></script>
   <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/app-config-service.js"></script>
   <script src="js/epasar/auth-service.js"></script>
   <script src="js/epasar/internal-shell.js"></script>
   <script src="js/epasar/market-workspace-service.js"></script>

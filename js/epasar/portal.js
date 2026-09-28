@@ -222,4 +222,28 @@
   document.body.appendChild(top);
   window.addEventListener('scroll', () => top.classList.toggle('visible', window.scrollY > 500), { passive: true });
   top.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // Muat konfigurasi dinamis frontpage (Full Custom)
+  async function loadDynamicFrontpage() {
+    try {
+      let settings = null;
+      if (window.EPASAR_CONFIG_SERVICE) {
+        settings = await window.EPASAR_CONFIG_SERVICE.getSettings();
+      } else if (window.db) {
+        const snap = await window.db.collection('app_settings').doc('general').get();
+        if (snap.exists) settings = snap.data();
+      }
+      if (!settings) return;
+      const fp = settings.frontpage || {};
+      if (fp.heroTitle) {
+        const heroEl = document.getElementById('portalHeroHeadline');
+        if (heroEl) heroEl.innerHTML = fp.heroTitle;
+      }
+      if (fp.announcement) {
+        const ticker = document.getElementById('portalTickerText');
+        if (ticker) ticker.textContent = fp.announcement;
+      }
+    } catch (_) {}
+  }
+  loadDynamicFrontpage();
 }());

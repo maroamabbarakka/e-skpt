@@ -219,8 +219,20 @@
     const claimSnap = await db().collection('market_claims').doc(application.claimId).get();
     const claim = claimSnap.exists ? claimSnap.data() : {};
     const verified = claim.verified || {};
-    const source = application.applicantSnapshot || {};
-    const signatory = { name: 'MUHAMMAD YUSUF NUR, S.STP', nip: '19800326 200003 1 001', rank: 'Pembina Tk. I', position: 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang', authority: 'a.n. BUPATI PINRANG' };
+    let signatory = { name: 'MUHAMMAD YUSUF NUR, S.STP', nip: '19800326 200003 1 001', rank: 'Pembina Tk. I', position: 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang', authority: 'a.n. BUPATI PINRANG' };
+    try {
+      const cfgSnap = await db().collection('app_settings').doc('general').get();
+      if (cfgSnap.exists && cfgSnap.data()?.signatory) {
+        const s = cfgSnap.data().signatory;
+        signatory = {
+          name: clean(s.name, 100) || signatory.name,
+          nip: clean(s.nip, 50) || signatory.nip,
+          rank: clean(s.rank, 80) || signatory.rank,
+          position: clean(s.position, 150) || signatory.position,
+          authority: clean(s.authority, 100) || signatory.authority
+        };
+      }
+    } catch (_) {}
     const marketUnitId = clean(application.marketUnitId || verified.unitId || claim.marketUnitId,100);
     if (!marketUnitId) throw new Error('Identitas unit pasar hasil verifikasi belum tersedia. Berkas harus dikembalikan ke tahap verifikasi pasar.');
     const documentSnapshot = { displayName: clean(input.displayName || source.displayName,120), address: clean(source.address,300), businessType: clean(source.businessType || source.businessName,120), marketName: clean(source.marketName || application.marketId,120), marketId: clean(application.marketId,100), unitType: clean(verified.unitType || source.claimedUnitType || claim.claimedUnitType,20), unitNumber: clean(verified.unitNumber || source.claimedUnitNumber || claim.claimedUnitNumber,50), block: clean(verified.block || claim.claimedBlock,30), floor: clean(verified.floor || claim.claimedFloor,20), areaM2: Number(verified.areaM2 ?? source.claimedAreaM2 ?? claim.claimedAreaM2 ?? 0) || null };

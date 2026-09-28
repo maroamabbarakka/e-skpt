@@ -92,22 +92,47 @@
       if (!d || d.status !== 'ISSUED') { root.innerHTML = '<p class="document-error">Dokumen SKPT tidak ditemukan atau belum diterbitkan oleh Kepala Dinas.</p>'; return; }
       const actualToken = d.verificationToken || activeToken;
       const dHash = d.documentHash || '-';
-      const s = d.documentSnapshot || {}, signer = d.signatory || {};
+      const s = d.documentSnapshot || {};
+
+      // Ambil konfigurasi dinamis sistem jika tersedia
+      let appSettings = null;
+      try {
+        if (window.EPASAR_CONFIG_SERVICE) {
+          appSettings = await window.EPASAR_CONFIG_SERVICE.getSettings();
+        } else if (window.db) {
+          const cfgSnap = await window.db.collection('app_settings').doc('general').get();
+          if (cfgSnap.exists) appSettings = cfgSnap.data();
+        }
+      } catch (_) {}
+
+      const configSigner = appSettings?.signatory || {};
+      const signer = {
+        name: configSigner.name || d.signatory?.name || 'MUHAMMAD YUSUF NUR, S.STP',
+        nip: configSigner.nip || d.signatory?.nip || '19800326 200003 1 001',
+        rank: configSigner.rank || d.signatory?.rank || 'Pembina Tk. I',
+        position: configSigner.position || d.signatory?.position || 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang',
+        authority: configSigner.authority || d.signatory?.authority || 'a.n. BUPATI PINRANG'
+      };
+
+      const officeAddress = appSettings?.frontpage?.officeAddress || 'Jalan Bintang No. 1 · Telp/Faks. (0421) 921215 · Pinrang 91212';
+      const perdaMarket = appSettings?.legalBasis?.perdaMarket || 'Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024 tentang Pengelolaan Pasar Rakyat.';
+      const perdaTax = appSettings?.legalBasis?.perdaTax || 'Peraturan Daerah Kabupaten Pinrang Nomor 1 Tahun 2024 tentang Pajak Daerah dan Retribusi Daerah.';
+
       const issueYear = new Date(d.issueDate).getFullYear();
       const number = String(d.number || '-');
       const verificationUrl = `${location.origin}/verifikasi-skpt.html?token=${encodeURIComponent(actualToken)}`;
       const tteLabel = d.tteStatus === 'SIGNED' ? 'DITANDATANGANI ELEKTRONIK' : d.tteStatus === 'UAT_SIMULATED' ? 'UJI COBA · TTE SIMULASI' : d.tteStatus === 'NOT_INTEGRATED' ? 'PERSETUJUAN KADIS TERCATAT · TTE BELUM TERINTEGRASI' : d.tteStatus === 'REGISTERED_MANUAL' ? 'TERDAFTAR · PENGESAHAN MANUAL' : 'MENUNGGU PENGESAHAN';
       const isTrainingDocument = d.isDemo === true || ['TEST','INTERNAL_UAT','TRAINING','DEMO'].includes(String(d.environment || '').toUpperCase());
-      const dummyTte = isTrainingDocument ? `<div class="dummy-tte" aria-label="QR simulasi tanda tangan elektronik Kepala Dinas"><div id="dummyTteQr" class="dummy-tte-qr branded-qr"></div><div class="dummy-tte-copy"><strong>SIMULASI TTE</strong><span>${esc(signer.name || 'MUHAMMAD YUSUF NUR, S.STP')}</span><small>Kepala Dinas · Dokumen latihan</small><small>Ref. ${esc(d.officialReference || actualToken.slice(0,16))}</small></div></div>` : '';
+      const dummyTte = isTrainingDocument ? `<div class="dummy-tte" aria-label="QR simulasi tanda tangan elektronik Kepala Dinas"><div id="dummyTteQr" class="dummy-tte-qr branded-qr"></div><div class="dummy-tte-copy"><strong>SIMULASI TTE</strong><span>${esc(signer.name)}</span><small>Kepala Dinas · Dokumen latihan</small><small>Ref. ${esc(d.officialReference || actualToken.slice(0,16))}</small></div></div>` : '';
       const annual = Array.isArray(d.annualValidations) ? d.annualValidations : [{year:issueYear,status:'INITIAL_ISSUE'},{year:issueYear+1,status:'DUE'}];
       const annualCell = (item, fallbackYear) => { const labels = {VALIDATED:'DISAHKAN',INITIAL_ISSUE:'PENERBITAN AWAL',DUE:'MENUNGGU PEMERIKSAAN',RETURNED:'DIKEMBALIKAN'}; const status = labels[item?.status] || 'BELUM TERCATAT'; return `<span>Tahun ${esc(item?.year || fallbackYear)}<small class="annual-status ${item?.status === 'DUE' || item?.status === 'RETURNED' ? 'due' : ''}">${status}</small></span>`; };
       const photoUrl = await publicPhoto(d.photoMediaToken, s.photoUrl || (d.isDemo ? 'assets/uat/pedagang-contoh-3x4.jpg' : ''));
       const photoBlock = photoUrl ? `<div class="document-verification-photo"><img class="document-photo" src="${esc(photoUrl)}" alt="Foto pedagang"></div>` : '<div class="document-verification-photo document-photo document-photo-empty">Foto belum tersedia</div>';
       root.innerHTML = `${isTrainingDocument ? '<div class="uat-document-banner"><strong>DOKUMEN UJI COBA</strong><span>Tidak berlaku sebagai dokumen resmi</span></div>' : ''}
-        <header class="official-letterhead"><img class="document-crest" src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div class="document-agency">PEMERINTAH KABUPATEN PINRANG</div><div class="document-agency document-agency-dept">DINAS PERINDUSTRIAN, PERDAGANGAN,<br>ENERGI DAN SUMBER DAYA MINERAL</div><div class="document-address">Jalan Bintang No. 1 · Telp/Faks. (0421) 921215 · Pinrang 91212</div></header>
+        <header class="official-letterhead"><img class="document-crest" src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div class="document-agency">PEMERINTAH KABUPATEN PINRANG</div><div class="document-agency document-agency-dept">DINAS PERINDUSTRIAN, PERDAGANGAN,<br>ENERGI DAN SUMBER DAYA MINERAL</div><div class="document-address">${esc(officeAddress)}</div></header>
         <section class="document-title-block"><h1>SURAT KETERANGAN PEMAKAIAN TEMPAT</h1><p>Nomor: ${esc(number)}</p></section>
         <section class="document-body">
-          <div class="legal-basis"><b>Dasar:</b>${list(['Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024 tentang Pengelolaan Pasar Rakyat.','Peraturan Daerah Kabupaten Pinrang Nomor 1 Tahun 2024 tentang Pajak Daerah dan Retribusi Daerah.'])}</div>
+          <div class="legal-basis"><b>Dasar:</b>${list([perdaMarket, perdaTax])}</div>
           <div><p>Yang bertanda tangan di bawah ini menerangkan bahwa:</p><dl class="identity-table"><dt>Nama</dt><dd>: ${esc(s.displayName || d.displayName)}</dd><dt>Alamat</dt><dd>: ${esc(s.address)}</dd><dt>Jenis Dagangan</dt><dd>: ${esc(s.businessType)}</dd><dt>Luas Tempat Jualan</dt><dd>: ${s.areaM2 ? `${esc(s.areaM2)} m²` : '-'}</dd></dl></div>
           <p>Diberikan Surat Keterangan Pemakaian Tempat <b>${esc(s.unitType)} ${esc(s.unitNumber)}</b>${s.block ? ` Blok ${esc(s.block)}` : ''}${s.floor ? ` Lantai ${esc(s.floor)}` : ''}, pada <b>${esc(s.marketName || s.marketId)}</b>, dengan ketentuan sebagai berikut:</p>
           <h3>A. Hak Pedagang (Pasal 21):</h3>${list(rights)}
@@ -116,7 +141,7 @@
           <p><b>D.</b> Pelanggaran terhadap Pasal 20, Pasal 22, dan Pasal 27 ayat (1) dapat dikenai sanksi administratif sesuai Pasal 30 Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024.</p>
           <p><b>E.</b> SKPT berlaku selama 2 (dua) tahun sejak ${dateId(d.issueDate)} sampai dengan ${dateId(d.validUntil)} dan dapat diperpanjang melalui permohonan periode berikutnya sesuai prosedur yang berlaku.</p>
         </section>
-        <section class="document-footer-grid"><div class="register-box"><b>CATATAN<br>ADMINISTRASI DIGITAL</b>${annualCell(annual[0],issueYear)}${annualCell(annual[1],issueYear+1)}</div><div class="signature-block"><div>Pinrang, ${dateId(d.issueDate)}</div><div>${esc(signer.authority || 'a.n. BUPATI PINRANG')}<br>${esc(signer.position || 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang')}</div><div class="signature-space">${dummyTte}</div><b><u>${esc(signer.name || 'MUHAMMAD YUSUF NUR, S.STP')}</u></b><br>${esc(signer.rank || 'Pembina Tk. I')}<br>NIP. ${esc(signer.nip || '19800326 200003 1 001')}</div></section>
+        <section class="document-footer-grid"><div class="register-box"><b>CATATAN<br>ADMINISTRASI DIGITAL</b>${annualCell(annual[0],issueYear)}${annualCell(annual[1],issueYear+1)}</div><div class="signature-block"><div>Pinrang, ${dateId(d.issueDate)}</div><div>${esc(signer.authority)}<br>${esc(signer.position)}</div><div class="signature-space">${dummyTte}</div><b><u>${esc(signer.name)}</u></b><br>${esc(signer.rank)}<br>NIP. ${esc(signer.nip)}</div></section>
         <section class="document-verification"><div id="qr" class="document-qr-code branded-qr"></div><div class="document-verification-details"><span class="document-status">${esc(tteLabel)}</span><br><b>Verifikasi dokumen</b><br>Nomor: ${esc(number)}<br><span class="document-hash">SHA-256: ${esc(dHash)}</span><br>Referensi: ${esc(d.officialReference || actualToken.slice(0,16))}<br>Berlaku sampai: ${dateId(d.validUntil)}</div>${photoBlock}</section>
         <p class="document-disclaimer">SKPT ini merupakan keterangan administratif pemakaian tempat usaha dan bukan bukti kepemilikan hak atas tanah atau bangunan. Keaslian dan status dokumen diperiksa melalui QR resmi e-PASAR.</p>`;
       if (window.QRCode) {

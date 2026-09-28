@@ -11,11 +11,12 @@
     'kadis-approval.html':['Persetujuan SKPT','e-SKPT'],
     'annual-validation.html':['Pengesahan Tahunan','e-SKPT'],
     'occupancy-change.html':['Perubahan Pemegang','Pasar'],
+    'admin-kustomisasi.html':['Kustomisasi Aplikasi','Sistem'],
     'admin-akun.html':['Kelola Akun','Sistem'],
     'profil.html':['Profil & Keamanan','Sistem']
   };
   if(!pageMap[path])return;
-  const icons={home:'<path d="M3 11 12 3l9 8v9h-6v-6H9v6H3z"/>',inbox:'<path d="M4 5h16v14H4zM4 14h5l2 2h2l2-2h5"/>',market:'<path d="M4 9h16l-2-5H6zM6 9v11h12V9M9 20v-6h6v6"/>',doc:'<path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h5"/>',calendar:'<path d="M4 6h16v14H4zM8 3v6M16 3v6M4 10h16"/>',swap:'<path d="m7 7 3-3m-3 3 3 3M17 17l-3 3m3-3-3-3M8 7h9v5M16 17H7v-5"/>',users:'<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21c.6-4.3 2.8-7 7-7s6.4 2.7 7 7M17 8a3 3 0 0 1 0 6M18 15c2.4.4 3.7 2.4 4 5"/>',profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-5 3.3-7 8-7s7.2 2 8 7"/>'};
+  const icons={home:'<path d="M3 11 12 3l9 8v9h-6v-6H9v6H3z"/>',inbox:'<path d="M4 5h16v14H4zM4 14h5l2 2h2l2-2h5"/>',market:'<path d="M4 9h16l-2-5H6zM6 9v11h12V9M9 20v-6h6v6"/>',doc:'<path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h5"/>',calendar:'<path d="M4 6h16v14H4zM8 3v6M16 3v6M4 10h16"/>',swap:'<path d="m7 7 3-3m-3 3 3 3M17 17l-3 3m3-3-3-3M8 7h9v5M16 17H7v-5"/>',users:'<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21c.6-4.3 2.8-7 7-7s6.4 2.7 7 7M17 8a3 3 0 0 1 0 6M18 15c2.4.4 3.7 2.4 4 5"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-5 3.3-7 8-7s7.2 2 8 7"/>'};
   const menu=[
     ['UTAMA','admin-epasar.html','Dashboard','home',['ALL']],
     ['DATA & LAPORAN','database-pedagang.html','Database Pedagang','users',['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']],
@@ -25,7 +26,8 @@
     ['', 'occupancy-change.html','Perubahan Pemegang','swap',['SUPER_ADMIN','MARKET_HEAD','KADIS']],
     ['e-SKPT','kadis-approval.html','Persetujuan','doc',['SUPER_ADMIN','KADIS']],
     ['', 'annual-validation.html','Pengesahan Tahunan','calendar',['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']],
-    ['SISTEM','admin-akun.html','Kelola Akun','users',['SUPER_ADMIN']],
+    ['SISTEM','admin-kustomisasi.html','Kustomisasi Sistem','settings',['SUPER_ADMIN','KADIS']],
+    ['', 'admin-akun.html','Kelola Akun','users',['SUPER_ADMIN']],
     ['', 'profil.html','Profil & Keamanan','profile',['ALL']]
   ];
   const main=document.querySelector('main');if(!main)return;

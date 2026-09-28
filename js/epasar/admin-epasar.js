@@ -158,7 +158,7 @@
           <article class="kpi"><small>Total Pedagang Terdata</small><strong id="kpiKadisTraders">...</strong><p>17 Pasar se-Kab. Pinrang</p></article>
           <article class="kpi"><small>Menunggu Persetujuan Kadis</small><strong id="kpiKadisPending" style="color:#d97706">...</strong><p>Siap diputuskan & TTE</p></article>
           <article class="kpi"><small>SKPT Resmi Diterbitkan</small><strong id="kpiKadisIssued" style="color:#2563eb">...</strong><p>Tervalidasi TTE Elektronik</p></article>
-          <article class="kpi"><small>Potensi Retribusi Pasar</small><strong id="kpiKadisRetribusi" style="color:#16a34a">...</strong><p>Estimasi PAD per Bulan</p></article>
+          <article class="kpi"><small>Unit Pasar Terkelola</small><strong id="kpiKadisMarkets" style="color:#16a34a">17 Pasar</strong><p>Jadwal Operasional Dinamis</p></article>
         </div>
 
         <div class="command-grid" style="margin-bottom: 24px;">
@@ -225,12 +225,12 @@
         const totalTraders = tradersSnap.size;
         const pendingCount = pendingAppsSnap.size;
         const issuedCount = issuedAppsSnap.size;
-        const totalEstimatedRetribution = totalTraders * 75000;
 
         document.getElementById('kpiKadisTraders').textContent = totalTraders;
         document.getElementById('kpiKadisPending').textContent = pendingCount;
         document.getElementById('kpiKadisIssued').textContent = issuedCount;
-        document.getElementById('kpiKadisRetribusi').textContent = 'Rp ' + Number(totalEstimatedRetribution).toLocaleString('id-ID');
+        const kpiMarketsEl = document.getElementById('kpiKadisMarkets');
+        if (kpiMarketsEl) kpiMarketsEl.textContent = '17 Pasar';
 
         const pendingList = [];
         pendingAppsSnap.forEach(d => pendingList.push({ id: d.id, ...d.data() }));
