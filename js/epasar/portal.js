@@ -241,7 +241,9 @@
       }
       if (fp.announcement) {
         const ticker = document.getElementById('portalTickerText');
+        const tickerClone = document.getElementById('portalTickerTextClone');
         if (ticker) ticker.textContent = fp.announcement;
+        if (tickerClone) tickerClone.textContent = fp.announcement;
       }
     } catch (_) {}
   }

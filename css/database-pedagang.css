@@ -718,18 +718,36 @@
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .db-kpis {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .db-kpis .db-kpi-card:last-child {
+    grid-column: 1 / -1;
   }
   .db-filter-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
   .db-header-actions {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
   }
   .db-btn {
     justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 500px) {
+  .db-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .db-header-actions {
+    grid-template-columns: 1fr;
   }
 }

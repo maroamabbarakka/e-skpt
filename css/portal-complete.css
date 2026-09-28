@@ -170,3 +170,214 @@ html{scroll-behavior:smooth}body{overflow-x:hidden;background:#fff}
 .sd-hero{background-image:linear-gradient(108deg,rgba(3,24,139,.96) 0%,rgba(5,64,204,.9) 50%,rgba(7,104,222,.82) 100%),linear-gradient(90deg,rgba(4,24,126,.42),rgba(4,76,198,.1)),url('../assets/images/bg-hero.jpg');background-position:center center,center center,center 48%;background-repeat:no-repeat;background-size:cover,cover,cover}
 .sd-hero:before,.sd-hero:after{z-index:0}.sd-hero-copy,.sd-metrics,.sd-services{z-index:1}.sd-metrics article,.sd-services a{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 @media(max-width:700px){.sd-hero{background-position:center center,center center,58% center}}
+
+/* ==========================================================================
+   ENHANCED UI/UX, MODERN TICKER & SUPER RESPONSIVE DESIGN PASS
+   ========================================================================== */
+
+/* Modern Continuous Running Ticker */
+.portal-ticker-wrapper {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(90deg, #042e76 0%, #075bd8 55%, #05265e 100%);
+  color: #ffffff;
+  padding: 6px 18px;
+  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 18px rgba(4, 46, 118, 0.18);
+  overflow: hidden;
+}
+.portal-ticker-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #e0f2fe;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  margin-right: 14px;
+}
+.ticker-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #76c900;
+  box-shadow: 0 0 0 0 rgba(118, 201, 0, 0.7);
+  animation: ticker-pulse 1.8s infinite;
+}
+@keyframes ticker-pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(118, 201, 0, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(118, 201, 0, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(118, 201, 0, 0); }
+}
+.ticker-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.portal-ticker-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(90deg, transparent 0%, black 2%, black 98%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 2%, black 98%, transparent 100%);
+}
+.portal-ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker-slide 32s linear infinite;
+  will-change: transform;
+}
+.portal-ticker-track:hover {
+  animation-play-state: paused;
+}
+.portal-ticker-content {
+  display: inline-block;
+  padding-right: 60px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+@keyframes ticker-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Glassmorphism Header */
+.sd-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-bottom: 1px solid rgba(8, 45, 93, 0.08) !important;
+}
+
+/* Search Focus Glow */
+.sd-search {
+  transition: all 0.25s ease;
+}
+.sd-search:focus-within {
+  border-color: #76c900;
+  box-shadow: 0 0 0 4px rgba(118, 201, 0, 0.3), 0 12px 28px rgba(7, 91, 216, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Enhanced Services Card Elevation */
+.sd-services a {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease !important;
+}
+.sd-services a:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 42px rgba(4, 49, 115, 0.22) !important;
+}
+.sd-services strong {
+  transition: gap 0.2s ease;
+}
+.sd-services a:hover strong {
+  gap: 10px;
+}
+
+/* Super Responsive Breakpoints for Mobile & Tablet */
+@media (max-width: 700px) {
+  .portal-ticker-wrapper {
+    padding: 6px 12px;
+    font-size: 0.74rem;
+  }
+  .portal-ticker-badge {
+    padding: 3px 8px;
+    font-size: 0.62rem;
+    margin-right: 8px;
+  }
+  .portal-ticker-badge span {
+    display: none;
+  }
+  .portal-ticker-track {
+    animation-duration: 25s;
+  }
+  /* Metriks 2x2 rapi di layar HP */
+  .sd-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-top: 20px !important;
+  }
+  .sd-metrics article {
+    min-height: 88px !important;
+    padding: 12px 10px !important;
+    grid-template-columns: 44px 1fr !important;
+    column-gap: 10px !important;
+  }
+  .sd-metrics span {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+  }
+  .sd-metrics span svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .sd-metrics b {
+    font-size: 0.98rem !important;
+    margin: 1px 0 !important;
+  }
+  .sd-metrics small, .sd-metrics i {
+    font-size: 0.67rem !important;
+  }
+
+  /* Services 2 kolom di HP layar sedang, 1 kolom di HP kecil */
+  .sd-services {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .sd-services a {
+    min-height: 180px !important;
+    padding: 18px 14px !important;
+  }
+  .sd-services span {
+    width: 58px !important;
+    height: 58px !important;
+    margin-bottom: 12px !important;
+    border-radius: 16px !important;
+  }
+  .sd-services span svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .sd-services b {
+    font-size: 0.92rem !important;
+  }
+  .sd-services small {
+    font-size: 0.72rem !important;
+    line-height: 1.4 !important;
+    min-height: 48px !important;
+    margin: 6px 0 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sd-services {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .sd-services a {
+    min-height: auto !important;
+    padding: 20px !important;
+  }
+  .sd-services small {
+    min-height: auto !important;
+  }
+}
+
