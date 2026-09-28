@@ -8,21 +8,101 @@
   <link rel="stylesheet" href="css/epasar.css">
   <link rel="stylesheet" href="css/official-documents.css">
   <link rel="stylesheet" href="css/document-security-mark.css">
+  <style>
+    body {
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 16px;
+      margin: 0;
+    }
+    .card-presentation {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 480px;
+    }
+    .card-sheet {
+      width: 85.6mm;
+      height: 54mm;
+      margin: 0 auto 16px;
+      position: relative;
+    }
+    .card-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 14px;
+      width: 100%;
+    }
+    .card-note {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-align: center;
+      margin: 10px 0 0;
+      max-width: 360px;
+      line-height: 1.4;
+    }
+    .btn-card-action {
+      min-height: 40px;
+      padding: 8px 22px;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    .btn-card-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      .card-actions, .card-note, #message {
+        display: none !important;
+      }
+      .card-sheet {
+        margin: 0 !important;
+      }
+    }
+  </style>
 </head>
 <body>
-  <main class="card-sheet">
-    <div id="message" class="admin-message">Memuat kartu pedagang…</div>
-    <section id="card" class="trader-id-card" hidden></section>
-  </main>
-  <p class="card-note">Kartu ini adalah identitas layanan e-PASAR, bukan bukti kepemilikan unit pasar.</p>
-  <div class="card-actions document-toolbar">
-    <a class="button secondary" href="index.html">Kembali</a>
-    <button class="button primary" type="button" onclick="window.print()">Simpan / Cetak</button>
+  <div class="card-presentation">
+    <main class="card-sheet">
+      <div id="message" class="admin-message">Memuat kartu pedagang…</div>
+      <section id="card" class="trader-id-card" hidden></section>
+    </main>
+    <p class="card-note">Kartu ini adalah identitas resmi layanan e-PASAR Pemerintah Kabupaten Pinrang, bukan bukti kepemilikan hak atas tanah/kios.</p>
+    <div class="card-actions no-print">
+      <button class="button secondary btn-card-action" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.close(); }">
+        ← Kembali
+      </button>
+      <button class="button primary btn-card-action" type="button" onclick="window.print()">
+        🖨️ Simpan / Cetak Kartu
+      </button>
+    </div>
   </div>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="js/epasar/firebase-config.local.js"></script>
   <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/app-config-service.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="js/epasar/trader-card.js"></script>
 </body>

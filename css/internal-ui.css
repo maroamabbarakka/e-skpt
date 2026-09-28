@@ -492,3 +492,64 @@
   background: #1ebc59 !important;
   transform: translateY(-1px) !important;
 }
+
+/* Tombol Aksi Icon-Only Profesional untuk Popup SKPT */
+.db-icon-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.db-action-icon-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  border: 1px solid transparent !important;
+  text-decoration: none !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  flex-shrink: 0 !important;
+}
+
+.db-action-icon-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16) !important;
+}
+
+.db-action-icon-btn:active {
+  transform: translateY(0) !important;
+}
+
+.db-action-icon-btn.btn-skpt-pdf {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+}
+.db-action-icon-btn.btn-skpt-pdf:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+}
+
+.db-action-icon-btn.btn-trader-card {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
+  color: #ffffff !important;
+  border-color: #4f46e5 !important;
+}
+.db-action-icon-btn.btn-trader-card:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #312e81 100%) !important;
+}
+
+.db-action-icon-btn.btn-send-wa {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+}
+.db-action-icon-btn.btn-send-wa:hover {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+}

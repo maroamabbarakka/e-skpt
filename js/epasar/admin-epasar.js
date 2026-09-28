@@ -677,21 +677,61 @@
     }
 
     if (currentKpiType === 'kpiIssued' || currentKpiType === 'kpiKadisIssued') {
-      bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Pedagang</th><th>Pasar & Unit</th><th>Nomor SKPT</th><th>Aksi Legalitas</th></tr></thead><tbody>${
+      bodyEl.innerHTML = `<table class="db-popup-table">
+        <thead>
+          <tr>
+            <th style="width: 36px; text-align: center;">No</th>
+            <th>Pedagang</th>
+            <th>Pasar & Unit</th>
+            <th>Nomor SKPT</th>
+            <th style="width: 120px; text-align: center;">Aksi Legalitas</th>
+          </tr>
+        </thead>
+        <tbody>${
         matching.map((r, i) => {
           const snap = r.documentSnapshot || {};
           const token = r.verificationToken || r.publicToken || '';
-          const pToken = r.publicToken || r.photoMediaToken || token;
+          const pToken = r.publicToken || token || r.id;
+          const issueDateStr = r.issueDate ? new Date(r.issueDate).toLocaleDateString('id-ID') : 'Terbit';
           return `<tr>
-            <td>${i + 1}</td>
-            <td><b>${esc(snap.displayName || r.displayName || r.traderId)}</b><br><small>${esc(snap.businessType || 'Usaha Pasar')}</small></td>
-            <td>${esc(snap.marketName || r.marketId)}<br><small>${esc(snap.unitType || 'Unit')} ${esc(snap.unitNumber || '-')}</small></td>
-            <td><span class="db-badge db-badge-success">${esc(r.number)}</span><br><small>${r.issueDate ? new Date(r.issueDate).toLocaleDateString('id-ID') : 'Terbit'}</small></td>
+            <td style="text-align: center; font-weight: 750; color: #64748b;">${i + 1}</td>
             <td>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <a href="skpt-pdf.html?token=${encodeURIComponent(token)}" target="_blank" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">📄 Cetak SKPT</a>
-                <a href="trader-card.html?token=${encodeURIComponent(pToken)}" target="_blank" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">🪪 Kartu</a>
-                <button type="button" class="db-btn db-btn-whatsapp" style="min-height:28px;padding:2px 8px;font-size:0.68rem;" data-admin-wa="${esc(r.id)}">💬 WA</button>
+              <strong style="color:#0f172a; font-size:0.82rem;">${esc(snap.displayName || r.displayName || r.traderId)}</strong><br>
+              <small style="color:#64748b;">${esc(snap.businessType || 'Usaha Pasar')}</small>
+            </td>
+            <td>
+              <strong style="color:#1e293b;">${esc(snap.marketName || r.marketId)}</strong><br>
+              <small style="color:#0284c7; font-weight:600;">${esc(snap.unitType || 'Unit')} ${esc(snap.unitNumber || '-')}</small>
+            </td>
+            <td>
+              <div class="db-skpt-cell">
+                <span class="db-code-badge" style="font-size:0.68rem;" title="Nomor SKPT Resmi">${esc(r.number)}</span>
+                <small style="color:#64748b; font-size:0.65rem;">Terbit: ${esc(issueDateStr)}</small>
+              </div>
+            </td>
+            <td style="text-align: center;">
+              <div class="db-icon-actions">
+                <a href="skpt-pdf.html?token=${encodeURIComponent(token)}" target="_blank" class="db-action-icon-btn btn-skpt-pdf" title="Cetak Dokumen SKPT Resmi (PDF)" aria-label="Cetak SKPT">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </a>
+                <a href="trader-card.html?token=${encodeURIComponent(token || pToken)}" target="_blank" class="db-action-icon-btn btn-trader-card" title="Lihat & Cetak Kartu Pedagang Digital" aria-label="Kartu Pedagang">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <circle cx="8" cy="10" r="2"></circle>
+                    <path d="M14 9h4m-4 4h4m-8 3h8"></path>
+                  </svg>
+                </a>
+                <button type="button" class="db-action-icon-btn btn-send-wa" data-admin-wa="${esc(r.id)}" title="Kirim Berkas & Tautan ke WhatsApp Pedagang" aria-label="Kirim WhatsApp">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 18.07c-1.5 0-2.97-.4-4.25-1.17l-.3-.18-3.12.82.83-3.04-.2-.32a8.04 8.04 0 0 1-1.23-4.27c0-4.47 3.64-8.11 8.12-8.11 2.17 0 4.21.85 5.74 2.39a8.07 8.07 0 0 1 2.38 5.72c0 4.47-3.65 8.11-8.12 8.11zm4.45-6.08c-.24-.12-1.44-.71-1.66-.79-.23-.08-.39-.12-.56.12-.17.24-.65.79-.8 1-.15.2-.3.24-.54.12-.24-.12-1.03-.38-1.96-1.21-.72-.64-1.21-1.44-1.35-1.68-.15-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.02s.87 2.34 1 2.51c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28z"/>
+                  </svg>
+                </button>
               </div>
             </td>
           </tr>`;
