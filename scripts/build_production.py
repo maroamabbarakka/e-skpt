@@ -5,9 +5,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-EXCLUDED_DIRS = {".git", ".firebase", "dist", "node_modules", "scripts", "tests", "artifacts", "EPASAR_SATU_DATA_DEVELOPER_PACK_V1"}
+EXCLUDED_DIRS = {".git", ".firebase", "dist", "node_modules", "scripts", "scratch", "tests", "artifacts", "EPASAR_SATU_DATA_DEVELOPER_PACK_V1"}
 EXCLUDED_SUFFIXES = {".md", ".py", ".log"}
-EXCLUDED_FILES = {"firebase.json", "firestore.rules", "firestore.indexes.json", "playwright.config.js", "Perda 2024 - Pengelolaan Pasar Rakyat.pdf"}
+EXCLUDED_FILES = {
+    "firebase.json",
+    "firebase.test.json",
+    "firebase.notification.test.json",
+    "firestore.rules",
+    "firestore.indexes.json",
+    "package.json",
+    "package-lock.json",
+    "playwright.config.js",
+    "skpt-layout-audit.png",
+    "Perda 2024 - Pengelolaan Pasar Rakyat.pdf",
+}
 EXCLUDED_ASSETS = {
     "Alur Verifikasi Pasar.mp4",
     "Mengenal e-SKPT.mp4",
@@ -61,6 +72,9 @@ def validate() -> None:
         "css/official-documents.css",
         "css/skpt-compact.css",
         "css/skpt-print-fix.css",
+        "css/skpt-legal-appendix.css",
+          "css/market-document-themes.css",
+          "css/market-identity.css",
         "css/document-polish.css",
         "css/photo-documents.css",
         "css/header-logo-fix.css",
@@ -70,6 +84,7 @@ def validate() -> None:
         "css/portal-reference.css",
         "css/portal-complete.css",
         "assets/guilloche-border.svg",
+        "assets/SKPT_Lampiran_Profesional.md",
         "assets/models/selfie_segmenter_float16_2023-05-07.tflite",
         "assets/videos/panduan-pendataan-web.mp4",
         "assets/videos/alur-verifikasi.mp4",
@@ -85,8 +100,10 @@ def validate() -> None:
         "js/epasar/market-workspace-service.js",
         "js/epasar/public-unit-verification.js",
         "js/epasar/skpt-pdf.js",
+        "js/epasar/skpt-legal-appendix.js",
         "js/epasar/skpt-statement.js",
         "js/epasar/trader-card.js",
+        "js/epasar/market-colors.js",
         "js/epasar/background-remove.js",
         "js/epasar/photo-editor.js",
         "js/epasar/admin-intake-review.js",
@@ -98,11 +115,31 @@ def validate() -> None:
         "database-pedagang.html",
         "css/database-pedagang.css",
         "js/epasar/database-pedagang.js",
+        "data-informasi.html",
+        "infografis.html",
+        "css/infografis.css",
+        "js/epasar/infografis.js",
+        "css/peta-pasar.css",
+        "js/epasar/peta-pasar.js",
+        "assets/data/markets_geo.json",
+        "assets/data/pinrang_regency.geojson",
+        "assets/images/pasar/MKT-001.jpg",
+        "assets/images/pasar/MKT-010.jpg",
     ]
     missing = [path for path in required if not (DIST / path).is_file() or (DIST / path).stat().st_size == 0]
     if missing:
         raise RuntimeError(f"Output build tidak lengkap: {', '.join(missing)}")
-    forbidden = [DIST / "EPASAR_SATU_DATA_DEVELOPER_PACK_V1", DIST / "scripts", DIST / ".git"]
+    forbidden = [
+        DIST / "EPASAR_SATU_DATA_DEVELOPER_PACK_V1",
+        DIST / "scripts",
+        DIST / "scratch",
+        DIST / ".git",
+        DIST / "firebase.test.json",
+        DIST / "firebase.notification.test.json",
+        DIST / "package.json",
+        DIST / "package-lock.json",
+        DIST / "skpt-layout-audit.png",
+    ]
     leaked = [str(path.relative_to(DIST)) for path in forbidden if path.exists()]
     if leaked:
         raise RuntimeError(f"Artefak internal masuk build: {', '.join(leaked)}")

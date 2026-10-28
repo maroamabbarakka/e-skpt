@@ -1,6 +1,7 @@
 (function () {
   'use strict';
   const root = document.getElementById('document');
+  const appendixRoot = document.getElementById('legalAppendix');
   const token = new URLSearchParams(location.search).get('token');
   const esc = (v) => String(v ?? '-').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const dateId = (v) => v ? new Date(v).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-';
@@ -85,6 +86,20 @@
 
   async function boot() {
     const params = new URLSearchParams(location.search);
+    if (params.get('preview') === 'lampiran') {
+      try {
+        const legalDocument = await window.EPASAR_SKPT_LEGAL_APPENDIX.load();
+        root.remove();
+        window.EPASAR_SKPT_LEGAL_APPENDIX.renderAppendixPages(appendixRoot, legalDocument, {
+          number: params.get('number') || 'PRATINJAU-LAMPIRAN',
+          legalAppendixVersion: legalDocument.version
+        });
+      } catch (error) {
+        console.error(error);
+        root.innerHTML = '<p class="document-error">Lampiran ketentuan belum dapat dimuat.</p>';
+      }
+      return;
+    }
     const activeToken = params.get('token') || params.get('verificationToken') || params.get('publicToken') || params.get('id');
     if (!activeToken) { root.innerHTML = '<p class="document-error">Token dokumen tidak tersedia.</p>'; return; }
     try {
@@ -93,6 +108,9 @@
       const actualToken = d.verificationToken || activeToken;
       const dHash = d.documentHash || '-';
       const s = d.documentSnapshot || {};
+      const marketPalette = window.EPASAR_MARKET_THEME
+        ? window.EPASAR_MARKET_THEME.apply(root, s.marketId || d.marketId, s.marketName || d.marketName)
+        : { primary: '#123F7C', dark: '#123F7C' };
 
       // Ambil konfigurasi dinamis sistem jika tersedia
       let appSettings = null;
@@ -157,12 +175,18 @@
         </section>
         <section class="document-footer-grid"><div class="register-box"><b>CATATAN<br>ADMINISTRASI DIGITAL</b>${annualCell(annual[0],issueYear)}${annualCell(annual[1],issueYear+1)}</div><div class="signature-block"><div>Pinrang, ${dateId(d.issueDate)}</div><div>${esc(signer.authority)}<br>${esc(signer.position)}</div><div class="signature-space">${signatureAreaHtml}</div><b><u>${esc(signer.name)}</u></b><br>${esc(signer.rank)}<br>NIP. ${esc(signer.nip)}</div></section>
         <section class="document-verification"><div id="qr" class="document-qr-code branded-qr"></div><div class="document-verification-details"><span class="document-status">${esc(tteLabel)}</span><br><b>Verifikasi dokumen</b><br>Nomor: ${esc(number)}<br><span class="document-hash">SHA-256: ${esc(dHash)}</span><br>Referensi: ${esc(d.officialReference || actualToken.slice(0,16))}<br>Berlaku sampai: ${dateId(d.validUntil)}</div>${photoBlock}</section>
-        <p class="document-disclaimer">SKPT ini merupakan keterangan administratif pemakaian tempat usaha dan bukan bukti kepemilikan hak atas tanah atau bangunan. Keaslian dan status dokumen diperiksa melalui QR resmi e-PASAR.</p>`;
+        <p class="document-disclaimer">SKPT ini merupakan keterangan administratif pemakaian tempat usaha dan bukan bukti kepemilikan hak atas tanah atau bangunan. Dokumen ini terdiri atas halaman utama dan lampiran ketentuan yang merupakan satu kesatuan. Keaslian dan status dokumen diperiksa melalui QR resmi e-PASAR.</p>`;
       if (window.QRCode) {
-        new QRCode(document.getElementById('qr'),{text:verificationUrl,width:160,height:160,colorDark:'#123f7c',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+        new QRCode(document.getElementById('qr'),{text:verificationUrl,width:160,height:160,colorDark:marketPalette.dark || marketPalette.primary,colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
         const tteQr = document.getElementById('dummyTteQr');
         if (tteQr) new QRCode(tteQr,{text:`${verificationUrl}&proof=tte-demo&ref=${encodeURIComponent(d.officialReference || actualToken.slice(0,16))}`,width:96,height:96,colorDark:'#111111',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
       }
+      if (!window.EPASAR_SKPT_LEGAL_APPENDIX || !appendixRoot) throw new Error('Modul lampiran ketentuan SKPT tidak tersedia.');
+      const legalDocument = await window.EPASAR_SKPT_LEGAL_APPENDIX.load();
+      window.EPASAR_SKPT_LEGAL_APPENDIX.renderAppendixPages(appendixRoot, legalDocument, {
+        number,
+        legalAppendixVersion: d.legalAppendixVersion || legalDocument.version
+      });
     } catch (error) { console.error(error); root.innerHTML = '<p class="document-error">Dokumen belum dapat dimuat. Periksa koneksi lalu coba kembali.</p>'; }
   }
   boot();

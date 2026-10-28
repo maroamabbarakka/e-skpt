@@ -12,6 +12,11 @@
   const rows = document.getElementById('intakeRows');
   const nextButton = document.getElementById('nextButton');
   const previousButton = document.getElementById('previousButton');
+  let traderNotifications = [];
+  const NON_MARKET_CACHE_TTL_MS = 60 * 1000;
+  let nonMarketCache = { expiresAt: 0, rows: null, promise: null };
+  let publicStatsCache = { expiresAt: 0, data: null, promise: null };
+  let metricsPromise = null;
 
   function escapeHtml(value) {
     return String(value ?? '—').replace(/[&<>"']/g, character => ({
@@ -33,12 +38,85 @@
     return raw.replace(/Missing or insufficient permissions\.?/i, 'Akses ke data ini belum tersedia untuk akun Anda.');
   }
 
+  async function getPublicStatsSummary(options = {}) {
+    const now = Date.now();
+    if (!options.force && publicStatsCache.data && publicStatsCache.expiresAt > now) return publicStatsCache.data;
+    if (publicStatsCache.promise) return publicStatsCache.promise;
+    publicStatsCache.promise = window.db.collection('public_stats').doc('summary').get()
+      .then(snapshot => snapshot.exists ? snapshot.data() : null)
+      .catch(error => {
+        console.warn('Ringkasan statistik belum tersedia:', error);
+        return publicStatsCache.data;
+      })
+      .then(data => {
+        if (data) {
+          publicStatsCache.data = data;
+          publicStatsCache.expiresAt = Date.now() + NON_MARKET_CACHE_TTL_MS;
+        }
+        return data;
+      })
+      .finally(() => { publicStatsCache.promise = null; });
+    return publicStatsCache.promise;
+  }
+
+  function notificationSource(row) {
+    return ({ ADMIN_INTAKE_REVIEW: 'Admin', MARKET_VERIFICATION: 'Kepala Pasar', KADIS_DECISION: 'Kadis' })[row.sourceType] || row.sourceRole || 'Petugas';
+  }
+
+  function renderTraderNotifications() {
+    const body = document.getElementById('notificationRows');
+    const badge = document.getElementById('notificationCountBadge');
+    if (!body) return;
+    if (badge) badge.textContent = `${traderNotifications.length} belum dikirim`;
+    body.innerHTML = traderNotifications.map(row => `<tr>
+      <td data-label="Pedagang"><b>${esc(row.traderName || row.traderId || 'Pedagang')}</b><small style="display:block;color:#64748b;">${esc(row.registrationCode || 'Tanpa nomor registrasi')}</small></td>
+      <td data-label="Keputusan"><span class="status-badge ${row.decision === 'REJECTED' ? 'status-rejected' : 'status-warning'}">${row.decision === 'REJECTED' ? 'DITOLAK' : 'PERLU PERBAIKAN'}</span></td>
+      <td data-label="Sumber">${esc(notificationSource(row))}</td>
+      <td data-label="Alasan">${esc(row.reason || row.summary || '—')}</td>
+      <td data-label="WhatsApp"><input data-notification-phone="${esc(row.id)}" type="tel" value="${esc(row.phone || '')}" placeholder="08xxxxxxxxxx" style="min-width:145px;margin:0;"></td>
+      <td data-label="Tindakan"><button class="button primary" type="button" data-send-notification="${esc(row.id)}">Kirim via WA</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:18px;color:#64748b;">Tidak ada penolakan atau perbaikan yang menunggu pengiriman.</td></tr>';
+  }
+
+  async function loadTraderNotifications() {
+    const panel = document.getElementById('notificationQueue');
+    if (!panel || !window.EPASAR_ADMIN_NOTIFICATIONS) return;
+    try {
+      traderNotifications = await window.EPASAR_ADMIN_NOTIFICATIONS.pending(currentProfile);
+      renderTraderNotifications();
+    } catch (error) {
+      document.getElementById('notificationRows').innerHTML = `<tr><td colspan="6">${esc(friendlyError(error))}</td></tr>`;
+    }
+  }
+
+  document.getElementById('notificationRows')?.addEventListener('click', async event => {
+    const button = event.target.closest('[data-send-notification]');
+    if (!button) return;
+    const row = traderNotifications.find(item => item.id === button.dataset.sendNotification);
+    const input = document.querySelector(`[data-notification-phone="${CSS.escape(button.dataset.sendNotification)}"]`);
+    const phone = window.EPASAR_ADMIN_NOTIFICATIONS.normalizePhone(input?.value);
+    if (!phone) { alert('Masukkan nomor WhatsApp pedagang yang valid.'); input?.focus(); return; }
+    const popup = window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(window.EPASAR_ADMIN_NOTIFICATIONS.message(row))}`, '_blank');
+    if (!popup) { alert('WhatsApp tidak dapat dibuka. Izinkan pop-up lalu coba kembali.'); return; }
+    button.disabled = true;
+    try {
+      await window.EPASAR_ADMIN_NOTIFICATIONS.markOpened(row, currentProfile, phone);
+      traderNotifications = traderNotifications.filter(item => item.id !== row.id);
+      renderTraderNotifications();
+    } catch (error) {
+      button.disabled = false;
+      alert(friendlyError(error));
+    }
+  });
+
   async function renderRoleWorkspace(profile) {
     currentProfile = profile;
     const isMarket = profile.role === 'MARKET_HEAD';
     const isKadis = profile.role === 'KADIS';
     const name = profile.displayName || profile.position || profile.role;
     const marketNames = (profile.marketIds || []).map(id => window.EPASAR?.marketById(id)?.name || id).join(', ');
+    const primaryMarketId = profile.marketId || profile.marketIds?.[0] || '';
+    if (primaryMarketId) window.EPASAR_MARKET_THEME?.apply(document.documentElement, primaryMarketId, marketNames);
     const subtitle = isMarket 
       ? `Kepala Pasar — ${marketNames || 'Pasar Rakyat Kabupaten Pinrang'}`
       : 'Pimpinan Eksekutif Dinas Perindag-ESDM Kabupaten Pinrang';
@@ -80,9 +158,10 @@
             </div>
           </section>
 
-          <aside class="app-panel">
-            <h2>Kewenangan Kepala Pasar</h2>
-            <p class="app-panel-sub">Pedoman verifikasi fisik sesuai Perda No. 6 Tahun 2024.</p>
+              <aside class="app-panel">
+                <h2>Kewenangan Kepala Pasar</h2>
+                <p class="app-panel-sub">Pedoman verifikasi fisik sesuai Perda No. 6 Tahun 2024.</p>
+                <p class="notice"><strong>ALUR KERJA</strong><br>Antrean verifikasi adalah tugas aktif Anda. <strong>Semua data pasar:</strong> hanya daftar referensi untuk pencarian dan pemeriksaan riwayat.</p>
             <div class="notice" style="margin-bottom: 12px;">
               <b>Integritas Data Lapangan</b><br>
               Hasil verifikasi faktual Anda menentukan keabsahan rekomendasi penerbitan SKPT resmi oleh Kepala Dinas.
@@ -135,14 +214,6 @@
         document.getElementById('kpiMarketVerified').textContent = verified;
         document.getElementById('kpiMarketConflict').textContent = conflict;
 
-        // Pasang event listener klik interaktif untuk kartu Kepala Pasar
-        document.querySelectorAll('[data-market-kpi]').forEach(card => {
-          card.addEventListener('click', () => {
-            const kpiType = card.dataset.marketKpi;
-            openAdminKpi(kpiType, { assignedIds, marketNames });
-          });
-        });
-
         const recent = claims.slice(0, 8);
         const rowsEl = document.getElementById('marketRecentRows');
         if (recent.length === 0) {
@@ -169,6 +240,7 @@
           <article class="kpi kpi-soft-blue" data-kadis-kpi="kpiKadisTraders" title="Klik untuk rincian sebaran pedagang di 11 pasar"><small>Total Pedagang Terdata</small><strong id="kpiKadisTraders">...</strong><p>11 Pasar se-Kab. Pinrang</p></article>
           <article class="kpi kpi-soft-amber" data-kadis-kpi="kpiKadisPending" title="Klik untuk berkas menunggu persetujuan Kadis"><small>Menunggu Persetujuan Kadis</small><strong id="kpiKadisPending">...</strong><p>Siap diputuskan & TTE</p></article>
           <article class="kpi kpi-soft-green" data-kadis-kpi="kpiKadisIssued" title="Klik untuk SKPT resmi yang telah diterbitkan"><small>SKPT Resmi Diterbitkan</small><strong id="kpiKadisIssued">...</strong><p>Tervalidasi TTE Elektronik</p></article>
+          <article class="kpi kpi-soft-cyan" data-kadis-kpi="kpiKadisNonMarket" title="Klik untuk rincian pedagang non-pasar / mandiri"><small>Pedagang Non-Pasar</small><strong id="kpiKadisNonMarket">...</strong><p>Mandiri Luar Pasar</p></article>
           <article class="kpi kpi-soft-purple" data-kadis-kpi="kpiKadisMarkets" title="Klik untuk direktori 11 pasar resmi & jadwal aktif"><small>Unit Pasar Resmi Terkelola</small><strong id="kpiKadisMarkets">11 Pasar</strong><p>Jadwal Operasional Dinamis</p></article>
         </div>
 
@@ -227,29 +299,25 @@
       `;
 
       try {
-        const [tradersSnap, pendingAppsSnap, issuedAppsSnap] = await Promise.all([
-          window.db.collection('traders').limit(300).get(),
-          window.db.collection('skpt_applications').where('status', '==', 'KADIS_REVIEW').limit(100).get(),
-          window.db.collection('skpt_applications').where('status', '==', 'ISSUED').limit(100).get()
+        const [totalTraders, pendingCount, issuedCount, pendingAppsSnap, stats] = await Promise.all([
+          count('traders'),
+          count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
+          count('skpt_applications', 'status', '==', 'ISSUED'),
+          window.db.collection('skpt_applications').where('status', '==', 'KADIS_REVIEW').limit(8).get(),
+          getPublicStatsSummary()
         ]);
-
-        const totalTraders = tradersSnap.size;
-        const pendingCount = pendingAppsSnap.size;
-        const issuedCount = issuedAppsSnap.size;
 
         document.getElementById('kpiKadisTraders').textContent = totalTraders;
         document.getElementById('kpiKadisPending').textContent = pendingCount;
         document.getElementById('kpiKadisIssued').textContent = issuedCount;
+        const kpiKadisNonMarketEl = document.getElementById('kpiKadisNonMarket');
+        if (kpiKadisNonMarketEl) {
+          const projectedCount = Number(stats?.nonMarketTraders);
+          if (Number.isFinite(projectedCount)) kpiKadisNonMarketEl.textContent = projectedCount;
+          else kpiKadisNonMarketEl.textContent = (await getNonMarketTradersData()).length;
+        }
         const kpiMarketsEl = document.getElementById('kpiKadisMarkets');
         if (kpiMarketsEl) kpiMarketsEl.textContent = '11 Pasar';
-
-        // Pasang event listener klik interaktif untuk kartu Kepala Dinas
-        document.querySelectorAll('[data-kadis-kpi]').forEach(card => {
-          card.addEventListener('click', () => {
-            const kpiType = card.dataset.kadisKpi;
-            openAdminKpi(kpiType);
-          });
-        });
 
         const pendingList = [];
         pendingAppsSnap.forEach(d => pendingList.push({ id: d.id, ...d.data() }));
@@ -298,7 +366,10 @@
       { id: 'MKT-010', name: 'Pasar Rakyat Sentral Pinrang' },
       { id: 'MKT-011', name: 'Pasar Rakyat Teppo' }
     ];
-    markets.forEach(m => {
+    const allowedMarkets = currentProfile?.role === 'MARKET_ADMIN'
+      ? markets.filter(market => (currentProfile.marketIds || []).includes(market.id))
+      : markets;
+    allowedMarkets.forEach(m => {
       const opt = document.createElement('option');
       opt.value = m.id;
       opt.textContent = `${m.id} · ${m.name}`;
@@ -382,20 +453,134 @@
     return snapshot.size;
   }
 
-  async function loadMetrics() {
-    const targets = {
-      kpiTotalTraders: count('traders', 'status', '==', 'ACTIVE'),
-      kpiSubmitted: count('trader_intake', 'status', '==', 'SUBMITTED'),
-      kpiMarket: count('market_claims', 'verificationStatus', '==', 'UNVERIFIED'),
-      kpiConflict: count('market_claims', 'verificationStatus', '==', 'CONFLICT'),
-      kpiKadis: count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
-      kpiIssued: count('skpt_documents', 'status', '==', 'ISSUED'),
-      kpiAnnual: count('skpt_annual_validations', 'status', '==', 'PENDING_REVIEW')
-    };
-    await Promise.all(Object.entries(targets).map(async ([id, promise]) => {
-      try { document.getElementById(id).textContent = await promise; }
-      catch (error) { console.warn(`[e-PASAR] KPI ${id} belum tersedia`, error); document.getElementById(id).textContent = '—'; }
-    }));
+  async function getNonMarketTradersData(options = {}) {
+    const force = options.force === true;
+    const now = Date.now();
+    if (!force && nonMarketCache.rows && nonMarketCache.expiresAt > now) return nonMarketCache.rows;
+    if (nonMarketCache.promise) return nonMarketCache.promise;
+
+    nonMarketCache.promise = (async () => {
+      try {
+        const [tradersSnap, claimsSnap, bizSnap] = await Promise.all([
+          window.db.collection('traders').limit(300).get(),
+          window.db.collection('market_claims').limit(400).get(),
+          window.db.collection('businesses').limit(300).get()
+        ]);
+
+        const marketTraderIds = new Set();
+        claimsSnap.forEach(d => {
+          const cd = d.data();
+          if (cd.traderId) marketTraderIds.add(cd.traderId);
+        });
+
+        const bizByTrader = new Map();
+        bizSnap.forEach(d => {
+          const bd = d.data();
+          if (bd.traderId && !bizByTrader.has(bd.traderId)) {
+            bizByTrader.set(bd.traderId, bd);
+          }
+        });
+
+        const nonMarketList = [];
+        tradersSnap.forEach(d => {
+          const td = d.data();
+          const tId = td.traderId || d.id;
+          const isMarketTrader = marketTraderIds.has(tId);
+          const explicitNonMarket = td.marketId === 'NON_MARKET' || td.locationType === 'GENERAL' || td.hasMarketUnit === false;
+
+          if (!isMarketTrader || explicitNonMarket) {
+            const biz = bizByTrader.get(tId) || {};
+            const token = td.publicToken || td.verificationToken || td.intakeId || tId;
+            nonMarketList.push({
+            id: d.id,
+            traderId: tId,
+            displayName: td.displayName || td.name || 'Pelaku Usaha Mandiri',
+            nikMasked: td.nikMasked || '7315************',
+            phone: td.phone || biz.phone || '',
+            businessName: biz.name || td.businessName || 'Usaha Perdagangan Mandiri',
+            businessType: biz.type || td.businessType || 'Non-Pasar',
+            businessCategory: biz.category || biz.group || 'Umum',
+            district: td.district || td.identity?.district || 'Kabupaten Pinrang',
+            village: td.village || td.identity?.village || '—',
+            address: td.address || td.identity?.address || '',
+            registrationCode: td.registrationCode || td.code || tId,
+            publicToken: token,
+            verificationToken: token,
+            status: td.status || 'ACTIVE',
+            isNonMarket: true,
+            unitType: 'NON_PASAR',
+            marketId: 'NON_MARKET',
+            marketName: 'Luar Kawasan Pasar (Mandiri)'
+            });
+          }
+        });
+        nonMarketCache.rows = nonMarketList;
+        nonMarketCache.expiresAt = Date.now() + NON_MARKET_CACHE_TTL_MS;
+        return nonMarketList;
+      } catch (err) {
+        console.warn('Gagal memuat data pedagang non-pasar:', err);
+        if (nonMarketCache.rows) return nonMarketCache.rows;
+        return [];
+      } finally {
+        nonMarketCache.promise = null;
+      }
+    })();
+    return nonMarketCache.promise;
+  }
+
+  async function loadMetrics(options = {}) {
+    if (metricsPromise) return metricsPromise;
+    metricsPromise = (async () => {
+      const targets = {
+        kpiTotalTraders: count('traders', 'status', '==', 'ACTIVE'),
+        kpiSubmitted: count('trader_intake', 'status', '==', 'SUBMITTED'),
+        kpiMarket: count('market_claims', 'verificationStatus', '==', 'UNVERIFIED'),
+        kpiConflict: count('market_claims', 'verificationStatus', '==', 'CONFLICT'),
+        kpiKadis: count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
+        kpiIssued: count('skpt_documents', 'status', '==', 'ISSUED'),
+        kpiAnnual: count('skpt_annual_validations', 'status', '==', 'PENDING_REVIEW')
+      };
+      if (currentProfile?.role === 'MARKET_ADMIN') {
+        delete targets.kpiSubmitted;
+        const marketIds = window.EPASAR_ADMIN_INTAKE.assignedMarketIds(currentProfile);
+        const submitted = marketIds.length
+          ? await window.db.collection('trader_intake').where('routingMarketIds', 'array-contains-any', marketIds).where('status', '==', 'SUBMITTED').get()
+          : { size: 0 };
+        const submittedElement = document.getElementById('kpiSubmitted');
+        if (submittedElement) submittedElement.textContent = submitted.size;
+      }
+      await Promise.all(Object.entries(targets).map(async ([id, promise]) => {
+        try { document.getElementById(id).textContent = await promise; }
+        catch (error) { console.warn(`[e-PASAR] KPI ${id} belum tersedia`, error); document.getElementById(id).textContent = '—'; }
+      }));
+
+      const metricLabels = {
+        kpiTotalTraders: ['Total Pedagang Aktif', 'Master pedagang resmi', 'Jumlah master pedagang aktif; tidak termasuk pengajuan yang belum disetujui.'],
+        kpiSubmitted: ['Pengajuan Baru', 'Belum menjadi master pedagang', 'Berkas berstatus SUBMITTED yang masih menunggu review admin.'],
+        kpiMarket: ['Klaim Menunggu Verifikasi', 'Bukan jumlah pedagang atau unit fisik', 'Klaim lokasi atau unit berstatus UNVERIFIED; satu pedagang dapat memiliki lebih dari satu klaim.']
+      };
+      Object.entries(metricLabels).forEach(([id, text]) => {
+        const value = document.getElementById(id);
+        const card = value?.closest('.kpi');
+        if (value?.previousElementSibling) value.previousElementSibling.textContent = text[0];
+        if (value?.nextElementSibling) value.nextElementSibling.textContent = text[1];
+        if (card) card.title = text[2];
+      });
+
+      try {
+        const nonMarketEl = document.getElementById('kpiNonMarketTraders');
+        if (nonMarketEl) {
+          const stats = await getPublicStatsSummary(options);
+          const projectedCount = Number(stats?.nonMarketTraders);
+          if (Number.isFinite(projectedCount)) nonMarketEl.textContent = projectedCount;
+          else nonMarketEl.textContent = (await getNonMarketTradersData(options)).length;
+        }
+      } catch (errNm) {
+        console.warn('Gagal set KPI non market:', errNm);
+      }
+    })();
+    try { return await metricsPromise; }
+    finally { metricsPromise = null; }
   }
 
   async function load(cursor) {
@@ -404,12 +589,12 @@
       if (!window.EPASAR_FIREBASE_READY) {
         throw new Error('Firebase/Auth belum dikonfigurasi. Akses admin dinonaktifkan.');
       }
-      const result = await window.EPASAR_ADMIN_INTAKE.page(cursor);
+      const result = await window.EPASAR_ADMIN_INTAKE.page(currentProfile, cursor);
       currentCursor = result.last || null;
       currentHasMore = result.hasMore;
       rawIntakeList = result.rows;
       filterAndRenderIntake();
-      if (currentPage === 1) loadMetrics();
+      if (currentPage === 1) await loadMetrics();
       workspace.hidden = false;
       message.hidden = true;
     } catch (error) {
@@ -473,7 +658,20 @@
 
   function formatAdminWaMessage(record) {
     const origin = window.location.origin;
-    const name = record.displayName || record.applicantSnapshot?.displayName || record.documentSnapshot?.displayName || 'Pedagang';
+    const name = record.displayName || record.applicantSnapshot?.displayName || record.documentSnapshot?.displayName || 'Pelaku Usaha';
+    const isNonMarket = record.isNonMarket === true || record.unitType === 'NON_PASAR' || record.marketId === 'NON_MARKET';
+
+    if (isNonMarket) {
+      const biz = record.businessName || record.applicantSnapshot?.businessName || 'Usaha Perdagangan Mandiri';
+      const loc = record.district ? `${record.district}${record.village && record.village !== '—' ? ' / ' + record.village : ''}` : 'Kabupaten Pinrang';
+      const token = record.publicToken || record.verificationToken || record.traderId || record.id;
+      const cardUrl = `${origin}/trader-card.html?token=${encodeURIComponent(token)}`;
+      const statusUrl = `${origin}/epasar-status.html?code=${encodeURIComponent(record.registrationCode || '')}&token=${encodeURIComponent(token)}`;
+      const regCodeText = record.registrationCode ? `🔢 *Nomor Registrasi:*\n${record.registrationCode}\n\n` : '';
+
+      return `*PEMERINTAH KABUPATEN PINRANG*\n*Dinas Perindustrian, Perdagangan, ESDM*\n-------------------------------------------\nYth. Bapak/Ibu *${name}*,\nBerikut rincian legalitas identitas resmi *Pelaku Usaha Mandiri (Non-Pasar Rakyat)* Anda yang telah terdaftar pada sistem satu data e-PASAR:\n\n💼 *Nama Usaha:* ${biz}\n📍 *Lokasi Usaha:* ${loc}\n${regCodeText}Silakan akses & unduh Kartu Pedagang Digital resmi Anda:\n🪪 *Unduh Kartu Pedagang Digital:*\n${cardUrl}\n\n🔍 *Cek Status & Profil Usaha:*\n${statusUrl}\n\n_Catatan: Kartu ini merupakan identitas resmi kepesertaan Satu Data Perdagangan Dinas Perindag-ESDM Kabupaten Pinrang._`;
+    }
+
     const skptNumber = record.number || record.skptNumber || '—';
     const market = record.documentSnapshot?.marketName || record.applicantSnapshot?.marketName || record.marketName || 'Pasar Rakyat Pinrang';
     const unit = `${record.documentSnapshot?.unitType || record.applicantSnapshot?.claimedUnitType || 'Unit'} ${record.documentSnapshot?.unitNumber || record.applicantSnapshot?.claimedUnitNumber || ''}`;
@@ -538,7 +736,9 @@
       kpiKadisTraders: { title: 'Sebaran Pedagang di 11 Pasar Rakyat Resmi', subtitle: 'MONITORING EKSEKUTIF KEPALA DINAS' },
       kpiKadisPending: { title: 'Permohonan SKPT Menunggu Persetujuan Kadis', subtitle: 'BERKAS SIAP TTE ELEKTRONIK' },
       kpiKadisIssued: { title: 'SKPT Resmi Terbit & Tersertifikasi Digital', subtitle: 'LEGALITAS RESMI PEMERINTAH KABUPATEN PINRANG' },
-      kpiKadisMarkets: { title: 'Direktori 11 Pasar Rakyat Resmi & Jadwal Operasional Aktif', subtitle: 'MASTER DATABASE RETRIBUSI PASAR PINRANG' }
+      kpiKadisMarkets: { title: 'Direktori 11 Pasar Rakyat Resmi & Jadwal Operasional Aktif', subtitle: 'MASTER DATABASE RETRIBUSI PASAR PINRANG' },
+      kpiNonMarketTraders: { title: 'Daftar Pedagang Non-Pasar (Pelaku Usaha Mandiri)', subtitle: 'SATU DATA PEDAGANG KABUPATEN PINRANG · LUAR KAWASAN PASAR' },
+      kpiKadisNonMarket: { title: 'Daftar Pedagang Non-Pasar (Pelaku Usaha Mandiri)', subtitle: 'MONITORING EKSEKUTIF KADIS · PELAKU USAHA MANDIRI' }
     };
 
     const cfg = titles[type] || { title: 'Rincian Data', subtitle: 'DASHBOARD METRIK' };
@@ -546,12 +746,20 @@
     subtitleEl.textContent = cfg.subtitle;
 
     try {
-      if (type === 'kpiIssued' || type === 'kpiKadisIssued') {
+      if (type === 'kpiNonMarketTraders' || type === 'kpiKadisNonMarket') {
+        currentKpiData = await getNonMarketTradersData();
+      } else if (type === 'kpiIssued' || type === 'kpiKadisIssued') {
         const snap = await window.db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(100).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
       } else if (type === 'kpiSubmitted') {
-        const snap = await window.db.collection('trader_intake').where('status', '==', 'SUBMITTED').limit(80).get();
+        let query = window.db.collection('trader_intake').where('status', '==', 'SUBMITTED');
+        if (currentProfile?.role === 'MARKET_ADMIN') {
+          const marketIds = window.EPASAR_ADMIN_INTAKE.assignedMarketIds(currentProfile);
+          if (!marketIds.length) { currentKpiData = []; filterAndRenderAdminKpi(); return; }
+          query = query.where('routingMarketIds', 'array-contains-any', marketIds);
+        }
+        const snap = await query.limit(80).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
       } else if (type === 'kpiMarket') {
@@ -744,6 +952,68 @@
           if (record) sendAdminWa(record);
         });
       });
+    } else if (currentKpiType === 'kpiNonMarketTraders' || currentKpiType === 'kpiKadisNonMarket') {
+      bodyEl.innerHTML = `
+        <div style="margin-bottom:12px; font-size:0.78rem; color:#047857; background:#f0fdfa; border:1px solid #99f6e4; padding:10px 14px; border-radius:10px;">
+          🏪 <b>Direktori Pelaku Usaha Mandiri (Non-Pasar Rakyat)</b> — Pedagang mandiri di luar 11 pasar rakyat resmi yang terdata dalam basis data terpusat e-PASAR Pinrang. Setiap pedagang berhak memiliki Kartu Digital Pelaku Usaha Mandiri resmi.
+        </div>
+        <table class="db-popup-table">
+          <thead>
+            <tr>
+              <th style="width: 36px; text-align: center;">No</th>
+              <th>Pelaku Usaha</th>
+              <th>Usaha & Domisili</th>
+              <th>Status & Kategori</th>
+              <th style="width: 105px; text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>${
+            matching.map((r, i) => {
+              const token = r.publicToken || r.traderId;
+              return `<tr>
+                <td style="text-align: center; font-weight: 750; color: #64748b;">${i + 1}</td>
+                <td>
+                  <strong style="color:#0f172a; font-size:0.82rem;">${esc(r.displayName)}</strong><br>
+                  <small style="color:#64748b;">ID: ${esc(r.traderId)}</small>
+                </td>
+                <td>
+                  <strong style="color:#1e293b;">${esc(r.businessName)}</strong><br>
+                  <small style="color:#059669; font-weight:600;">📍 ${esc(r.district)}${r.village && r.village !== '—' ? ' / ' + esc(r.village) : ''}</small>
+                </td>
+                <td>
+                  <span class="db-badge" style="background: linear-gradient(135deg, #0284c7 0%, #16a34a 100%); color:#fff; font-weight:700; font-size:0.68rem; padding:3px 8px; border-radius:99px;">
+                    NON-PASAR RAKYAT
+                  </span><br>
+                  <small style="color:#64748b; font-size:0.65rem;">Pelaku Usaha Mandiri</small>
+                </td>
+                <td style="text-align: center;">
+                  <div class="db-icon-actions">
+                    <a href="trader-card.html?token=${encodeURIComponent(token)}" target="_blank" class="db-action-icon-btn btn-trader-card" title="Lihat & Unduh Kartu Pelaku Usaha Mandiri" aria-label="Kartu Pedagang">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <circle cx="8" cy="10" r="2"></circle>
+                        <path d="M14 9h4m-4 4h4m-8 3h8"></path>
+                      </svg>
+                    </a>
+                    <button type="button" class="db-action-icon-btn btn-send-wa" data-nonmarket-wa="${esc(r.id)}" title="Kirim Kartu & Informasi ke WhatsApp Pedagang" aria-label="Kirim WhatsApp">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 18.07c-1.5 0-2.97-.4-4.25-1.17l-.3-.18-3.12.82.83-3.04-.2-.32a8.04 8.04 0 0 1-1.23-4.27c0-4.47 3.64-8.11 8.12-8.11 2.17 0 4.21.85 5.74 2.39a8.07 8.07 0 0 1 2.38 5.72c0 4.47-3.65 8.11-8.12 8.11zm4.45-6.08c-.24-.12-1.44-.71-1.66-.79-.23-.08-.39-.12-.56.12-.17.24-.65.79-.8 1-.15.2-.3.24-.54.12-.24-.12-1.03-.38-1.96-1.21-.72-.64-1.21-1.44-1.35-1.68-.15-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.02s.87 2.34 1 2.51c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')
+          }</tbody>
+        </table>
+      `;
+
+      bodyEl.querySelectorAll('button[data-nonmarket-wa]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const record = matching.find(row => row.id === btn.dataset.nonmarketWa);
+          if (record) sendAdminWa(record);
+        });
+      });
     } else if (currentKpiType === 'kpiSubmitted') {
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>Registrasi</th><th>Nama Pemohon</th><th>Pasar</th><th>Unit Diklaim</th><th>Aksi</th></tr></thead><tbody>${
         matching.map((r, i) => `<tr>
@@ -859,7 +1129,7 @@
   }
 
   function setupKpiInteractions() {
-    // Global delegation klik card KPI untuk semua role (Super Admin, Kepala Pasar, Kepala Dinas)
+    // Satu-satunya handler kartu KPI. Delegation juga mencakup kartu role yang dibuat dinamis.
     document.addEventListener('click', (e) => {
       const card = e.target.closest('[data-admin-kpi], [data-market-kpi], [data-kadis-kpi]');
       if (!card) return;
@@ -867,26 +1137,6 @@
       if (type) {
         e.preventDefault();
         openAdminKpi(type);
-      }
-    });
-
-    const kpis = [
-      { id: 'kpiTotalTraders', type: 'kpiTotalTraders' },
-      { id: 'kpiSubmitted', type: 'kpiSubmitted' },
-      { id: 'kpiMarket', type: 'kpiMarket' },
-      { id: 'kpiConflict', type: 'kpiConflict' },
-      { id: 'kpiKadis', type: 'kpiKadis' },
-      { id: 'kpiIssued', type: 'kpiIssued' },
-      { id: 'kpiAnnual', type: 'kpiAnnual' },
-      { id: 'kpiPage', type: 'kpiPage' }
-    ];
-
-    kpis.forEach(item => {
-      const el = document.getElementById(item.id);
-      const article = el?.closest('.kpi');
-      if (article) {
-        article.style.cursor = 'pointer';
-        article.addEventListener('click', () => openAdminKpi(item.type));
       }
     });
 
@@ -932,6 +1182,8 @@
     currentPage = 1;
     currentCursor = null;
     cursorHistory.length = 0;
+    nonMarketCache.expiresAt = 0;
+    publicStatsCache.expiresAt = 0;
     load(null);
   });
 
@@ -954,13 +1206,14 @@
   (async function boot() {
     try {
       if (window.EPASAR_FIREBASE_INIT) window.EPASAR_FIREBASE_INIT();
-      const profile = await window.EPASAR_AUTH.requireStaff(['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN']);
+      const profile = await window.EPASAR_AUTH.requireStaff(['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','UPTD_HEAD','KADIS','TECH_ADMIN']);
       currentProfile = profile;
       window.EPASAR_INTERNAL_UI?.setProfile(profile);
+      if (profile.role === 'UPTD_HEAD') { location.replace('uptd-approval.html'); return; }
       setupIntakeFilterEvents();
       setupKpiInteractions();
       if (profile.role === 'MARKET_HEAD' || profile.role === 'KADIS') renderRoleWorkspace(profile);
-      else load(null);
+      else { await Promise.all([load(null), loadTraderNotifications()]); }
     } catch (error) {
       workspace.hidden = true;
       setMessage(`${friendlyError(error)} Mengalihkan ke halaman login…`, true);

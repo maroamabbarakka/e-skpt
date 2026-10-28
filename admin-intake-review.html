@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/intake-review.css" />
     <link rel="stylesheet" href="css/intake-decision.css" />
     <link rel="stylesheet" href="css/internal-ui.css" />
+    <link rel="stylesheet" href="css/market-identity.css" />
   </head>
   <body>
     <main class="intake-review-shell">
@@ -28,6 +29,10 @@
         <section class="review-section">
           <h2>Identitas dan usaha</h2>
           <div id="identitySummary" class="review-summary"></div>
+          <div id="nikControl" class="nik-control" role="status" aria-live="polite">
+            <strong>Kontrol NIK</strong>
+            <span>Memeriksa registry identitas internal&hellip;</span>
+          </div>
           <div id="businessSummary" class="review-summary"></div>
         </section>
         <section class="review-section">
@@ -124,10 +129,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="js/epasar/firebase-config.local.js"></script>
+    <script src="js/epasar/market-colors.js"></script>
     <script src="js/epasar/constants.js"></script>
     <script src="js/epasar/config.js"></script>
     <script src="js/epasar/auth-service.js"></script>
     <script src="js/epasar/internal-shell.js"></script>
+    <script src="js/epasar/admin-intake-service.js"></script>
     <script src="js/epasar/workflow-service.js"></script>
     <script src="js/epasar/intake-review-service.js"></script>
     <script src="js/epasar/admin-intake-review.js"></script>

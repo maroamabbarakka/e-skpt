@@ -10,7 +10,7 @@ if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 async function loginUser(page, email, target = 'database-pedagang.html') {
   await page.goto(`${BASE}/login.html?t=${Date.now()}`, { waitUntil: 'domcontentloaded' });
   await page.locator('#identifier').fill(email);
-  await page.locator('#password').fill('Pasar202#');
+  await page.locator('#password').fill(process.env.EPASAR_UAT_PASSWORD || (() => { throw new Error('EPASAR_UAT_PASSWORD wajib tersedia di environment lokal.'); })());
   await page.getByRole('button', { name: 'Masuk' }).click();
   await page.waitForURL(/admin-epasar/, { timeout: 25000 });
   if (target) {

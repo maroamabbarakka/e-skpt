@@ -77,9 +77,10 @@ async function write(idToken, summary) {
 
 (async () => {
   const idToken = await token();
-  const [traders, documents, businesses, locations, claims, occupancies] = await Promise.all([
+  const [traders, documents, businesses, locations, claims, occupancies, intakes, applications] = await Promise.all([
     list(idToken, 'traders'), list(idToken, 'skpt_documents'), list(idToken, 'businesses'),
-    list(idToken, 'business_locations'), list(idToken, 'market_claims'), list(idToken, 'market_occupancies')
+    list(idToken, 'business_locations'), list(idToken, 'market_claims'), list(idToken, 'market_occupancies'),
+    list(idToken, 'trader_intake'), list(idToken, 'skpt_applications')
   ]);
   const activeTraders = traders.filter(valid);
   const traderIds = new Set(activeTraders.map((row) => row.traderId || row.id));
@@ -97,6 +98,8 @@ async function write(idToken, summary) {
   let topCategories = sorted.slice(0, 5).map(([label, count]) => ({ label, count }));
   if (sorted.length > 5) topCategories = [...sorted.slice(0, 4).map(([label, count]) => ({ label, count })), { label: 'OTHER', count: sorted.slice(4).reduce((sum, item) => sum + item[1], 0) }];
   const marketTraders = [...traderIds].filter((id) => marketIds.has(id)).length;
+  const rejectedIntakes = intakes.filter((row) => String(row.status || '').toUpperCase() === 'REJECTED').length;
+  const rejectedApplications = applications.filter((row) => String(row.status || '').toUpperCase() === 'REJECTED').length;
   const summary = {
     totalTraders: traderIds.size,
     totalIssuedSkpt: issued.length,
@@ -105,7 +108,10 @@ async function write(idToken, summary) {
     totalCategories: categoryCounts.size,
     marketTraders,
     nonMarketTraders: Math.max(0, traderIds.size - marketTraders),
-    topCategories
+    topCategories,
+    rejectedIntakes,
+    rejectedApplications,
+    rejectedTotal: rejectedIntakes + rejectedApplications
   };
   await write(idToken, summary);
   console.log(JSON.stringify({ status: 'PASS', summary }, null, 2));

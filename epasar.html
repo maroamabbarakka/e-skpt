@@ -14,6 +14,7 @@
     <link rel="icon" href="favicon.png" />
     <link rel="stylesheet" href="css/epasar.css" />
     <link rel="stylesheet" href="css/form-wizard.css" />
+    <link rel="stylesheet" href="css/market-identity.css" />
   </head>
   <body class="registration-page">
     <header class="registration-topbar">
@@ -66,8 +67,49 @@
             Tidak. Pendataan umum tetap dapat dikirim tanpa pengajuan e-SKPT.
           </p>
         </details>
+        <details>
+          <summary>Dokumen apa yang perlu disiapkan?</summary>
+          <p>
+            Foto atau pindai KTP diperlukan untuk seluruh pendataan. KK
+            bersifat opsional. Selfie dan foto dagangan/usaha hanya diwajibkan
+            jika Anda memilih pengajuan e-SKPT.
+          </p>
+        </details>
       </div>
     </aside>
+    <div
+      id="skptLegalModal"
+      class="legal-consent-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="skptLegalModalTitle"
+      hidden
+    >
+      <div class="legal-consent-dialog">
+        <header class="legal-consent-header">
+          <div>
+            <p>PERSETUJUAN SEBELUM PERMOHONAN e-SKPT</p>
+            <h2 id="skptLegalModalTitle">Ketentuan Pemakaian Tempat Pasar</h2>
+          </div>
+          <button id="closeSkptLegalModal" type="button" aria-label="Tutup dokumen">&times;</button>
+        </header>
+        <div class="legal-consent-progress" aria-live="polite">
+          <div><span id="skptLegalProgressText">Baca dokumen sampai selesai</span><strong id="skptLegalProgressPercent">0%</strong></div>
+          <div class="legal-consent-progress-track"><span id="skptLegalProgressBar"></span></div>
+        </div>
+        <div id="skptLegalScroll" class="legal-consent-scroll" tabindex="0" aria-label="Isi lengkap dokumen persyaratan e-SKPT">
+          <div id="skptLegalContent" class="legal-document"><p>Memuat dokumen persyaratan&hellip;</p></div>
+          <div id="skptLegalEnd" class="legal-document-end" tabindex="-1"><strong>Akhir dokumen</strong><span>Pastikan seluruh ketentuan telah dibaca dan dipahami.</span></div>
+        </div>
+        <footer class="legal-consent-footer">
+          <p id="skptLegalConsentHint">Tombol persetujuan aktif setelah dokumen dibaca sampai bagian akhir.</p>
+          <div>
+            <button id="cancelSkptLegalModal" class="button secondary" type="button">Kembali</button>
+            <button id="acceptSkptLegalDocument" class="button primary" type="button" disabled>Saya telah membaca dan menyetujui</button>
+          </div>
+        </footer>
+      </div>
+    </div>
     <main class="form-shell registration-shell">
       <header class="page-header">
         <p class="eyebrow">LAYANAN PENDATAAN PUBLIK</p>
@@ -232,106 +274,87 @@
             <div>
               <h2>Dokumen & e-SKPT</h2>
               <p class="step-help">
-                Pilih tempat yang akan diajukan. Setiap tempat menghasilkan satu
-                permohonan e-SKPT.
+                Lengkapi dokumen identitas untuk pendataan. Dokumen tambahan
+                hanya diminta jika Anda memilih pengajuan e-SKPT.
               </p>
             </div>
           </div>
+          <section class="document-group identity-documents">
+            <div class="group-title">
+              <div>
+                <h3>Dokumen Identitas Pedagang</h3>
+                <p>
+                  Digunakan untuk mencocokkan identitas dan mencegah data
+                  pedagang ganda, dengan maupun tanpa pengajuan e-SKPT.
+                </p>
+              </div>
+              <span class="tag required-tag">KTP WAJIB</span>
+            </div>
+            <div class="privacy-note document-privacy-note">
+              <span aria-hidden="true">&#9678;</span>
+              <p><b>Dokumen dilindungi.</b> KTP dan KK memiliki akses terbatas, tidak ditampilkan kepada publik, dan tidak dimasukkan ke QR atau kartu pedagang.</p>
+            </div>
+            <div class="upload-grid identity-upload-grid">
+              <label class="upload-box required-upload"
+                ><span class="upload-icon" aria-hidden="true">&#9635;</span
+                ><b>Foto/pindai KTP</b><span class="tag required-tag">WAJIB</span
+                ><small>Pastikan tulisan terbaca dan seluruh sisi kartu terlihat.</small
+                ><input id="identityKtpPhoto" name="identityKtpPhoto" type="file" accept="image/*" capture="environment" /><span class="upload-action"
+                  >Ambil Foto atau Pilih Galeri</span
+                ><span id="identityKtpPhotoStatus" class="media-status" aria-live="polite"></span
+              ></label>
+              <label class="upload-box"
+                ><span class="upload-icon" aria-hidden="true">&#9636;</span
+                ><b>Foto KK</b><span class="tag optional-tag">OPSIONAL</span
+                ><small>Dapat ditambahkan sebagai dokumen pendukung identitas.</small
+                ><input id="identityKkPhoto" name="identityKkPhoto" type="file" accept="image/*" capture="environment" /><span class="upload-action"
+                  >Ambil Foto atau Pilih Galeri</span
+                ><span id="identityKkPhotoStatus" class="media-status" aria-live="polite"></span
+              ></label>
+            </div>
+          </section>
           <section class="document-group">
             <div class="group-title">
               <div>
                 <h3>Pengajuan e-SKPT</h3>
-                <p>
-                  Anda tetap dapat menyelesaikan pendataan tanpa mengajukan
-                  e-SKPT.
-                </p>
+                <p>Pilih tempat pasar yang akan diajukan. Pendataan tetap dapat diselesaikan tanpa mengajukan e-SKPT.</p>
               </div>
               <span class="tag optional-tag">PILIHAN</span>
             </div>
             <div id="skptPlaceChoices" class="entity-list"></div>
           </section>
-          <section class="document-group">
-            <div class="group-title">
-              <div>
-                <h3>Foto Pendukung</h3>
-                <p>Foto diperkecil dan dikompres otomatis di perangkat Anda.</p>
-              </div>
-            </div>
-            <div class="upload-grid">
-              <label class="upload-box"
-                ><span class="upload-icon">◎</span><b>Foto penjual/selfie</b
-                ><small>Wajib hanya jika mengajukan e-SKPT</small
-                ><input
-                  id="profilePhoto"
-                  name="profilePhoto"
-                  type="file"
-                  accept="image/*"
-                  capture="user" /><span class="upload-action"
-                  >Ambil Foto atau Pilih Galeri</span
-                ><span id="profilePhotoStatus" class="media-status"></span
-                ><span class="preview-wrap"
-                  ><img
-                    id="profilePhotoPreview"
-                    class="photo-preview"
-                    alt="Pratinjau foto"
-                    hidden /></span></label
-              ><label class="upload-box"
-                ><span class="upload-icon">▧</span><b>Foto dagangan</b
-                ><span class="tag optional-tag">OPSIONAL</span
-                ><input
-                  id="businessPhoto"
-                  name="businessPhoto"
-                  type="file"
-                  accept="image/*"
-                  capture="environment" /><span class="upload-action"
-                  >Ambil Foto atau Pilih Galeri</span
-                ><span id="businessPhotoStatus" class="media-status"></span
-                ><span class="preview-wrap"
-                  ><img
-                    id="businessPhotoPreview"
-                    class="photo-preview"
-                    alt="Pratinjau dagangan"
-                    hidden /></span
-              ></label>
-            </div>
-          </section>
           <div id="skptOnlyAttachments" hidden>
             <section class="document-group restricted">
               <div class="group-title">
                 <div>
-                  <h3>Data Khusus e-SKPT</h3>
+                  <h3>Dokumen Pendukung e-SKPT</h3>
                   <p>
                     Bagian ini hanya muncul karena Anda memilih pengajuan
-                    e-SKPT.
+                    e-SKPT. Foto dikompres otomatis di perangkat Anda.
                   </p>
                 </div>
                 <span class="tag required-tag">WAJIB</span>
               </div>
-              <label
-                >Foto/pindai KTP<input
-                  id="identityKtpPhoto"
-                  name="identityKtpPhoto"
-                  type="file"
-                  accept="image/*"
-                  capture="environment" /><small
-                  >Dokumen memiliki akses terbatas dan tidak ditampilkan kepada
-                  publik.</small
-                ><span
-                  id="identityKtpPhotoStatus"
-                  class="media-status"
-                ></span></label
-              ><label
-                >Foto KK <span class="tag optional-tag">OPSIONAL</span
-                ><input
-                  id="identityKkPhoto"
-                  name="identityKkPhoto"
-                  type="file"
-                  accept="image/*"
-                  capture="environment" /><span
-                  id="identityKkPhotoStatus"
-                  class="media-status"
-                ></span
-              ></label>
+              <div class="upload-grid skpt-upload-grid">
+                <label class="upload-box required-upload"
+                  ><span class="upload-icon" aria-hidden="true">&#9678;</span
+                  ><b>Foto penjual/selfie</b><span class="tag required-tag">WAJIB</span
+                  ><small>Gunakan foto terbaru dengan wajah terlihat jelas.</small
+                  ><input id="profilePhoto" name="profilePhoto" type="file" accept="image/*" capture="user" /><span class="upload-action"
+                    >Ambil Foto atau Pilih Galeri</span
+                  ><span id="profilePhotoStatus" class="media-status" aria-live="polite"></span
+                  ><span class="preview-wrap"><img id="profilePhotoPreview" class="photo-preview" alt="Pratinjau foto penjual" hidden /></span
+                ></label>
+                <label class="upload-box required-upload"
+                  ><span class="upload-icon" aria-hidden="true">&#9639;</span
+                  ><b>Foto dagangan/usaha</b><span class="tag required-tag">WAJIB</span
+                  ><small>Tampilkan dagangan atau kegiatan usaha yang diajukan.</small
+                  ><input id="businessPhoto" name="businessPhoto" type="file" accept="image/*" capture="environment" /><span class="upload-action"
+                    >Ambil Foto atau Pilih Galeri</span
+                  ><span id="businessPhotoStatus" class="media-status" aria-live="polite"></span
+                  ><span class="preview-wrap"><img id="businessPhotoPreview" class="photo-preview" alt="Pratinjau foto dagangan atau usaha" hidden /></span
+                ></label>
+              </div>
               <div id="skptRequirements">
                 <div class="two-col">
                   <label
@@ -353,7 +376,10 @@
                   /></label>
                 </div>
                 <div class="requirements-box">
-                  <strong>Persyaratan e-SKPT</strong>
+                  <div class="requirements-heading">
+                    <div><strong>Persyaratan e-SKPT</strong><small>Wajib dipahami sebelum permohonan dikirim</small></div>
+                    <span id="skptLegalStatus" class="legal-read-status is-pending">Belum dibaca</span>
+                  </div>
                   <ul>
                     <li>
                       Identitas dan kondisi tempat dapat diperiksa petugas.
@@ -362,14 +388,16 @@
                       e-SKPT berlaku dua tahun dan bukan bukti kepemilikan.
                     </li>
                     <li>Setiap tempat diproses sebagai permohonan terpisah.</li>
+                    <li>Hak, kewajiban, larangan, pencabutan, dan sanksi mengikuti Perda Kabupaten Pinrang Nomor 6 Tahun 2024.</li>
                   </ul>
+                  <button id="openSkptLegalModal" class="legal-document-button" type="button"><span aria-hidden="true">&#9633;</span><span><b>Baca dokumen persyaratan lengkap</b><small>Petikan ketentuan SKPT &middot; akan dilampirkan pada dokumen SKPT</small></span><span aria-hidden="true">&rarr;</span></button>
                 </div>
                 <label class="check"
-                  ><input name="skptAck" type="checkbox" /><span
-                    >Saya telah membaca dan menyetujui persyaratan pengajuan
-                    e-SKPT.</span
+                  ><input name="skptAck" type="checkbox" disabled /><span
+                    >Saya telah membaca seluruh dokumen persyaratan dan menyetujui ketentuan pengajuan e-SKPT.</span
                   ></label
                 >
+                <small class="legal-consent-note">Persetujuan hanya dapat diberikan setelah dokumen lengkap dibuka dan dibaca sampai akhir.</small>
               </div>
             </section>
           </div>
@@ -445,6 +473,8 @@
         <div class="success-actions">
           <a id="statusLink" class="button primary" href="epasar-status.html"
             >Cek Status</a
+          ><a id="directCardLink" class="button secondary" href="trader-card.html" target="_blank" hidden
+            >🪪 Buka Kartu Digital</a
           ><a class="button secondary" href="index.html">Kembali ke Beranda</a>
         </div>
       </section>
@@ -453,6 +483,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="js/epasar/firebase-config.local.js"></script>
+    <script src="js/epasar/market-colors.js"></script>
     <script src="js/epasar/constants.js"></script>
     <script src="js/epasar/validators.js"></script>
     <script src="js/epasar/config.js"></script>
@@ -462,6 +493,7 @@
     <script src="js/epasar/intake-service.js"></script>
     <script src="js/epasar/correction-service.js"></script>
     <script src="js/epasar/media-ui.js"></script>
+    <script src="js/epasar/skpt-legal-appendix.js"></script>
     <script src="js/epasar/trader-form.js"></script>
   </body>
 </html>

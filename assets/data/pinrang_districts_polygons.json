@@ -1,0 +1,585 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-lembang",
+        "name": "Kecamatan Lembang",
+        "district": "Lembang",
+        "capital": "Tuppu",
+        "color": "#d97706",
+        "code": "73.15.07"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.4314,
+              -3.3391
+            ],
+            [
+              119.48,
+              -3.2703
+            ],
+            [
+              119.57,
+              -3.29
+            ],
+            [
+              119.65,
+              -3.32
+            ],
+            [
+              119.695,
+              -3.41
+            ],
+            [
+              119.685,
+              -3.52
+            ],
+            [
+              119.66,
+              -3.585
+            ],
+            [
+              119.56,
+              -3.59
+            ],
+            [
+              119.495,
+              -3.575
+            ],
+            [
+              119.465,
+              -3.46
+            ],
+            [
+              119.4314,
+              -3.3391
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-batulappa",
+        "name": "Kecamatan Batulappa",
+        "district": "Batulappa",
+        "capital": "Bilajeng",
+        "color": "#14b8a6",
+        "code": "73.15.12"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.66,
+              -3.585
+            ],
+            [
+              119.72,
+              -3.55
+            ],
+            [
+              119.786,
+              -3.59
+            ],
+            [
+              119.78,
+              -3.67
+            ],
+            [
+              119.715,
+              -3.675
+            ],
+            [
+              119.675,
+              -3.65
+            ],
+            [
+              119.66,
+              -3.585
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-duampanua",
+        "name": "Kecamatan Duampanua",
+        "district": "Duampanua",
+        "capital": "Lampa",
+        "color": "#f59e0b",
+        "code": "73.15.06"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.465,
+              -3.46
+            ],
+            [
+              119.495,
+              -3.575
+            ],
+            [
+              119.56,
+              -3.59
+            ],
+            [
+              119.66,
+              -3.585
+            ],
+            [
+              119.675,
+              -3.65
+            ],
+            [
+              119.615,
+              -3.675
+            ],
+            [
+              119.595,
+              -3.705
+            ],
+            [
+              119.51,
+              -3.71
+            ],
+            [
+              119.472,
+              -3.63
+            ],
+            [
+              119.465,
+              -3.46
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-patampanua",
+        "name": "Kecamatan Patampanua",
+        "district": "Patampanua",
+        "capital": "Teppo",
+        "color": "#10b981",
+        "code": "73.15.05"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.615,
+              -3.675
+            ],
+            [
+              119.675,
+              -3.65
+            ],
+            [
+              119.715,
+              -3.675
+            ],
+            [
+              119.74,
+              -3.71
+            ],
+            [
+              119.725,
+              -3.755
+            ],
+            [
+              119.645,
+              -3.75
+            ],
+            [
+              119.615,
+              -3.71
+            ],
+            [
+              119.615,
+              -3.675
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-cempa",
+        "name": "Kecamatan Cempa",
+        "district": "Cempa",
+        "capital": "Cempa",
+        "color": "#8b5cf6",
+        "code": "73.15.08"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.51,
+              -3.71
+            ],
+            [
+              119.595,
+              -3.705
+            ],
+            [
+              119.615,
+              -3.71
+            ],
+            [
+              119.618,
+              -3.765
+            ],
+            [
+              119.535,
+              -3.775
+            ],
+            [
+              119.505,
+              -3.755
+            ],
+            [
+              119.51,
+              -3.71
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-paleteang",
+        "name": "Kecamatan Paleteang",
+        "district": "Paleteang",
+        "capital": "Benteng Sawitto",
+        "color": "#2563eb",
+        "code": "73.15.11"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.618,
+              -3.755
+            ],
+            [
+              119.645,
+              -3.75
+            ],
+            [
+              119.67,
+              -3.755
+            ],
+            [
+              119.668,
+              -3.785
+            ],
+            [
+              119.63,
+              -3.785
+            ],
+            [
+              119.618,
+              -3.755
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-watang-sawitto",
+        "name": "Kecamatan Watang Sawitto",
+        "district": "Watang Sawitto",
+        "capital": "Sawitto",
+        "color": "#3b82f6",
+        "code": "73.15.04"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.63,
+              -3.785
+            ],
+            [
+              119.668,
+              -3.785
+            ],
+            [
+              119.665,
+              -3.818
+            ],
+            [
+              119.625,
+              -3.818
+            ],
+            [
+              119.62,
+              -3.795
+            ],
+            [
+              119.63,
+              -3.785
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-tiroang",
+        "name": "Kecamatan Tiroang",
+        "district": "Tiroang",
+        "capital": "Tiroang",
+        "color": "#0ea5e9",
+        "code": "73.15.09"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.67,
+              -3.755
+            ],
+            [
+              119.725,
+              -3.755
+            ],
+            [
+              119.775,
+              -3.77
+            ],
+            [
+              119.76,
+              -3.82
+            ],
+            [
+              119.665,
+              -3.818
+            ],
+            [
+              119.668,
+              -3.785
+            ],
+            [
+              119.67,
+              -3.755
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-mattiro-sompe",
+        "name": "Kecamatan Mattiro Sompe",
+        "district": "Mattiro Sompe",
+        "capital": "Langnga",
+        "color": "#a855f7",
+        "code": "73.15.03"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.505,
+              -3.755
+            ],
+            [
+              119.535,
+              -3.775
+            ],
+            [
+              119.618,
+              -3.765
+            ],
+            [
+              119.62,
+              -3.795
+            ],
+            [
+              119.605,
+              -3.875
+            ],
+            [
+              119.51,
+              -3.87
+            ],
+            [
+              119.495,
+              -3.81
+            ],
+            [
+              119.505,
+              -3.755
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-lanrisang",
+        "name": "Kecamatan Lanrisang",
+        "district": "Lanrisang",
+        "capital": "Lanrisang",
+        "color": "#ec4899",
+        "code": "73.15.10"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.51,
+              -3.87
+            ],
+            [
+              119.605,
+              -3.875
+            ],
+            [
+              119.618,
+              -3.935
+            ],
+            [
+              119.535,
+              -3.94
+            ],
+            [
+              119.51,
+              -3.87
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-mattiro-bulu",
+        "name": "Kecamatan Mattiro Bulu",
+        "district": "Mattiro Bulu",
+        "capital": "Bunga",
+        "color": "#6366f1",
+        "code": "73.15.01"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.625,
+              -3.818
+            ],
+            [
+              119.665,
+              -3.818
+            ],
+            [
+              119.76,
+              -3.82
+            ],
+            [
+              119.745,
+              -3.925
+            ],
+            [
+              119.665,
+              -3.93
+            ],
+            [
+              119.618,
+              -3.935
+            ],
+            [
+              119.605,
+              -3.875
+            ],
+            [
+              119.625,
+              -3.818
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kec-suppa",
+        "name": "Kecamatan Suppa",
+        "district": "Suppa",
+        "capital": "Majennang",
+        "color": "#475569",
+        "code": "73.15.02"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.535,
+              -3.94
+            ],
+            [
+              119.618,
+              -3.935
+            ],
+            [
+              119.665,
+              -3.93
+            ],
+            [
+              119.745,
+              -3.925
+            ],
+            [
+              119.72,
+              -4.01
+            ],
+            [
+              119.65,
+              -4.0438
+            ],
+            [
+              119.57,
+              -4.03
+            ],
+            [
+              119.535,
+              -3.94
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

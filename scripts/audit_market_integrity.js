@@ -2,6 +2,7 @@
 
 // Audit read-only. Script ini hanya melakukan login dan HTTP GET; tidak ada write,
 // migrasi, perbaikan otomatis, atau pencetakan data pribadi seperti NIK/telepon.
+const crypto = require('crypto');
 const { createReadClient } = require('./lib/firebase_rest_read');
 
 const email = process.env.EPASAR_AUDIT_EMAIL || process.env.EPASAR_ADMIN_EMAIL;
@@ -27,11 +28,13 @@ function issue(listTarget, code, collection, row, detail) {
 
 (async () => {
   const idToken = await client.authenticate();
-  const names = ['users', 'traders', 'market_trader_directory', 'market_claims', 'skpt_applications', 'market_units', 'market_occupancies', 'verification_records', 'business_locations'];
+  const names = ['users', 'traders', 'trader_private', 'nik_registry', 'market_trader_directory', 'market_claims', 'skpt_applications', 'market_units', 'market_occupancies', 'verification_records', 'business_locations'];
   const values = await Promise.all(names.map(name => client.list(idToken, name)));
   const data = Object.fromEntries(names.map((name, index) => [name, values[index]]));
   const issues = [];
   const traders = new Set(data.traders.map(row => row.traderId).filter(Boolean));
+  const traderDocuments = new Map(data.traders.map(row => [row.id, row]));
+  const registryByHash = new Map(data.nik_registry.map(row => [row.id, row]));
   const claims = new Map(data.market_claims.map(row => [row.id, row]));
   const applications = new Map(data.skpt_applications.map(row => [row.id, row]));
   const units = new Map(data.market_units.map(row => [row.id, row]));
@@ -49,6 +52,31 @@ function issue(listTarget, code, collection, row, detail) {
     (Array.isArray(row.marketIds) ? row.marketIds : []).forEach(marketId => {
       if (marketClass(marketId) !== 'CANONICAL') issue(issues, 'HEAD_INVALID_MARKET', 'users', { ...row, marketId }, `Penugasan pasar ${marketClass(marketId).toLowerCase()}.`);
     });
+  });
+
+  const privateNikOwners = new Map();
+  data.trader_private.forEach(row => {
+    const normalizedNik = String(row.nik || '').replace(/\s/g, '');
+    if (!/^\d{16}$/.test(normalizedNik)) {
+      issue(issues, 'PRIVATE_NIK_INVALID', 'trader_private', row, 'NIK privat tidak memenuhi format 16 digit.');
+      return;
+    }
+    const hash = crypto.createHash('sha256').update(normalizedNik).digest('hex');
+    const owners = privateNikOwners.get(hash) || [];
+    owners.push(row);
+    privateNikOwners.set(hash, owners);
+    const registry = registryByHash.get(hash);
+    if (!registry) issue(issues, 'PRIVATE_NIK_MISSING_REGISTRY', 'trader_private', row, 'Master privat tidak memiliki reservasi NIK.');
+    else if (registry.traderId !== row.traderId) issue(issues, 'PRIVATE_NIK_REGISTRY_MISMATCH', 'trader_private', row, 'Pemilik registry berbeda dari master privat.');
+  });
+  privateNikOwners.forEach(owners => {
+    if (owners.length < 2) return;
+    owners.forEach(row => issue(issues, 'DUPLICATE_PRIVATE_NIK', 'trader_private', row, `NIK yang sama ditemukan pada ${owners.length} master privat.`));
+  });
+  data.nik_registry.forEach(row => {
+    const trader = row.traderDocumentId ? traderDocuments.get(row.traderDocumentId) : null;
+    if (!trader) issue(issues, 'REGISTRY_MISSING_TRADER_DOCUMENT', 'nik_registry', row, 'Registry menunjuk dokumen pedagang yang tidak tersedia.');
+    else if (trader.traderId !== row.traderId) issue(issues, 'REGISTRY_TRADER_MISMATCH', 'nik_registry', row, 'traderId registry berbeda dari dokumen pedagang.');
   });
 
   data.market_claims.forEach(row => {

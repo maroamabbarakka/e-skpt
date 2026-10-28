@@ -1,0 +1,177 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Paleteang",
+        "district": "Paleteang",
+        "regency": "Pinrang",
+        "display_name": "Bulu Paleteang, Pinrang, Sulawesi Selatan, 91213, Indonesia",
+        "osm_id": 1070178279
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.6601,
+          -3.7648
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tiroang",
+        "district": "Tiroang",
+        "regency": "Pinrang",
+        "display_name": "Tiroang, Pinrang, Sulawesi Selatan, Indonesia",
+        "osm_id": 1271819526
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.7148226,
+          -3.7772265
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Cempa",
+        "district": "Cempa",
+        "regency": "Pinrang",
+        "display_name": "Cempa, Pinrang, Sulawesi Selatan, Indonesia",
+        "osm_id": 1271820417
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.5838915,
+          -3.7364818
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Duampanua",
+        "district": "Duampanua",
+        "regency": "Pinrang",
+        "display_name": "SMP Negeri 5 Duampanua, Jalan Poros Pinrang - Batas Prov. Sulawesi Barat, Bungi, Pinrang, Sulawesi Selatan, Indonesia",
+        "osm_id": 1559827920
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              119.5386354,
+              -3.6117825
+            ],
+            [
+              119.5389492,
+              -3.6119659
+            ],
+            [
+              119.5390679,
+              -3.6118377
+            ],
+            [
+              119.5400355,
+              -3.6123522
+            ],
+            [
+              119.5403868,
+              -3.6114417
+            ],
+            [
+              119.5395265,
+              -3.6111642
+            ],
+            [
+              119.5392956,
+              -3.6110749
+            ],
+            [
+              119.538863,
+              -3.6112161
+            ],
+            [
+              119.5386354,
+              -3.6117825
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lembang",
+        "district": "Lembang",
+        "regency": "Pinrang",
+        "display_name": "Lembang Mesakada, Pinrang, Sulawesi Selatan, Indonesia",
+        "osm_id": 1271819602
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.5401123,
+          -3.3254684
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lanrisang",
+        "district": "Lanrisang",
+        "regency": "Pinrang",
+        "display_name": "Lanrisang, Pinrang, Sulawesi Selatan, 91261, Indonesia",
+        "osm_id": 1271820579
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.5556118,
+          -3.8860864
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Suppa",
+        "district": "Suppa",
+        "regency": "Pinrang",
+        "display_name": "Watang Suppa, Pinrang, Sulawesi Selatan, 91272, Indonesia",
+        "osm_id": 1271819931
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.6169428,
+          -3.9516159
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Batulappa",
+        "district": "Batulappa",
+        "regency": "Pinrang",
+        "display_name": "Batulappa, Pinrang, Sulawesi Selatan, Indonesia",
+        "osm_id": 1271819631
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.677764,
+          -3.6114332
+        ]
+      }
+    }
+  ]
+}

@@ -1,1 +1,285 @@
-.skpt-document .document-body{font-size:8pt;line-height:1.2}.skpt-document .document-body h3{font-size:8pt;margin:1.7mm 0 .5mm}.skpt-document .document-body p{margin:1.9mm 0}.skpt-document .document-body ol{margin:.7mm 0 1.5mm 7mm}.skpt-document .document-body li{margin:.25mm 0}.skpt-document .document-footer-grid{font-size:7.7pt;margin-top:3.8mm}.skpt-document .signature-space{height:11mm}.skpt-document .document-verification{display:grid;grid-template-columns:25mm minmax(0,1fr) 22mm;align-items:center;column-gap:4mm;font-size:6.5pt;margin-top:3mm;min-height:31mm}.skpt-document .document-qr-code{width:25mm;height:25mm;box-sizing:border-box}.skpt-document .document-verification>*{min-width:0}@media print{html,body{width:210mm;height:297mm;overflow:hidden}.skpt-document{width:209mm!important;height:294mm!important;min-height:294mm!important;max-height:294mm!important;margin:0!important;overflow:hidden!important;break-after:avoid!important;page-break-after:avoid!important}}
+/* Pengunci komposisi SKPT A4. Dimuat terakhir agar layar, cetak, dan PDF identik. */
+.skpt-document {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
+  padding: 13mm 16mm 9mm;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fff;
+  color: #17243a;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.skpt-document,
+.skpt-document * { box-sizing: border-box; }
+
+.skpt-document .official-letterhead {
+  display: grid;
+  grid-template-columns: 27mm minmax(0, 1fr) 27mm;
+  align-items: center;
+  min-height: 20mm;
+  padding: 0 2mm 2.4mm;
+  border-bottom: .55mm solid #174f83;
+  text-align: center;
+}
+
+.skpt-document .official-letterhead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1.25mm;
+  height: .25mm;
+  background: #39845a;
+}
+
+.skpt-document .official-letterhead .document-crest {
+  position: static;
+  grid-column: 1;
+  grid-row: 1 / 4;
+  justify-self: center;
+  width: 17mm;
+  height: 17mm;
+  transform: none;
+  object-fit: contain;
+}
+
+.skpt-document .document-agency,
+.skpt-document .document-address {
+  grid-column: 2;
+  margin: 0;
+  color: #17243a;
+}
+
+.skpt-document .document-agency {
+  font: 800 11.3pt/1.08 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: .025em;
+}
+
+.skpt-document .document-agency-dept {
+  margin-top: .8mm;
+  font-size: 9.4pt;
+  line-height: 1.12;
+}
+
+.skpt-document .document-address {
+  margin-top: .7mm;
+  font: 7.2pt/1.18 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  color: #40526a;
+}
+
+.skpt-document .document-title-block {
+  margin: 3.6mm 0 2.2mm;
+  text-align: center;
+}
+
+.skpt-document .document-title-block h1 {
+  margin: 0;
+  color: #123f70;
+  font: 800 10.7pt/1.12 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: .055em;
+  text-decoration: none;
+}
+
+.skpt-document .document-title-block h1::after {
+  content: "";
+  display: block;
+  width: 25mm;
+  height: .45mm;
+  margin: 1.1mm auto .8mm;
+  border-radius: 1mm;
+  background: linear-gradient(90deg, #174f83, #39845a);
+}
+
+.skpt-document .document-title-block p {
+  margin: 0;
+  font: 700 7.8pt/1.15 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  color: #344760;
+}
+
+.skpt-document .document-body {
+  font: 8.15pt/1.23 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  color: #182337;
+}
+
+.skpt-document .document-body p { margin: 1.8mm 0; text-align: justify; }
+.skpt-document .document-body ol { margin: .75mm 0 1.45mm 7mm; padding: 0; }
+.skpt-document .document-body li { margin: .28mm 0; padding-left: .8mm; }
+.skpt-document .document-body h3 { margin: 1.5mm 0 .55mm; color: #123f70; font-size: 8.15pt; line-height: 1.18; }
+.skpt-document .legal-basis { display: grid; grid-template-columns: 17mm minmax(0, 1fr); }
+
+.skpt-document .identity-table {
+  display: grid;
+  grid-template-columns: 39mm minmax(0, 1fr);
+  margin: 1.6mm 0 1.9mm;
+  padding: 1.7mm 3mm;
+  border-left: .8mm solid #39845a;
+  background: rgba(235, 244, 250, .68);
+}
+
+.skpt-document .identity-table dt,
+.skpt-document .identity-table dd { margin: 0; padding: .28mm 0; }
+.skpt-document .identity-table dt { padding-left: 2mm; color: #3d5067; font-weight: 700; }
+.skpt-document .identity-table dd { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+.skpt-document .document-footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr);
+  align-items: end;
+  gap: 8mm;
+  margin-top: 7mm;
+  padding-top: 0;
+  font: 7.55pt/1.24 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.skpt-document .register-box {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr;
+  min-height: 19mm;
+  border: .25mm solid #8295aa;
+  border-top: .65mm solid #174f83;
+  background: rgba(255,255,255,.82);
+  text-align: center;
+}
+
+.skpt-document .register-box > * { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.7mm 1.4mm; border-left: .25mm solid #b5c1ce; }
+.skpt-document .register-box > *:first-child { border-left: 0; color: #123f70; }
+.skpt-document .annual-status { margin-top: .9mm; font-size: 5.7pt; line-height: 1.15; }
+.skpt-document .signature-block { min-width: 0; color: #17243a; font-size: 7.6pt; line-height: 1.25; text-align: center; }
+.skpt-document .signature-space { height: 14mm; }
+.skpt-document .signature-space:has(.dummy-tte) { height: 21mm !important; }
+
+.skpt-document .document-verification {
+  display: grid;
+  grid-template-columns: 25mm minmax(0, 1fr) 22mm;
+  align-items: center;
+  column-gap: 4mm;
+  min-height: 33mm;
+  margin-top: 4mm;
+  padding: 2.4mm 2.8mm 2.1mm;
+  border: .25mm solid #bdc9d5;
+  border-top: .7mm solid #174f83;
+  background: rgba(247, 250, 252, .88);
+  font: 6.75pt/1.34 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.skpt-document .document-verification > * { min-width: 0; }
+.skpt-document .document-qr-code { width: 25mm; height: 25mm; padding: 1mm; box-sizing: border-box; background: #fff; }
+.skpt-document .document-verification-details { line-height: 1.38; overflow-wrap: anywhere; }
+.skpt-document .document-status { margin-bottom: 1mm; padding: .8mm 1.7mm; border-color: #7d9bb8; background: #eef5fa; color: #174f83; }
+.skpt-document .document-hash { display: inline-block; margin: .35mm 0; font: 5.8pt/1.25 Consolas, "Courier New", monospace; word-break: break-all; }
+.skpt-document .document-verification-photo { width: 22mm; min-width: 22mm; margin-left: auto; }
+.skpt-document .document-verification-photo .document-photo,
+.skpt-document .document-photo-empty { width: 22mm; height: 29.33mm; padding: 1mm; border: .25mm solid #8193a7; object-fit: cover; background: #fff; }
+
+.skpt-document .document-disclaimer {
+  margin: 1.7mm 4mm 0;
+  color: #52647a;
+  font: 6pt/1.28 Arial, "Helvetica Neue", Helvetica, sans-serif;
+  text-align: center;
+}
+
+.skpt-document .dummy-tte { margin-top: .4mm; }
+.skpt-document .uat-document-banner { top: 7.4mm; right: 17mm; transform: rotate(1deg) scale(.92); transform-origin: top right; }
+.skpt-document .signature-space > div:empty { height: 100% !important; }
+
+/* Watermark visual SKPT. Tidak menjadi bagian data, hash, snapshot, atau TTE. */
+.skpt-document::before {
+  content: "";
+  display: block !important;
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 51%;
+  width: 112mm;
+  height: 112mm;
+  background: linear-gradient(145deg, #155d9c 0%, #1d6b92 48%, #39845a 76%, #6f913f 100%);
+  opacity: .045;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  -webkit-mask: url("../assets/logo-pinrang-vector-rapi.svg") center / contain no-repeat;
+  mask: url("../assets/logo-pinrang-vector-rapi.svg") center / contain no-repeat;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.skpt-document::after {
+  content: "";
+  display: block !important;
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: transparent url("../assets/guilloche-border.svg") center / 100% 100% no-repeat;
+  box-shadow: none;
+  pointer-events: none;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.skpt-document > :not(.uat-document-banner) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Jangan mengubah komposisi menjadi versi mobile: pratinjau hanya menggulir A4 utuh. */
+@media screen and (max-width: 850px) {
+  body.document-screen { min-width: 210mm; overflow-x: auto; }
+  .skpt-document {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 10px !important;
+    padding: 13mm 16mm 9mm !important;
+  }
+  .skpt-document .document-footer-grid { grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr) !important; }
+  .skpt-document .document-agency { font-size: 11.3pt; }
+  .skpt-document .document-agency-dept { font-size: 9.4pt; }
+  .skpt-document .document-address { font-size: 7.2pt; }
+  .skpt-document .document-body { font-size: 8.15pt; }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  html,
+  body.document-screen {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+  .document-toolbar { display: none !important; }
+  .skpt-document {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 13mm 16mm 9mm !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+  .skpt-document .document-footer-grid {
+    grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr) !important;
+  }
+}

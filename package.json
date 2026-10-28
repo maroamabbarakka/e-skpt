@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "test:skpt": "node tests/skpt-workflow-core.test.cjs",
+    "test:rules": "firebase emulators:exec --only firestore --config firebase.test.json --project demo-epasar-role-boundaries \"npm --prefix tests/rules test\"",
+    "check": "python scripts/check_epasar.py"
+  },
+  "dependencies": {
+    "xlsx": "0.18.5"
+  }
+}

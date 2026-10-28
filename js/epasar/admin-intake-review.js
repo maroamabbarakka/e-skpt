@@ -9,6 +9,7 @@
   const button = document.getElementById('processIntake');
   let intake = null;
   let profile = null;
+  let nikControlBlocked = false;
 
   const esc = value => String(value ?? '—').replace(/[&<>"']/g, character => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -31,6 +32,29 @@
 
   function summary(target, items) {
     target.innerHTML = items.map(([label, value]) => `<div class="summary-item"><small>${esc(label)}</small><strong>${esc(value || '—')}</strong></div>`).join('');
+  }
+
+  async function renderNikControl(nik) {
+    const root = document.getElementById('nikControl');
+    root.className = 'nik-control';
+    root.innerHTML = '<strong>Kontrol NIK</strong><span>Memeriksa registry identitas internal&hellip;</span>';
+    try {
+      const includeReference = ['SUPER_ADMIN', 'DISPERINDAG_ADMIN', 'TRADE_ADMIN', 'TECH_ADMIN'].includes(profile?.role);
+      const result = await window.EPASAR_WORKFLOW.inspectNikRegistration(nik, { includeReference });
+      if (!result.registered) {
+        root.classList.add('ok');
+        root.innerHTML = '<strong>NIK belum terdaftar</strong><span>Pemeriksaan awal lolos. Transaksi pembentukan master akan memeriksa ulang untuk mencegah proses bersamaan.</span>';
+        return;
+      }
+      nikControlBlocked = true;
+      root.classList.add(['LINKED', 'RESERVED'].includes(result.integrityStatus) ? 'conflict' : 'review');
+      const owner = [result.displayName, result.traderId].filter(Boolean).join(' · ') || 'referensi master tidak lengkap';
+      root.innerHTML = `<strong>NIK sudah terdaftar</strong><span>Terhubung dengan ${esc(owner)}. Jangan membentuk master baru. Pastikan apakah ini pedagang yang sama, kesalahan NIK, atau sengketa identitas.</span>`;
+    } catch (error) {
+      nikControlBlocked = true;
+      root.classList.add('review');
+      root.innerHTML = `<strong>Pemeriksaan NIK belum berhasil</strong><span>${esc(error.message || 'Registry identitas tidak dapat diperiksa.')} Pembentukan master dikunci untuk mencegah duplikasi.</span>`;
+    }
   }
 
   const mediaLabel = type => ({ PROFILE: 'Foto pedagang', EVIDENCE: 'Foto usaha', LOCATION: 'Foto lokasi', IDENTITY_KTP: 'KTP (terbatas)', IDENTITY_KK: 'KK (terbatas)' })[type] || type;
@@ -76,13 +100,21 @@
   }
 
   async function boot() {
+    if (!intakeId) {
+      form.hidden = true;
+      notice('Pilih salah satu pendaftaran dari antrean. Anda akan dikembalikan ke daftar pendaftaran.', true);
+      setTimeout(() => { location.replace('admin-epasar.html#pendaftaran'); }, 900);
+      return;
+    }
     try {
       profile = await window.EPASAR_AUTH.requireStaff(['SUPER_ADMIN', 'DISPERINDAG_ADMIN', 'TRADE_ADMIN', 'MARKET_ADMIN']);
       window.EPASAR_INTERNAL_UI?.setProfile(profile);
-      if (!intakeId) throw new Error('ID pendaftaran tidak tersedia.');
       const snapshot = await db.collection('trader_intake').doc(intakeId).get();
       if (!snapshot.exists) throw new Error('Pendaftaran tidak ditemukan.');
       intake = { id: snapshot.id, ...snapshot.data() };
+      if (!window.EPASAR_ADMIN_INTAKE?.canAccess(profile, intake)) {
+        throw new Error('Pendaftaran ini berada di luar cakupan pasar yang ditugaskan kepada akun Anda.');
+      }
       const identity = intake.identity || {};
       const businessRows = Array.isArray(intake.businessDrafts) ? intake.businessDrafts : [];
       const business = businessRows[0] || {};
@@ -98,6 +130,7 @@
         ['WhatsApp', identity.phone], ['Wilayah', [identity.village, identity.district].filter(Boolean).join(', ')],
         ['Alamat', identity.address]
       ]);
+      await renderNikControl(identity.nik);
       summary(document.getElementById('businessSummary'), [
         ['Nama usaha', business.name], ['Jenis usaha', business.type],
         ['Kelompok/Kategori', [business.group, business.category].filter(Boolean).join(' · ')],
@@ -154,9 +187,14 @@
           button.disabled = true;
           document.getElementById('confirmReview').disabled = true;
           notice(`${invalidMarketCount} klaim memakai pasar yang tidak cocok dengan master pasar. Data tidak dapat diproses sebelum diperbaiki.`, true);
+        } else if (nikControlBlocked) {
+          button.disabled = true;
+          document.getElementById('confirmReview').disabled = true;
+          notice('Pembentukan master dikunci karena NIK sudah terdaftar atau registry identitas belum dapat diverifikasi. Gunakan pengembalian untuk koreksi atau eskalasi ke Admin Disperindag.', true);
         } else message.hidden = true;
       }
     } catch (error) {
+      form.hidden = true;
       notice(error.message || 'Pendaftaran belum dapat dimuat.', true);
     }
   }
@@ -196,7 +234,7 @@
     controls.forEach(control => { control.disabled = true; });
     try {
       const result = await window.EPASAR_INTAKE_REVIEW.decide(intake, profile, { action, reason, sections });
-      notice(result.status === 'REJECTED' ? 'Pendaftaran ditolak. Alasan sudah tersedia pada halaman status pedagang.' : 'Pendaftaran dikembalikan. Pedagang dapat melihat alasan dan mengirim jawaban koreksi melalui halaman status.');
+      notice(result.status === 'REJECTED' ? 'Pendaftaran ditolak dan masuk antrean notifikasi Admin untuk dikirim ke pedagang via WhatsApp.' : 'Permintaan perbaikan masuk antrean notifikasi Admin untuk dikirim ke pedagang via WhatsApp.');
       setTimeout(() => { location.href = 'admin-epasar.html'; }, 1500);
     } catch (error) {
       notice(error.message || 'Keputusan belum dapat disimpan.', true);

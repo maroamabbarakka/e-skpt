@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const ROLES = ['SUPER_ADMIN', 'DISPERINDAG_ADMIN', 'TRADE_ADMIN', 'MARKET_ADMIN', 'MARKET_HEAD', 'KADIS', 'TECH_ADMIN'];
+  const ROLES = ['SUPER_ADMIN', 'DISPERINDAG_ADMIN', 'TRADE_ADMIN', 'MARKET_ADMIN', 'MARKET_HEAD', 'UPTD_HEAD', 'KADIS', 'TECH_ADMIN'];
 
   function clean(value, max) { return String(value || '').trim().slice(0, max); }
 
@@ -11,9 +11,14 @@
     if (!ROLES.includes(role)) throw new Error('Role akun tidak valid.');
     if (!['ACTIVE', 'INACTIVE'].includes(status)) throw new Error('Status akun tidak valid.');
     if (!input.uid) throw new Error('UID Firebase wajib tersedia.');
-    if (role === 'MARKET_HEAD' && !Array.isArray(input.marketIds)) throw new Error('Daftar penugasan pasar wajib diisi.');
-    const marketIds = role === 'MARKET_HEAD' ? [...new Set(input.marketIds.map(value => window.EPASAR?.canonicalMarketId(value)).filter(Boolean))] : [];
-    if (role === 'MARKET_HEAD' && !marketIds.length) throw new Error('Pilih minimal satu pasar dari master pasar untuk Kepala Pasar.');
+    const scopedRole = ['MARKET_HEAD', 'MARKET_ADMIN', 'UPTD_HEAD'].includes(role);
+    if (scopedRole && !Array.isArray(input.marketIds)) throw new Error('Daftar penugasan pasar wajib diisi.');
+    const marketIds = scopedRole ? [...new Set(input.marketIds.map(value => window.EPASAR?.canonicalMarketId(value)).filter(Boolean))] : [];
+    if (scopedRole && !marketIds.length) throw new Error('Pilih minimal satu pasar dari master pasar untuk role ini.');
+    if (role === 'UPTD_HEAD') {
+      const regions = new Set(marketIds.map(value => window.EPASAR?.marketRegion(value)).filter(Boolean));
+      if (regions.size !== 1) throw new Error('Kepala UPTD hanya dapat ditugaskan pada pasar dalam satu wilayah yang sama.');
+    }
     return {
       uid: String(input.uid),
       username: clean(input.username, 60).toLowerCase(),
@@ -21,7 +26,7 @@
       position: clean(input.position, 120),
       role,
       marketIds,
-      marketDirectoryScoped: role === 'MARKET_HEAD' && existing?.marketDirectoryScoped === true,
+      marketDirectoryScoped: scopedRole,
       status,
       phone: clean(input.phone, 30),
       photoMediaId: existing?.photoMediaId || null,
@@ -42,9 +47,24 @@
     const actor = window.EPASAR_CURRENT_PROFILE;
     if (!canEdit(actor, existing || { uid })) throw new Error('Hanya Super Admin yang dapat mengelola akun.');
     const payload = profilePayload({ ...input, uid }, existing);
-    await window.db.collection('users').doc(uid).set(payload, { merge: false });
-    if (payload.username) await window.db.collection('login_aliases').doc(payload.username).set({ uid, status: payload.status, updatedAt: window.firebase?.firestore?.FieldValue?.serverTimestamp ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date() });
-    return payload;
+    const batch = window.db.batch();
+    const profileReference = window.db.collection('users').doc(uid);
+    batch.set(profileReference, payload, { merge: true });
+    if (payload.username) batch.set(window.db.collection('login_aliases').doc(payload.username), {
+      uid,
+      status: payload.status,
+      updatedAt: window.firebase?.firestore?.FieldValue?.serverTimestamp ? window.firebase.firestore.FieldValue.serverTimestamp() : new Date()
+    }, { merge: true });
+    await batch.commit();
+    const savedSnapshot = await profileReference.get({ source: 'server' });
+    if (!savedSnapshot.exists) throw new Error('Profil tidak ditemukan setelah penyimpanan. Muat ulang dan coba kembali.');
+    const saved = savedSnapshot.data();
+    const expectedMarkets = [...payload.marketIds].sort();
+    const actualMarkets = Array.isArray(saved.marketIds) ? [...saved.marketIds].sort() : [];
+    if (saved.status !== payload.status || saved.role !== payload.role || JSON.stringify(actualMarkets) !== JSON.stringify(expectedMarkets)) {
+      throw new Error('Verifikasi penyimpanan gagal: status atau cakupan pasar di server belum sesuai.');
+    }
+    return { ...saved, uid };
   }
 
   async function provision(input) {

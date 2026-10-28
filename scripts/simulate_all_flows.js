@@ -5,7 +5,8 @@ const fs = require('fs');
 const path = require('path');
 
 const BASE = 'http://127.0.0.1:8090';
-const PASSWORD = 'Pasar202#';
+const PASSWORD = process.env.EPASAR_UAT_PASSWORD;
+if (!PASSWORD) throw new Error('EPASAR_UAT_PASSWORD wajib tersedia di environment lokal.');
 const OUT_DIR = path.resolve(process.cwd(), 'artifacts', 'simulasi-lengkap');
 const PHOTO_SAMPLE = path.resolve(process.cwd(), 'assets', 'uat', 'pedagang-contoh-3x4.jpg');
 

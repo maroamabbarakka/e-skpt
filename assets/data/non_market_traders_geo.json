@@ -1,0 +1,90 @@
+[
+  {
+    "id": "NMK-001",
+    "name": "Fajar Ramadhan (Kopi Keliling Mandiri)",
+    "district": "Watang Sawitto",
+    "address": "Jl. Bintang, Kel. Sawitto",
+    "businessType": "Minuman Kopi & Kuliner Keliling",
+    "category": "Kuliner / Makanan Siap Saji",
+    "coordinates": { "lat": -3.7915, "lng": 119.6520 },
+    "status": "REGISTERED",
+    "icon": "☕"
+  },
+  {
+    "id": "NMK-002",
+    "name": "Toko Berkah Mandiri",
+    "district": "Paleteang",
+    "address": "Jl. Macinnae, Kel. Pacongang",
+    "businessType": "Toko Kelontong & Sembako Rumahan",
+    "category": "Bahan Pokok & Sembako",
+    "coordinates": { "lat": -3.7740, "lng": 119.6580 },
+    "status": "REGISTERED",
+    "icon": "🏪"
+  },
+  {
+    "id": "NMK-003",
+    "name": "Sentra Pengasapan Ikan Lero",
+    "district": "Suppa",
+    "address": "Desa Lero, Kec. Suppa",
+    "businessType": "Olahan Ikan & Hasil Laut",
+    "category": "Industri Pengolahan Pangan",
+    "coordinates": { "lat": -3.9850, "lng": 119.6050 },
+    "status": "REGISTERED",
+    "icon": "🐟"
+  },
+  {
+    "id": "NMK-004",
+    "name": "Katering Hj. Maimunah",
+    "district": "Tiroang",
+    "address": "Jl. Poros Tiroang No. 12",
+    "businessType": "Jasa Boga & Kue Tradisional",
+    "category": "Kuliner / Olahan Pangan",
+    "coordinates": { "lat": -3.7920, "lng": 119.7050 },
+    "status": "REGISTERED",
+    "icon": "🍲"
+  },
+  {
+    "id": "NMK-005",
+    "name": "Kerajinan Bambu Bunga",
+    "district": "Mattiro Bulu",
+    "address": "Desa Bunga, Kec. Mattiro Bulu",
+    "businessType": "Anyaman & Mebel Bambu",
+    "category": "Kerajinan & Kriya UMKM",
+    "coordinates": { "lat": -3.8550, "lng": 119.6750 },
+    "status": "REGISTERED",
+    "icon": "🎋"
+  },
+  {
+    "id": "NMK-006",
+    "name": "Kios Bibit & Pupuk Tani",
+    "district": "Patampanua",
+    "address": "Jl. Poros Malimpung, Desa Malimpung",
+    "businessType": "Saprotan & Pertanian Mandiri",
+    "category": "Perdagangan Umum",
+    "coordinates": { "lat": -3.7150, "lng": 119.6580 },
+    "status": "REGISTERED",
+    "icon": "🌱"
+  },
+  {
+    "id": "NMK-007",
+    "name": "Bengkel Sepeda Motor Harapan",
+    "district": "Cempa",
+    "address": "Jl. Tanra Tuo, Kec. Cempa",
+    "businessType": "Jasa Servis & Sparepart Motor",
+    "category": "Jasa & Perdagangan Teknis",
+    "coordinates": { "lat": -3.7520, "lng": 119.5650 },
+    "status": "REGISTERED",
+    "icon": "🔧"
+  },
+  {
+    "id": "NMK-008",
+    "name": "Sentra Keripik Pisang Tanduk",
+    "district": "Lembang",
+    "address": "Desa Rajang, Kec. Lembang",
+    "businessType": "UMKM Olahan Camilan Lokal",
+    "category": "Industri Pengolahan Pangan",
+    "coordinates": { "lat": -3.5450, "lng": 119.6350 },
+    "status": "REGISTERED",
+    "icon": "🍌"
+  }
+]

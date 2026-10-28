@@ -9,25 +9,39 @@
 
 /* Header & Action Bar */
 .db-header-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
   align-items: center;
-  gap: 10px;
+  justify-content: end;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #dbe6f1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 7px 20px rgba(19, 58, 101, .06);
+}
+
+.db-shell .admin-head > div:first-child { min-width: 0; }
+.db-shell .admin-head h1 { text-wrap: balance; }
+.db-shell .admin-head .admin-user { line-height: 1.45; }
+
+.db-header-actions > * {
+  min-width: 0;
 }
 
 .db-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 8px 16px;
+  min-height: 42px;
+  padding: 9px 14px;
   border: 1px solid transparent;
-  border-radius: 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  font-weight: 750;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
   white-space: nowrap;
 }
 
@@ -35,6 +49,11 @@
   width: 16px;
   height: 16px;
   fill: currentColor;
+}
+
+.db-btn:focus-visible {
+  outline: 3px solid rgba(2, 132, 199, .25);
+  outline-offset: 2px;
 }
 
 .db-btn-primary {
@@ -57,14 +76,27 @@
   transform: translateY(-1px);
 }
 
-.db-btn-json {
+.db-btn-geojson {
   background: #fff;
-  color: #1a3b61;
-  border-color: #cbdbee;
+  color: #075ebd;
+  border-color: #b9d5ee;
 }
-.db-btn-json:hover {
+.db-btn-geojson:hover {
   background: #f1f7fe;
-  border-color: #92b8e3;
+  border-color: #65a9df;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(7, 94, 189, .12);
+}
+
+.db-btn-refresh {
+  background: #f3f6f9;
+  color: #415b76;
+  border-color: #d9e2eb;
+}
+.db-btn-refresh:hover {
+  background: #e9f0f6;
+  border-color: #b7c7d6;
+  color: #173b60;
   transform: translateY(-1px);
 }
 
@@ -230,18 +262,141 @@
   background: #fff;
   box-shadow: var(--app-shadow);
   overflow: hidden;
+  border-radius: 16px;
+  position: relative;
+}
+
+/* Petunjuk Geser Tabel Responsif */
+.db-scroll-hint {
+  display: none;
+  background: linear-gradient(90deg, #eff6ff, #f0fdf4);
+  color: #1d4ed8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-bottom: 1px solid #dbeafe;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 1024px) {
+  .db-scroll-hint {
+    display: flex;
+  }
 }
 
 .db-table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  overscroll-behavior-inline: contain;
+  position: relative;
+}
+
+/* Custom Slim Scrollbar yang Mulus & Terlihat Jelas */
+.db-table-wrap::-webkit-scrollbar {
+  height: 7px;
+  background: #f1f5f9;
+}
+.db-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.db-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .db-table {
+  --db-col-no: 44px;
+  --db-col-identity: 190px;
+  --db-col-action: 120px;
   width: 100%;
-  min-width: 1060px;
-  border-collapse: collapse;
+  min-width: 1040px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
   text-align: left;
+}
+
+.db-table .db-col-no { width: var(--db-col-no); }
+.db-table .db-col-identity { width: var(--db-col-identity); }
+.db-table .db-col-business { width: 145px; }
+.db-table .db-col-market { width: 125px; }
+.db-table .db-col-unit { width: 120px; }
+.db-table .db-col-skpt { width: 120px; }
+.db-table .db-col-schedule { width: 125px; }
+.db-table .db-col-verification { width: 115px; }
+.db-table .db-col-action { width: var(--db-col-action); }
+
+.db-table th:nth-child(1) { width: 44px !important; }
+.db-table th:nth-child(2) { width: 190px !important; min-width: 190px !important; }
+.db-table th:nth-child(3) { width: 145px !important; min-width: 0 !important; }
+.db-table th:nth-child(4) { width: 125px !important; min-width: 0 !important; }
+.db-table th:nth-child(5) { width: 120px !important; min-width: 0 !important; }
+.db-table th:nth-child(6) { width: 120px !important; min-width: 0 !important; }
+.db-table th:nth-child(7) { width: 125px !important; min-width: 0 !important; }
+.db-table th:nth-child(8) { width: 115px !important; min-width: 0 !important; }
+.db-table th:nth-child(9) { width: 92px !important; min-width: 92px !important; }
+
+/* Kolom Sticky 1 (No) & Kolom 2 (Identitas Pedagang) Agar Konteks Tidak Hilang */
+.db-table th:first-child,
+.db-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #ffffff;
+  width: var(--db-col-no);
+  min-width: var(--db-col-no);
+  max-width: var(--db-col-no);
+  text-align: center;
+}
+
+.db-table th:first-child {
+  background: #f1f5fa;
+  z-index: 20;
+}
+
+.db-table th:nth-child(2),
+.db-table td:nth-child(2) {
+  position: sticky;
+  left: var(--db-col-no);
+  z-index: 10;
+  background: #ffffff;
+  box-shadow: 4px 0 8px -3px rgba(0, 0, 0, 0.12);
+  width: var(--db-col-identity);
+  min-width: var(--db-col-identity);
+  max-width: var(--db-col-identity);
+}
+
+/* Aksi selalu dapat dijangkau tanpa menggulir sampai ujung tabel. */
+.db-table th:last-child,
+.db-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 11;
+  background: #fff;
+  width: var(--db-col-action);
+  min-width: var(--db-col-action);
+  max-width: var(--db-col-action);
+  box-shadow: -5px 0 10px -6px rgba(15, 43, 76, .3);
+}
+
+.db-table th:last-child { z-index: 21; background: #f1f5fa; }
+.db-table tbody tr:hover td:last-child { background: #f6fafe; }
+
+.db-table th:nth-child(2) {
+  background: #f1f5fa;
+  z-index: 20;
+}
+
+.db-table tbody tr:hover td:first-child,
+.db-table tbody tr:hover td:nth-child(2) {
+  background: #f6fafe;
 }
 
 .db-table th {
@@ -255,6 +410,106 @@
   border-bottom: 2px solid #cbd5e1;
   white-space: nowrap;
 }
+
+/* Header Tabel yang Dapat Diurutkan (Sortable Columns) */
+.db-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.db-table th.sortable:hover {
+  background: #e2eaf4;
+  color: #0369a1;
+}
+
+.db-table th.sortable .sort-icon {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  vertical-align: middle;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.db-table th.sortable.sorted-asc,
+.db-table th.sortable.sorted-desc {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-bottom: 2.5px solid #0284c7;
+}
+
+.db-table th.sortable.sorted-asc .sort-icon,
+.db-table th.sortable.sorted-desc .sort-icon {
+  color: #0284c7;
+  font-weight: 900;
+}
+
+/* Card Peringatan Khusus Konflik Fisik Pasar di Modal Detail */
+.db-conflict-card {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff1f2 100%);
+  border: 1px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.08);
+}
+
+.db-conflict-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.db-conflict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 99px;
+  letter-spacing: 0.03em;
+}
+
+.db-conflict-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.db-conflict-item small {
+  display: block;
+  color: #991b1b;
+  font-size: 0.65rem;
+  font-weight: 750;
+  margin-bottom: 2px;
+}
+
+.db-conflict-item strong {
+  display: block;
+  color: #1e293b;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 580px) {
+  .db-conflict-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .db-table td {
   padding: 10px 12px;
@@ -770,13 +1025,15 @@
 }
 .db-popup-list-wrap {
   max-height: 380px;
-  overflow-y: auto;
+  max-width: 100%;
+  overflow: auto;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #fff;
 }
 .db-popup-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 0.75rem;
 }
@@ -804,6 +1061,7 @@
 /* ==========================================================================
    OFFICIAL PRINT-READY LAYOUT (@media print)
    Khusus Cetak Buku Induk dan Rekapitulasi Resmi Pemerintah Kab. Pinrang
+   Layout A4 Landscape Presisi Siap Cetak
    ========================================================================== */
 .print-only {
   display: none !important;
@@ -812,170 +1070,363 @@
 @media print {
   @page {
     size: A4 landscape;
-    margin: 10mm 12mm 12mm 12mm;
+    margin: 7mm 9mm 9mm 9mm;
   }
 
-  body.internal-app {
-    background: #fff !important;
-    color: #000 !important;
-    font-size: 9pt !important;
-    line-height: 1.35 !important;
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
   }
 
-  /* Sembunyikan elemen aplikasi internal non-cetak */
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 7.2pt !important;
+    line-height: 1.25 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Sembunyikan SELURUH elemen aplikasi web internal saat mencetak */
   .internal-sidebar,
   .internal-topbar,
   .internal-scrim,
-  .db-filter-panel,
+  .admin-head,
+  .admin-user,
+  .admin-message,
   .db-kpis,
+  .db-filter-panel,
+  .db-table-panel,
+  .db-modal-overlay,
   .db-header-actions,
   .db-pagination-wrap,
+  .db-scroll-hint,
   .db-btn,
   .table-actions,
   .no-print {
     display: none !important;
   }
 
+  /* Hilangkan frame, padding, dan background shell */
   .internal-layout,
   .internal-stage,
   .internal-content,
-  .db-shell,
-  .db-table-panel,
-  .db-table-wrap {
+  body > main.db-shell {
     display: block !important;
     width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
-    background: transparent !important;
-    overflow: visible !important;
+    background: #ffffff !important;
   }
 
-  /* Tampilkan Kop Surat Resmi Cetak */
-  .print-only {
+  /* Sembunyikan anak langsung db-shell selain print container */
+  body > main.db-shell > *:not(#printReportContainer) {
+    display: none !important;
+  }
+
+  /* Tampilkan hanya Kontainer Cetak Resmi */
+  .print-only,
+  #printReportContainer {
     display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
+  .print-document-container {
+    width: 100% !important;
+    margin: 0 auto !important;
+    color: #0f172a !important;
+  }
+
+  /* Kop Surat Resmi Pemkab Pinrang */
   .print-official-header {
     display: flex !important;
-    align-items: center;
-    gap: 16px;
-    padding-bottom: 8px;
-    border-bottom: 3px double #000;
-    margin-bottom: 12px;
+    align-items: center !important;
+    gap: 16px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 3px double #000000 !important;
+    margin-bottom: 8px !important;
   }
 
   .print-official-logo {
-    width: 65px;
-    height: 78px;
-    object-fit: contain;
+    width: 58px !important;
+    height: 70px !important;
+    object-fit: contain !important;
   }
 
   .print-official-titles {
-    flex: 1;
-    text-align: center;
+    flex: 1 !important;
+    text-align: center !important;
   }
 
   .print-official-titles h3 {
-    margin: 0;
-    font-size: 13pt;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    margin: 0 !important;
+    font-size: 10pt !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: #000000 !important;
+    line-height: 1.15 !important;
   }
 
   .print-official-titles h2 {
-    margin: 2px 0;
-    font-size: 14pt;
-    font-weight: 900;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    margin: 2px 0 !important;
+    font-size: 11.5pt !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+    color: #000000 !important;
+    line-height: 1.2 !important;
   }
 
-  .print-official-titles p {
-    margin: 1px 0;
-    font-size: 8pt;
-    color: #222;
+  .print-kop-address,
+  .print-kop-web {
+    margin: 1px 0 !important;
+    font-size: 7pt !important;
+    color: #222222 !important;
+    line-height: 1.15 !important;
   }
 
+  /* Header Metadata Laporan */
   .print-report-meta {
-    margin: 12px 0 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 5px !important;
+    border-bottom: 1px solid #94a3b8 !important;
   }
 
-  .print-report-meta h1 {
-    margin: 0 0 4px;
-    font-size: 12pt;
-    font-weight: 800;
-    text-transform: uppercase;
+  .print-meta-left h1 {
+    margin: 0 0 2px !important;
+    font-size: 9.8pt !important;
+    font-weight: 850 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
+    color: #0f172a !important;
   }
 
-  .print-report-meta p {
-    margin: 0;
-    font-size: 8.5pt;
+  .print-meta-left p {
+    margin: 1px 0 !important;
+    font-size: 7.2pt !important;
+    color: #334155 !important;
   }
 
-  /* Tabel Cetak Resmi */
-  .db-table {
-    min-width: 100% !important;
-    border: 1px solid #000 !important;
-    font-size: 8pt !important;
+  .print-meta-right {
+    text-align: right !important;
   }
 
-  .db-table th {
-    background: #f0f0f0 !important;
-    color: #000 !important;
-    border: 1px solid #000 !important;
-    padding: 5px 6px !important;
-    font-weight: 800 !important;
+  .print-system-tag {
+    margin: 0 0 2px !important;
+    font-size: 7.8pt !important;
+    color: #1e3a8a !important;
+    letter-spacing: 0.02em !important;
   }
 
-  .db-table td {
-    border: 1px solid #555 !important;
-    padding: 4px 6px !important;
-    color: #000 !important;
+  .print-legal-basis {
+    margin: 0 0 2px !important;
+    font-size: 7pt !important;
+    color: #475569 !important;
   }
 
-  .db-table tbody tr {
-    page-break-inside: avoid;
-  }
-
-  .db-badge {
-    border: none !important;
-    padding: 0 !important;
-    background: transparent !important;
-    color: #000 !important;
+  #printTotalRecordsCount {
+    margin: 0 !important;
+    font-size: 7.4pt !important;
     font-weight: 700 !important;
+    color: #0f172a !important;
   }
 
-  /* Kolom Pengesahan Tanda Tangan Resmi Cetak */
+  /* Bagian / Section Dokumen */
+  .print-section {
+    margin-bottom: 11px !important;
+  }
+
+  .print-summary-section {
+    page-break-after: auto !important;
+  }
+
+  .print-section-header {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    margin-bottom: 4px !important;
+  }
+
+  .print-section-title {
+    margin: 0 !important;
+    font-size: 8.2pt !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+    color: #0f172a !important;
+  }
+
+  .print-section-subtitle {
+    font-size: 6.8pt !important;
+    color: #475569 !important;
+    font-style: italic !important;
+  }
+
+  /* Styling Tabel Cetak Profesional Presisi (Kompak & Hemat Kertas) */
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    font-size: 7.1pt !important;
+    line-height: 1.2 !important;
+    background: #ffffff !important;
+  }
+
+  .print-table thead {
+    display: table-header-group !important;
+  }
+
+  .print-table tr {
+    page-break-inside: avoid !important;
+  }
+
+  .print-table th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.01em !important;
+    padding: 3px 4px !important;
+    border: 1px solid #475569 !important;
+    vertical-align: middle !important;
+  }
+
+  .print-table td {
+    padding: 2.2px 3.5px !important;
+    border: 1px solid #94a3b8 !important;
+    color: #0f172a !important;
+    vertical-align: middle !important;
+    word-break: normal !important;
+  }
+
+  .print-table tbody tr:nth-child(even) {
+    background-color: #f8fafc !important;
+  }
+
+  .print-table tfoot th,
+  .print-table tfoot td {
+    background-color: #e2e8f0 !important;
+    font-weight: 850 !important;
+    border-top: 2px solid #0f172a !important;
+    border-bottom: 2px solid #0f172a !important;
+    padding: 3px 4px !important;
+    color: #0f172a !important;
+  }
+
+  /* Badge status cetak monokrom presisi */
+  .print-status-tag {
+    display: inline-block !important;
+    font-weight: 700 !important;
+    font-size: 6.8pt !important;
+    white-space: nowrap !important;
+  }
+  .print-status-success {
+    color: #15803d !important;
+  }
+  .print-status-warning {
+    color: #b45309 !important;
+  }
+  .print-status-danger {
+    color: #b91c1c !important;
+  }
+  .print-status-neutral {
+    color: #475569 !important;
+  }
+
+  /* Kolom Satu Baris Presisi (No-Wrap) Khusus Cetak (Tanpa Titik-titik Ellipsis) */
+  .print-nowrap {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
+
+  /* Lembar Pengesahan Tanda Tangan */
   .print-signatures {
     display: flex !important;
-    justify-content: space-between;
-    margin-top: 26px;
-    page-break-inside: avoid;
+    justify-content: space-between !important;
+    margin-top: 14px !important;
+    page-break-inside: avoid !important;
+    width: 100% !important;
   }
 
   .print-signature-box {
-    width: 250px;
-    text-align: center;
-    font-size: 8.5pt;
+    width: 280px !important;
+    text-align: center !important;
+    font-size: 7.8pt !important;
+    line-height: 1.25 !important;
+    color: #0f172a !important;
+  }
+
+  .print-signature-box .sign-top {
+    margin: 0 0 2px !important;
   }
 
   .print-signature-box .sign-role {
-    margin-bottom: 50px;
+    margin: 0 !important;
+    font-weight: 600 !important;
+  }
+
+  .print-signature-box .sign-space {
+    height: 44px !important;
   }
 
   .print-signature-box .sign-name {
-    font-weight: 800;
-    text-decoration: underline;
+    margin: 0 !important;
+    font-weight: 850 !important;
+    text-decoration: underline !important;
+    font-size: 8.5pt !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
   }
 
   .print-signature-box .sign-nip {
-    margin-top: 2px;
+    margin: 2px 0 0 !important;
+    font-size: 7.4pt !important;
+    color: #334155 !important;
+  }
+}
+
+  .print-signature-box .sign-top {
+    margin: 0 0 2px !important;
+  }
+
+  .print-signature-box .sign-role {
+    margin: 0 !important;
+    font-weight: 600 !important;
+  }
+
+  .print-signature-box .sign-space {
+    height: 52px !important;
+  }
+
+  .print-signature-box .sign-name {
+    margin: 0 !important;
+    font-weight: 850 !important;
+    text-decoration: underline !important;
+    font-size: 8.8pt !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  .print-signature-box .sign-nip {
+    margin: 2px 0 0 !important;
+    font-size: 7.8pt !important;
+    color: #334155 !important;
   }
 }
 
@@ -988,6 +1439,26 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+@media (max-width: 1350px) {
+  .db-shell .admin-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px !important;
+  }
+  .db-header-actions {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+  .db-header-actions .db-btn { justify-content: center; }
+}
+
+@media (max-width: 920px) {
+  .db-header-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1280px) { .db-table { min-width: 100%; } }
 
 @media (max-width: 768px) {
   .db-kpis {
@@ -1011,6 +1482,81 @@
     justify-content: center;
     width: 100%;
   }
+
+  .db-pagination-wrap {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+  .db-pagination-wrap > div { display: grid !important; grid-template-columns: 1fr 1fr; }
+  .db-pagination-wrap .button { min-width: 0; width: 100%; }
+
+  .db-table-panel { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  .db-scroll-hint { display: none; }
+  .db-table-wrap { overflow: visible; scrollbar-gutter: auto; }
+  .db-table,
+  .db-table tbody { display: block; width: 100%; min-width: 0; }
+  .db-table thead { display: none; }
+  .db-table tbody { display: grid; gap: 12px; }
+  .db-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid #d9e4ef;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(14, 55, 98, .07);
+  }
+  .db-table tbody td,
+  .db-table tbody td:first-child,
+  .db-table tbody td:nth-child(2),
+  .db-table tbody td:last-child {
+    position: static;
+    display: grid;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 10px 12px;
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 5px;
+    border: 0;
+    border-bottom: 1px solid #edf2f7;
+    background: #fff;
+    box-shadow: none;
+    text-align: left !important;
+  }
+  .db-table tbody td::before {
+    content: attr(data-label);
+    color: #61758c;
+    font-size: .61rem;
+    font-weight: 800;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+  }
+  .db-table tbody td:first-child {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    padding: 7px 12px;
+    background: #f3f7fb;
+  }
+  .db-table tbody td:first-child::before { content: "Data #"; margin-right: 4px; }
+  .db-table tbody td:nth-child(2),
+  .db-table tbody td:last-child { grid-column: 1 / -1; }
+  .db-table tbody td:last-child { justify-items: stretch; padding: 11px 12px; border-bottom: 0; background: #f8fbfe; }
+  .db-table tbody td:last-child .db-btn-rincian { width: 100%; justify-content: center; }
+  .db-trader-cell { align-items: flex-start; }
+  .db-trader-info,
+  .db-biz-cell,
+  .db-market-cell,
+  .db-unit-cell,
+  .db-skpt-cell,
+  .db-sched-cell { min-width: 0; }
+  .db-trader-name,
+  .db-biz-title,
+  .db-market-name { overflow-wrap: anywhere; }
 }
 
 @media (max-width: 500px) {
@@ -1082,4 +1628,17 @@
 }
 .db-action-icon-btn.btn-send-wa:hover {
   background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+}
+
+/* Tabel master: komposisi rapat, tenang, dan mudah dipindai. */
+@media (min-width: 901px) {
+  .db-table { --db-col-no:40px; --db-col-identity:170px; --db-col-action:82px; min-width:960px; }
+  .db-table .db-col-business,.db-table th:nth-child(3){width:132px!important}.db-table .db-col-market,.db-table th:nth-child(4){width:110px!important}.db-table .db-col-unit,.db-table th:nth-child(5){width:104px!important}.db-table .db-col-skpt,.db-table th:nth-child(6){width:110px!important}.db-table .db-col-schedule,.db-table th:nth-child(7){width:108px!important}.db-table .db-col-verification,.db-table th:nth-child(8){width:104px!important}.db-table th:nth-child(1){width:40px!important}.db-table th:nth-child(2){width:170px!important;min-width:170px!important}.db-table th:nth-child(9){width:82px!important;min-width:82px!important}
+  .db-table th{padding:10px 9px;font-size:.61rem;letter-spacing:.035em}.db-table td{height:72px;padding:9px;font-size:.7rem;background-color:#fff}
+  .db-table tbody tr:nth-child(even) td{background-color:#f8fafc}.db-table tbody tr:nth-child(odd) td{background-color:#fff}.db-table tbody tr:hover td{background-color:#edf6ff}
+  .db-table tbody tr:nth-child(even) td:first-child,.db-table tbody tr:nth-child(even) td:nth-child(2),.db-table tbody tr:nth-child(even) td:last-child{background-color:#f8fafc}.db-table tbody tr:nth-child(odd) td:first-child,.db-table tbody tr:nth-child(odd) td:nth-child(2),.db-table tbody tr:nth-child(odd) td:last-child{background-color:#fff}.db-table tbody tr:hover td:first-child,.db-table tbody tr:hover td:nth-child(2),.db-table tbody tr:hover td:last-child{background-color:#edf6ff}
+  .db-data-row{cursor:pointer;outline:none}.db-data-row:focus-visible td{background-color:#e8f3ff!important;box-shadow:inset 0 2px 0 #2683d9,inset 0 -2px 0 #2683d9}.db-data-row:focus-visible td:first-child{box-shadow:inset 2px 0 0 #2683d9,inset 0 2px 0 #2683d9,inset 0 -2px 0 #2683d9}.db-data-row:focus-visible td:last-child{box-shadow:inset -2px 0 0 #2683d9,inset 0 2px 0 #2683d9,inset 0 -2px 0 #2683d9}.market-themed-row{box-shadow:inset 2px 0 0 rgba(var(--market-color-rgb),.7);background-image:none}
+  .db-trader-cell{gap:8px}.db-trader-avatar{width:29px;height:29px;border-radius:7px;font-size:.72rem}.db-trader-name,.db-biz-title{font-size:.73rem;line-height:1.28}.db-biz-category{font-size:.61rem;line-height:1.35}.db-trader-chips{gap:3px}.db-chip-code{max-width:128px;padding:1px 4px;overflow:hidden;font-size:.56rem;text-overflow:ellipsis;white-space:nowrap}
+  .db-market-cell{position:relative;gap:1px;padding-left:10px}.db-market-cell:before{content:"";position:absolute;left:0;top:4px;width:3px;height:28px;border-radius:3px;background:var(--market-color,#64748b);opacity:.75}.db-market-kind{display:flex;align-items:center;gap:4px;color:#718399;font-size:.54rem;font-weight:700;line-height:1.2;text-transform:uppercase;letter-spacing:.035em}.db-market-kind i{width:4px;height:4px;border-radius:50%;background:var(--market-color,#64748b)}.db-market-name{display:block;width:100%;color:#17324f;font-size:.72rem;font-weight:750;line-height:1.25;overflow-wrap:anywhere}.db-market-code{padding:0 4px;border:0;background:#edf3f8;color:#526a82;font-size:.53rem}
+  .db-unit-badge{max-width:100%;gap:3px;padding:2px 5px;font-size:.62rem;white-space:normal}.db-unit-badge .unit-type{font-size:.55rem}.db-unit-meta{gap:2px;font-size:.57rem;flex-wrap:wrap}.db-badge{padding:3px 6px;font-size:.58rem;line-height:1.2;white-space:normal}.db-code-badge{max-width:100%;padding:1px 4px;overflow:hidden;font-size:.53rem;text-overflow:ellipsis;white-space:nowrap}.db-sched-pill{max-width:100%;padding:3px 6px;font-size:.58rem;line-height:1.25;white-space:normal}.db-sched-days,.db-sub-hint{font-size:.56rem}.db-btn-rincian{min-height:30px;padding:3px 8px;gap:4px;font-size:.61rem}.db-btn-rincian svg{width:11px;height:11px}
 }

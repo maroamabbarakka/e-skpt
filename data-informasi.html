@@ -1,1 +1,469 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Data dan informasi e-PASAR Kabupaten Pinrang"><title>Data & Informasi | e-PASAR Pinrang</title><link rel="icon" href="favicon.png"><link rel="stylesheet" href="css/epasar.css"><link rel="stylesheet" href="css/portal-reference.css"><link rel="stylesheet" href="css/portal-complete.css"><link rel="stylesheet" href="css/portal-pages.css"></head><body class="portal-page"><header class="sd-header"><a class="sd-brand" href="index.html"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><span><b>e-PASAR</b><small>Satu Data Pedagang<br>Kabupaten Pinrang</small></span></a><button class="sd-menu" id="sdMenu" aria-expanded="false" aria-controls="sdNav">☰</button><nav id="sdNav"><a href="index.html">Beranda</a><a href="layanan.html">Layanan</a><a class="active" href="data-informasi.html">Data & Informasi</a><a href="galeri-video.html">Galeri Video</a><a href="informasi.html">Informasi</a><a href="panduan.html">Panduan</a><a class="sd-login" href="login.html">MASUK PETUGAS</a></nav></header><main><section class="sub-hero"><div class="breadcrumb"><a href="index.html">Beranda</a><span>›</span><span>Data & Informasi</span></div><p class="eyebrow">RINGKASAN DATA PUBLIK</p><h1>Informasi perdagangan yang aman dan mudah dipahami</h1><p>Halaman ini menjelaskan cakupan data e-PASAR. Angka statistik hanya akan ditampilkan setelah data diperiksa dan layak dipublikasikan.</p></section><section class="page-wrap"><div class="page-heading"><h2>Cakupan satu data pedagang</h2><p>Ringkasan publik tidak memuat NIK, nomor pribadi, lampiran identitas, atau foto privat.</p></div><div class="info-grid"><article class="info-card"><span class="icon">A</span><h3>Pedagang dan usaha</h3><p>Satu identitas pedagang dapat terhubung ke beberapa usaha serta lokasi kegiatan.</p></article><article class="info-card"><span class="icon">B</span><h3>Pasar dan unit</h3><p>Klaim kios, los, atau lapak menjadi data resmi setelah diverifikasi Kepala Pasar.</p></article><article class="info-card"><span class="icon">C</span><h3>Klasifikasi berlapis</h3><p>Perdagangan, industri, kerajinan, UMKM, dan kandidat Dekranasda dapat digunakan bersama.</p></article></div><div class="page-heading" style="margin-top:64px"><h2>Status ketersediaan informasi</h2><p>Istilah dibuat sederhana agar mudah dipahami masyarakat.</p></div><div class="data-panel"><table><thead><tr><th>Kelompok informasi</th><th>Cakupan</th><th>Keterangan publik</th></tr></thead><tbody><tr><td>Pedagang</td><td>Pedagang pasar dan non-pasar</td><td>Ditampilkan setelah validasi</td></tr><tr><td>Unit usaha</td><td>Kios, los, lapak, toko, warung, usaha rumahan, dan lainnya</td><td>Tanpa data pribadi sensitif</td></tr><tr><td>SKPT</td><td>Status dan masa berlaku dokumen</td><td>Diperiksa melalui QR atau token dokumen</td></tr><tr><td>Klasifikasi</td><td>Perdagangan, industri, kerajinan, UMKM, dan ekonomi kreatif</td><td>Dapat memiliki lebih dari satu klasifikasi</td></tr></tbody></table></div><div class="notice-box"><b>Pelindungan data</b><br>NIK digunakan untuk deduplikasi internal. NIK tidak digunakan sebagai alamat dokumen, isi QR, atau identitas yang ditampilkan kepada publik.</div></section></main><footer class="sd-footer"><div class="sd-wrap footer-grid"><div class="footer-brand"><a class="sd-brand" href="index.html"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><span><b>e-PASAR</b><small>Satu Data Pedagang<br>Kabupaten Pinrang</small></span></a><p>Disperindag ESDM Kabupaten Pinrang</p></div><div><b>Layanan Publik</b><a href="layanan.html">Semua layanan</a><a href="epasar.html">Daftar Pedagang</a><a href="verifikasi-skpt.html">Verifikasi SKPT</a></div><div><b>Informasi</b><a href="informasi.html">Tentang layanan</a><a href="panduan.html">Panduan</a></div></div><div class="sd-wrap footer-bottom">© 2026 e-PASAR Kabupaten Pinrang <span><a class="maroa-project-link" href="https://maroamedia.web.app/" target="_blank" rel="noopener noreferrer">MAROA Project</a></span></div></footer><script src="js/epasar/portal.js"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Data, informasi statistik, dan visualisasi diagram satu data perdagangan e-PASAR Kabupaten Pinrang terintegrasi secara realtime.">
+  <title>Data & Informasi | Satu Data Pasar Kab. Pinrang</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/epasar.css">
+  <link rel="stylesheet" href="css/portal-reference.css">
+  <link rel="stylesheet" href="css/portal-complete.css">
+  <link rel="stylesheet" href="css/infografis.css">
+  <link rel="stylesheet" href="css/market-identity.css">
+  <!-- Leaflet GIS Map Styles -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/peta-pasar.css">
+</head>
+<body class="portal-page">
+  <header class="sd-header">
+    <a class="sd-brand" href="index.html">
+      <img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang">
+      <span><b>e-PASAR</b><small>Satu Data Pedagang<br>Kabupaten Pinrang</small></span>
+    </a>
+    <button class="sd-menu" id="sdMenu" aria-expanded="false" aria-controls="sdNav">☰</button>
+    <nav id="sdNav">
+      <a href="index.html">Beranda</a>
+      <a href="layanan.html">Layanan</a>
+      <a class="active" href="data-informasi.html">Data & Informasi</a>
+      <a href="galeri-video.html">Galeri Video</a>
+      <a href="informasi.html">Informasi</a>
+      <a href="panduan.html">Panduan</a>
+      <a class="sd-login" href="login.html">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10"></path></svg>
+        <span>MASUK PETUGAS</span>
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HERO SECTION KEMENDAG STYLE -->
+    <section class="info-hero">
+      <div class="info-hero-inner">
+        <nav class="info-breadcrumbs" aria-label="Breadcrumb">
+          <a href="index.html">Beranda</a>
+          <span>/</span>
+          <a href="data-informasi.html">Data & Informasi</a>
+          <span>/</span>
+          <span style="color:#ffffff">Infografis Pasar Rakyat</span>
+        </nav>
+        <div style="margin-bottom: 12px;">
+          <span class="info-live-badge">
+            <span class="info-pulse-dot" aria-hidden="true"></span>
+            DATA REALTIME KABUPATEN PINRANG 2026
+          </span>
+        </div>
+        <h1 class="info-hero-title">Statistik & Infografis Satu Data Pasar</h1>
+        <p class="info-hero-subtitle">
+          Informasi sebaran pedagang di pasar rakyat dan luar pasar, jenis komoditas dagangan, ketersediaan unit tempat usaha, serta perkembangan penerbitan e-SKPT resmi berdasarkan Peraturan Daerah Kabupaten Pinrang Nomor 6 Tahun 2024.
+        </p>
+      </div>
+    </section>
+
+    <!-- TOOLBAR FILTER BAR -->
+    <section class="info-filter-bar" aria-label="Filter Data Infografis">
+      <div class="info-field">
+        <label for="filterMarket">Cakupan Pasar Rakyat Pinrang</label>
+        <select id="filterMarket" class="info-select">
+          <option value="all">Semua 11 Pasar Rakyat Resmi Kabupaten Pinrang</option>
+          <option value="MKT-010">Pasar Rakyat Sentral Pinrang (Kec. Paleteang)</option>
+          <option value="MKT-001">Pasar Rakyat Bungi (Kec. Duampanua)</option>
+          <option value="MKT-002">Pasar Rakyat Cempa (Kec. Cempa)</option>
+          <option value="MKT-003">Pasar Rakyat Kampung Jaya (Kec. Watang Sawitto)</option>
+          <option value="MKT-004">Pasar Rakyat Kariango (Kec. Mattiro Bulu)</option>
+          <option value="MKT-005">Pasar Rakyat Langnga (Kec. Mattiro Sompe)</option>
+          <option value="MKT-006">Pasar Rakyat Lanrisang (Kec. Lanrisang)</option>
+          <option value="MKT-007">Pasar Rakyat Leppangang (Kec. Patampanua)</option>
+          <option value="MKT-008">Pasar Rakyat Marawi (Kec. Tiroang)</option>
+          <option value="MKT-009">Pasar Rakyat Pekkabata (Kec. Duampanua)</option>
+          <option value="MKT-011">Pasar Rakyat Teppo (Kec. Patampanua)</option>
+        </select>
+      </div>
+
+      <div class="info-field">
+        <label for="filterLocationType">Lokasi Usaha</label>
+        <select id="filterLocationType" class="info-select">
+          <option value="all">Semua (Pasar & Luar Pasar)</option>
+          <option value="market">Di Dalam Pasar Rakyat Saja</option>
+          <option value="non_market">Di Luar Pasar (Usaha Mandiri / Keliling)</option>
+        </select>
+      </div>
+
+      <div class="info-field">
+        <label for="filterYear">Tahun Basis</label>
+        <select id="filterYear" class="info-select">
+          <option value="2026">Tahun 2026 (Aktif)</option>
+          <option value="2025">Tahun 2025</option>
+        </select>
+      </div>
+
+      <div>
+        <button id="btnResetFilter" class="info-btn-reset" title="Kembalikan semua filter ke pengaturan awal">Reset</button>
+      </div>
+    </section>
+
+    <!-- METRICS HIGHLIGHT: KEMENDAG TOTAL NUMBER BANNER & SUB-INDICATORS -->
+    <div style="max-width: 1140px; margin: 0 auto; padding: 0 16px;">
+      <div class="total-number">
+        <h1 id="kpiTotal">0</h1>
+        <p>Jumlah Pedagang Terdaftar di Kabupaten Pinrang</p>
+        <div class="total-number-sub">
+          <span>🏛️ <strong id="kpiMarketSub">0</strong> di Pasar Rakyat</span>
+          <span>·</span>
+          <span>🏠 <strong id="kpiNonMarketSub">0</strong> di Luar Pasar</span>
+          <span>·</span>
+          <span>📄 <strong id="kpiSkptSub">0</strong> e-SKPT Sah Terbit</span>
+        </div>
+      </div>
+
+      <div class="info-submetrics-grid">
+        <article class="info-stat-card">
+          <div class="stat-meta">
+            <small>DI PASAR RAKYAT</small>
+            <span>🏛️ Kios, Los &amp; Lapak Resmi</span>
+          </div>
+          <strong id="kpiMarket" style="color: #3366cc;">0</strong>
+        </article>
+
+        <article class="info-stat-card">
+          <div class="stat-meta">
+            <small>DI LUAR PASAR</small>
+            <span>🏠 Usaha Mandiri &amp; Keliling</span>
+          </div>
+          <strong id="kpiNonMarket" style="color: #109618;">0</strong>
+        </article>
+
+        <article class="info-stat-card">
+          <div class="stat-meta">
+            <small>E-SKPT TERBIT</small>
+            <span>📄 Dokumen Terverifikasi Sah</span>
+          </div>
+          <strong id="kpiSkpt" style="color: #7c3aed;">0</strong>
+        </article>
+      </div>
+    </div>
+
+    <!-- CHARTS GRID CONTAINER -->
+    <div class="info-charts-container">
+
+      <!-- PETA GEOSPASIAL SEBARAN PASAR & SARANA (SISP KEMENDAG STYLE) -->
+      <section class="sisp-section" style="margin-bottom: 35px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 style="font-size:1.25rem; font-weight:800; color:#0f172a; margin:0 0 4px;">Peta Sebaran Sarana Pasar &amp; Titik Usaha (SISP Pinrang)</h2>
+            <p style="font-size:0.88rem; color:#64748b; margin:0;">Visualisasi geospasial 11 pasar rakyat resmi Kabupaten Pinrang dengan batas administrasi BIG dan koordinat presisi.</p>
+          </div>
+          <span style="font-size:0.78rem; font-weight:700; color:#2563eb; background:#eff6ff; padding:5px 12px; border-radius:99px; border:1px solid #bfdbfe;">
+            GIS Interaktif Leaflet · Batas Wilayah BIG
+          </span>
+        </div>
+
+        <div class="sisp-map-wrapper">
+          <!-- TOP PILL OVERLAY -->
+          <div class="sisp-overlay-title">
+            <span class="sisp-pulse-dot" aria-hidden="true"></span>
+            <h3>Peta Geospasial 11 Pasar Rakyat Resmi Kabupaten Pinrang</h3>
+          </div>
+
+          <!-- FILTER PANEL OVERLAY -->
+          <div class="sisp-overlay-filter">
+            <div class="sisp-filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              Filter Wilayah
+            </div>
+            <select id="sispFilterDistrict" class="sisp-filter-select" aria-label="Pilih Kecamatan">
+              <option value="all">Semua Kecamatan (12 Wilayah)</option>
+              <option value="Paleteang">Kec. Paleteang</option>
+              <option value="Watang Sawitto">Kec. Watang Sawitto</option>
+              <option value="Duampanua">Kec. Duampanua</option>
+              <option value="Cempa">Kec. Cempa</option>
+              <option value="Lembang">Kec. Lembang</option>
+              <option value="Mattiro Sompe">Kec. Mattiro Sompe</option>
+              <option value="Lanrisang">Kec. Lanrisang</option>
+              <option value="Patampanua">Kec. Patampanua</option>
+              <option value="Tiroang">Kec. Tiroang</option>
+              <option value="Mattiro Bulu">Kec. Mattiro Bulu</option>
+              <option value="Suppa">Kec. Suppa</option>
+              <option value="Batulappa">Kec. Batulappa</option>
+            </select>
+
+            <div class="sisp-filter-tags">
+              <button type="button" class="sisp-tag-btn active" data-type="all">Semua</button>
+              <button type="button" class="sisp-tag-btn" data-type="harian">Pasar Harian</button>
+              <button type="button" class="sisp-tag-btn" data-type="mingguan">Pasar Mingguan</button>
+            </div>
+
+            <button type="button" id="sispBtnResetMap" class="sisp-btn-reset-map">Reset Tampilan Peta</button>
+          </div>
+
+          <!-- FLOATING STATS BADGE (KANAN BAWAH) -->
+          <div class="sisp-overlay-stats">
+            <div class="sisp-avatar-stack" id="sispAvatarStack"></div>
+            <div class="sisp-stats-text" id="sispStatsText">
+              <strong>11 Pasar Rakyat</strong> · 0 Pedagang Terdata
+            </div>
+          </div>
+
+          <!-- SLIDE-OVER SIDEBAR PASAR -->
+          <aside class="sisp-sidebar" id="sispSidebar" aria-label="Detail Pasar Rakyat">
+            <div class="sisp-sidebar-header">
+              <img id="sidebarPhoto" class="sisp-sidebar-photo" src="" alt="Foto Pasar">
+              <span id="sidebarBadge" class="sisp-sidebar-badge">PASAR RAKYAT RESMI</span>
+              <button type="button" class="sisp-sidebar-close" onclick="closeMarketSidebar()" aria-label="Tutup Detail">✕</button>
+            </div>
+            <div class="sisp-sidebar-body">
+              <h4 id="sidebarTitle" class="sisp-sidebar-title">—</h4>
+              <span id="sidebarDistrict" class="sisp-sidebar-district">—</span>
+
+              <div class="sisp-info-list">
+                <div class="sisp-info-item">
+                  <span class="sisp-info-icon">📍</span>
+                  <span id="sidebarAddress">—</span>
+                </div>
+                <div class="sisp-info-item">
+                  <span class="sisp-info-icon">🕒</span>
+                  <span id="sidebarSchedule">—</span>
+                </div>
+                <div class="sisp-info-item">
+                  <span class="sisp-info-icon">🌐</span>
+                  <span id="sidebarCoords">—</span>
+                </div>
+              </div>
+
+              <div class="sisp-unit-grid">
+                <div class="sisp-unit-col">
+                  <small>Kios</small>
+                  <strong id="sidebarKios" style="color:#0284c7;">—</strong>
+                </div>
+                <div class="sisp-unit-col">
+                  <small>Los</small>
+                  <strong id="sidebarLos" style="color:#0d9488;">—</strong>
+                </div>
+                <div class="sisp-unit-col">
+                  <small>Lapak</small>
+                  <strong id="sidebarLapak" style="color:#f59e0b;">—</strong>
+                </div>
+              </div>
+
+              <a id="sidebarRouteBtn" class="sisp-route-btn" href="#" target="_blank" rel="noopener noreferrer">
+                <span>📍 Petunjuk Arah Google Maps</span>
+              </a>
+            </div>
+          </aside>
+
+          <!-- LEAFLET MAP ELEMENT -->
+          <div id="sispMap"></div>
+        </div>
+      </section>
+
+      <div class="info-charts-grid">
+        <!-- CHART 1: DONUT PASAR VS NON PASAR -->
+        <article class="info-chart-card">
+          <div class="info-chart-header">
+            <h3>Proporsi Pedagang di Pasar vs Luar Pasar</h3>
+            <small style="color:#64748b; font-size:0.75rem; font-weight:600;">Donut Distribution Chart</small>
+          </div>
+          <div id="chartMarketVsNonMarket" class="info-chart-canvas"></div>
+        </article>
+
+        <!-- CHART 2: BAR CHART SEBARAN PASAR -->
+        <article class="info-chart-card">
+          <div class="info-chart-header">
+            <h3>Sebaran Pedagang di 11 Pasar Rakyat Resmi</h3>
+            <small style="color:#64748b; font-size:0.75rem; font-weight:600;">Horizontal Ranking Chart</small>
+          </div>
+          <div id="chartByMarket" class="info-chart-canvas"></div>
+        </article>
+
+        <!-- CHART 3: DONUT KOMODITAS -->
+        <article class="info-chart-card">
+          <div class="info-chart-header">
+            <h3>Distribusi Pedagang Berdasarkan Komoditas</h3>
+            <small style="color:#64748b; font-size:0.75rem; font-weight:600;">Marketplace Commodity Breakdown</small>
+          </div>
+          <div id="chartByCommodity" class="info-chart-canvas"></div>
+        </article>
+
+        <!-- CHART 4: ROSE CHART TIPE TEMPAT -->
+        <article class="info-chart-card">
+          <div class="info-chart-header">
+            <h3>Distribusi Tipe Tempat Usaha</h3>
+            <small style="color:#64748b; font-size:0.75rem; font-weight:600;">Nightingale Rose Area</small>
+          </div>
+          <div id="chartByType" class="info-chart-canvas"></div>
+        </article>
+      </div>
+
+      <!-- DIREKTORI 11 PASAR RAKYAT RESMI (KEMENDAG TABLE STYLE) -->
+      <section class="info-table-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="font-size:1.2rem; font-weight:800; color:#0f172a; margin:0 0 4px;">Direktori &amp; Statistik 11 Pasar Rakyat Kabupaten Pinrang</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin:0;">Data unit kios, los, pelataran, jumlah pedagang terdaftar, dan tingkat okupansi pemanfaatan tempat usaha pasar.</p>
+          </div>
+          <div style="position:relative; min-width:280px; max-width:100%;">
+            <input type="text" id="marketTableSearch" placeholder="Cari nama pasar, kecamatan..." aria-label="Cari data pasar" style="width:100%; padding:9px 14px 9px 36px; border-radius:10px; border:1px solid #cbd5e1; font-size:0.85rem; outline:none; background:#f8fafc; transition:all 0.2s;" onfocus="this.style.background='#ffffff'; this.style.borderColor='#3170c8';" onblur="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';">
+            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.9rem;" aria-hidden="true">🔍</span>
+          </div>
+        </div>
+
+        <div class="info-table-responsive">
+          <table class="info-market-table">
+            <thead>
+              <tr>
+                <th style="width: 48px; text-align: center;">NO</th>
+                <th>NAMA PASAR RAKYAT</th>
+                <th>JADWAL OPERASIONAL</th>
+                <th style="text-align: right;">TOTAL UNIT</th>
+                <th style="text-align: center;">KIOS / LOS / LAPAK</th>
+                <th style="text-align: right;">PEDAGANG AKTIF</th>
+                <th style="text-align: center;">OKUPANSI</th>
+              </tr>
+            </thead>
+            <tbody id="marketTableBody">
+              <!-- Render via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px; font-size:0.8rem; color:#64748b; font-style:italic; border-top:1px solid #f1f5f9; padding-top:12px;">
+          <strong>Sumber : </strong>Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang (Kegiatan Satu Data Pedagang Pasar e-PASAR 2026), diolah Sistem Informasi Sarana Perdagangan Daerah berdasarkan Perda No. 6 Tahun 2024.
+        </div>
+      </section>
+
+      <!-- CAKUPAN SATU DATA & PELINDUNGAN NIK -->
+      <section class="scope-section">
+        <h2 style="font-size:1.25rem; font-weight:800; color:#0f172a; margin:0 0 6px;">Cakupan Satu Data Pedagang &amp; Pelindungan Kerahasiaan</h2>
+        <p style="font-size:0.88rem; color:#64748b; margin:0 0 20px;">Prinsip keterbukaan data publik e-PASAR dengan jaminan keamanan privasi identitas pedagang.</p>
+
+        <div class="scope-grid">
+          <article class="scope-card">
+            <div class="scope-card-icon">1</div>
+            <h3>Pedagang &amp; Ragam Usaha</h3>
+            <p>Satu identitas pedagang dapat terhubung ke beberapa jenis usaha dan lokasi kegiatan baik di dalam maupun di luar pasar.</p>
+          </article>
+          <article class="scope-card">
+            <div class="scope-card-icon">2</div>
+            <h3>Unit Pasar &amp; Okupansi</h3>
+            <p>Klaim kios, los, atau lapak divalidasi langsung oleh Kepala Pasar setempat guna memastikan keabsahan hak pemakaian tempat usaha.</p>
+          </article>
+          <article class="scope-card">
+            <div class="scope-card-icon">3</div>
+            <h3>Klasifikasi Dagangan Berlapis</h3>
+            <p>Perdagangan umum, industri rumahan, UMKM pangan, dan kerajinan Dekranasda dapat tercakup dan dikelompokkan secara tepat.</p>
+          </article>
+        </div>
+
+        <div class="protection-notice">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <div>
+            <strong>Pelindungan Kerahasiaan Data Pribadi (NIK)</strong>
+            <p>Nomor Induk Kependudukan (NIK) hanya digunakan untuk deduplikasi internal sistem. NIK tidak digunakan sebagai alamat tautan dokumen, tidak dicantumkan pada kode QR publik, dan tidak ditampilkan pada rekap statistik infografis ini.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACCORDION GLOSARIUM KEMENDAG & PERDA NO 6/2024 -->
+      <section class="info-accordion-container">
+        <h2 style="font-size:1.25rem; font-weight:800; color:#0f172a; margin:0 0 6px;">Glosarium Istilah &amp; Dasar Regulasi Pasar</h2>
+        <p style="font-size:0.88rem; color:#64748b; margin:0 0 20px;">Definisi resmi berdasarkan Perda Kab. Pinrang No. 6 Tahun 2024 dan Permendag RI No. 21 Tahun 2021.</p>
+
+        <div class="info-accordion-item">
+          <button class="info-accordion-btn" type="button" aria-expanded="false">
+            <span>Apa yang dimaksud dengan Pasar Rakyat?</span>
+            <span style="font-size:1.2rem; font-weight:bold;">+</span>
+          </button>
+          <div class="info-accordion-content" style="display: none;">
+            Pasar Rakyat adalah pasar yang dibangun dan dikelola oleh Pemerintah Daerah, Pemerintah Desa, swasta, BUMN/BUMD, atau koperasi dengan tempat usaha berupa toko, kios, los, dan tenda yang dimiliki/dikelola oleh pedagang kecil dan menengah, swadaya masyarakat atau koperasi dengan usaha skala kecil, modal kecil, dan proses jual beli barang dagangan melalui tawar-menawar.
+          </div>
+        </div>
+
+        <div class="info-accordion-item">
+          <button class="info-accordion-btn" type="button" aria-expanded="false">
+            <span>Apa itu e-SKPT (Surat Keterangan Penunjukan Tempat)?</span>
+            <span style="font-size:1.2rem; font-weight:bold;">+</span>
+          </button>
+          <div class="info-accordion-content" style="display: none;">
+            e-SKPT adalah dokumen izin hak pemakaian tempat usaha resmi berupa Kios, Los, atau Lapak di Pasar Rakyat yang diterbitkan secara elektronik oleh Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang, dilengkapi nomor registrasi unik, kode verifikasi cryptographic hash, dan QR-code anti-pemalsuan.
+          </div>
+        </div>
+
+        <div class="info-accordion-item">
+          <button class="info-accordion-btn" type="button" aria-expanded="false">
+            <span>Perbedaan Tempat Usaha Kios, Los, dan Lapak/Pelataran?</span>
+            <span style="font-size:1.2rem; font-weight:bold;">+</span>
+          </button>
+          <div class="info-accordion-content" style="display: none;">
+            <p><b>Kios</b> adalah bangunan tempat usaha beratap dan berpintu tertutup permanen di dalam lingkungan pasar.</p>
+            <p><b>Los</b> adalah bangunan permanen beratap tanpa dinding pemisah penuh yang diperuntukkan bagi kelompok pedagang tertentu.</p>
+            <p><b>Lapak / Pelataran</b> adalah tempat usaha terbuka tanpa sekat permanen di area pasar yang disediakan untuk pedagang harian atau mingguan.</p>
+          </div>
+        </div>
+
+        <div class="info-accordion-item">
+          <button class="info-accordion-btn" type="button" aria-expanded="false">
+            <span>Mengapa Pedagang di Luar Pasar Tetap Tercakup dalam e-PASAR?</span>
+            <span style="font-size:1.2rem; font-weight:bold;">+</span>
+          </button>
+          <div class="info-accordion-content" style="display: none;">
+            Sistem e-PASAR mengemban amanat Satu Data Perdagangan Kabupaten Pinrang untuk membina dan memberdayakan seluruh pelaku usaha mikro, kecil, dan mandiri di 12 kecamatan. Pendataan pedagang di luar pasar memungkinkan pemerintah menyalurkan program pemberdayaan, legalitas usaha, pelatihan kewirausahaan, serta pemetaan ketahanan pangan daerah.
+          </div>
+        </div>
+
+        <p class="info-source-note">Sumber data: Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral (Disperindag ESDM) Kabupaten Pinrang, diolah dari basis data e-SKPT &amp; e-PASAR tahun 2026.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="sd-footer">
+    <div class="sd-wrap footer-grid">
+      <div class="footer-brand">
+        <a class="sd-brand" href="index.html">
+          <img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang">
+          <span><b>e-PASAR</b><small>Satu Data Pedagang<br>Kabupaten Pinrang</small></span>
+        </a>
+        <p>Disperindag ESDM Kabupaten Pinrang</p>
+      </div>
+      <div>
+        <b>Layanan Publik</b>
+        <a href="layanan.html">Semua Layanan</a>
+        <a href="epasar.html">Pendaftaran Pedagang</a>
+        <a href="epasar-status.html">Cek Status Registrasi</a>
+        <a href="verifikasi-skpt.html">Verifikasi e-SKPT</a>
+      </div>
+      <div>
+        <b>Data & Panduan</b>
+        <a href="data-informasi.html">Data & Informasi</a>
+        <a href="galeri-video.html">Galeri Video</a>
+        <a href="panduan.html">Panduan Sistem</a>
+      </div>
+    </div>
+    <div class="sd-wrap footer-bottom">
+      © 2026 e-PASAR Kabupaten Pinrang <span><a class="maroa-project-link" href="https://maroamedia.web.app/" target="_blank" rel="noopener noreferrer">MAROA Project</a></span>
+    </div>
+  </footer>
+
+  <!-- Apache ECharts Library CDN (Sama dengan Satu Data Kemendag RI) -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+  <!-- Firebase SDK Modules untuk Realtime Data -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/epasar/firebase-config.local.js"></script>
+  <script src="js/epasar/config.js"></script>
+
+  <!-- Leaflet GIS Map Library (SISP Style) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Modul Batas Administrasi Resmi BIG (12 Kecamatan & 109 Desa/Kelurahan) -->
+  <script src="js/epasar/market-colors.js"></script>
+  <script src="js/epasar/pinrang-administrative-overlay.js"></script>
+  <script src="js/epasar/peta-pasar.js"></script>
+
+  <!-- Controller Skrip Infografis Realtime & Portal -->
+  <script src="js/epasar/infografis.js"></script>
+  <script src="js/epasar/portal.js"></script>
+</body>
+</html>

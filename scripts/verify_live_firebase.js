@@ -11,7 +11,7 @@ const { chromium } = require('playwright');
   console.log('Mengunjungi https://e-skpt.web.app/login...');
   await page.goto('https://e-skpt.web.app/login', { waitUntil: 'domcontentloaded' });
   await page.locator('#identifier').fill('kadis@eskpt.id');
-  await page.locator('#password').fill('Pasar202#');
+  await page.locator('#password').fill(process.env.EPASAR_UAT_PASSWORD || (() => { throw new Error('EPASAR_UAT_PASSWORD wajib tersedia di environment lokal.'); })());
   await page.getByRole('button', { name: 'Masuk' }).click();
   await page.waitForURL(/admin-epasar/, { timeout: 25000 });
   await page.waitForTimeout(4000);

@@ -54,9 +54,12 @@
     };
   }
   function districtOptions(value) {
-    return `<option value="">Pilih kecamatan</option>${E.DISTRICTS.map((name) => `<option value="${esc(name)}" ${name === value ? "selected" : ""}>${esc(name)}</option>`).join("")}`;
+    return `<option value="">Pilih kecamatan</option>${E.DISTRICTS.map((name) => `<option value="${esc(name)}" ${name === value ? "selected" : ""}>${esc(name)}</option>`).join("")}<option value="Luar Kabupaten Pinrang" ${value === "Luar Kabupaten Pinrang" ? "selected" : ""}>Luar Kabupaten Pinrang</option>`;
   }
   function villageOptions(district, value) {
+    if (district === "Luar Kabupaten Pinrang") {
+      return '<option value="Luar Kabupaten Pinrang" selected>— Tidak Ada Pilihan (Luar Kabupaten) —</option>';
+    }
     return `<option value="">${district ? "Pilih desa/kelurahan" : "Pilih kecamatan terlebih dahulu"}</option>${E.villagesByDistrict(
       district,
     )
@@ -95,9 +98,25 @@
         if (["workerCount", "areaM2"].includes(key))
           value = value === "" ? null : Number(value);
         target[key] = value;
-        if (key === "district") target.village = "";
-        if (key === "marketId")
-          target.marketName = E.MARKETS.find((x) => x.id === value)?.name || "";
+        if (key === "type") {
+          if (value === "MARKET") {
+            if (!target.marketPlaces || !target.marketPlaces.length) {
+              target.marketPlaces = [place()];
+            }
+          }
+        }
+        if (key === "district") {
+          target.village = target.district === "Luar Kabupaten Pinrang" ? "Luar Kabupaten Pinrang" : "";
+        }
+        if (key === "marketId") {
+          const selectedMarket = E.MARKETS.find((x) => x.id === value);
+          target.marketName = selectedMarket?.name || "";
+          if (selectedMarket && b.locations[+li]) {
+            b.locations[+li].district = selectedMarket.district || b.locations[+li].district;
+            b.locations[+li].village = selectedMarket.village || b.locations[+li].village;
+            b.locations[+li].address = selectedMarket.address || b.locations[+li].address;
+          }
+        }
         if (["type", "district", "marketId", "applySkpt"].includes(key))
           render();
         else document.dispatchEvent(new CustomEvent("epasar:entities-changed"));
@@ -130,7 +149,17 @@
     document.getElementById("locationWorkspace").innerHTML = businesses
       .map(
         (b, bi) =>
-          `<article class="entity-card"><header><strong>${esc(b.name || `Usaha ${bi + 1}`)}</strong><button type="button" data-add-location="${bi}">+ Tambah Lokasi Usaha</button></header>${b.locations.map((l, li) => `<section class="nested-card"><header><b>Lokasi ${li + 1}</b><button type="button" data-remove-location="${bi}|${li}">Hapus</button></header><label>Jenis lokasi<select data-bind="${bi}|l|${li}||type"><option value="GENERAL">Lokasi umum/non-pasar</option><option value="MARKET">Pasar yang dikelola Disperindag</option></select></label><div class="two-col"><label>Kecamatan<select required data-bind="${bi}|l|${li}||district">${districtOptions(l.district)}</select></label><label>Desa/Kelurahan<select required data-bind="${bi}|l|${li}||village" ${l.district ? "" : "disabled"}>${villageOptions(l.district, l.village)}</select></label></div><label>Alamat/petunjuk lokasi<textarea required data-bind="${bi}|l|${li}||address" maxlength="300">${esc(l.address)}</textarea></label>${l.type === "MARKET" ? `<div class="place-list">${l.marketPlaces.map((p, pi) => placeHtml(p, bi, li, pi)).join("")}</div><button class="button add-entity" type="button" data-add-place="${bi}|${li}">+ Tambah Tempat di Pasar</button><p class="notice">Nomor tempat adalah <b>klaim awal</b> dan belum resmi sebelum diverifikasi Kepala Pasar.</p>` : ""}</section>`).join("")}</article>`,
+          `<article class="entity-card"><header><strong>${esc(b.name || `Usaha ${bi + 1}`)}</strong><button type="button" data-add-location="${bi}">+ Tambah Lokasi Usaha</button></header>${b.locations.map((l, li) => {
+            const isMarket = l.type === "MARKET";
+            const isOutDistrict = l.district === "Luar Kabupaten Pinrang";
+            const addressFieldsHtml = isMarket
+              ? `<div class="notice market-auto-address-notice" style="background:#eff6ff; border-left:4px solid #2563eb; color:#1e40af; padding:12px 14px; border-radius:8px; margin:10px 0 14px; font-size:0.86rem; line-height:1.5;">
+                  🏛️ <b>Pedagang Pasar Rakyat:</b> Alamat dan wilayah lokasi usaha otomatis mengikuti data resmi pasar yang Anda pilih di bawah ini (kolom alamat manual dilewati).
+                </div>`
+              : `<div class="two-col"><label>Kecamatan<select required data-bind="${bi}|l|${li}||district">${districtOptions(l.district)}</select></label><label>Desa/Kelurahan<select ${isOutDistrict ? "disabled" : "required"} data-bind="${bi}|l|${li}||village" ${l.district && !isOutDistrict ? "" : "disabled"}>${villageOptions(l.district, l.village)}</select></label></div><label>Alamat/petunjuk lokasi<textarea required data-bind="${bi}|l|${li}||address" maxlength="300" placeholder="Contoh: Jl. Poros, RT/RW, atau patokan lokasi usaha mandiri">${esc(l.address)}</textarea></label>`;
+
+            return `<section class="nested-card"><header><b>Lokasi ${li + 1}</b><button type="button" data-remove-location="${bi}|${li}">Hapus</button></header><label>Jenis lokasi<select data-bind="${bi}|l|${li}||type"><option value="GENERAL">Lokasi umum / Usaha mandiri (non-pasar)</option><option value="MARKET">Pasar yang dikelola Disperindag</option></select></label>${addressFieldsHtml}${isMarket ? `<div class="place-list">${l.marketPlaces.map((p, pi) => placeHtml(p, bi, li, pi)).join("")}</div><button class="button add-entity" type="button" data-add-place="${bi}|${li}">+ Tambah Tempat di Pasar</button><p class="notice">Nomor tempat adalah <b>klaim awal</b> dan belum resmi sebelum diverifikasi Kepala Pasar.</p>` : ""}</section>`;
+          }).join("")}</article>`,
       )
       .join("");
     businesses.forEach((b, bi) =>
@@ -228,8 +257,6 @@
         return "Setiap usaha harus memiliki minimal satu lokasi.";
       for (const b of businesses)
         for (const l of b.locations) {
-          if (!l.district || !l.village || !l.address)
-            return "Lengkapi alamat setiap lokasi usaha.";
           if (l.type === "MARKET") {
             if (!l.marketPlaces.length)
               return "Tambahkan minimal satu tempat pada lokasi pasar.";
@@ -238,9 +265,6 @@
             );
             if (incomplete) {
               if (!incomplete.unitType) {
-                const field = document.querySelector(
-                  `[data-bind="${b.locations.indexOf(l)}|p"]`,
-                );
                 const picker = [
                   ...document.querySelectorAll(".unit-type-picker"),
                 ].find((x) => x.querySelector("select")?.value === "");
@@ -248,6 +272,22 @@
                 picker?.querySelector("button")?.focus({ preventScroll: true });
               }
               return "Lengkapi pasar, jenis tempat, dan nomor pada setiap tempat pasar.";
+            }
+            // Otomatis sinkronkan data wilayah dari pasar yang dipilih
+            const firstMarket = window.EPASAR?.marketById(l.marketPlaces[0]?.marketId);
+            if (firstMarket) {
+              l.district = firstMarket.district || l.district || "Paleteang";
+              l.village = firstMarket.village || l.village || "Sawitto";
+              l.address = firstMarket.address || l.address || firstMarket.name;
+            }
+          } else {
+            if (!l.district) return "Pilih kecamatan lokasi usaha.";
+            if (l.district !== "Luar Kabupaten Pinrang" && !l.village)
+              return "Pilih desa/kelurahan lokasi usaha.";
+            if (!l.address || !String(l.address).trim())
+              return "Lengkapi alamat/petunjuk lokasi usaha.";
+            if (l.district === "Luar Kabupaten Pinrang") {
+              l.village = "Luar Kabupaten Pinrang";
             }
           }
         }

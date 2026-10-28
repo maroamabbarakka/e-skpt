@@ -1,0 +1,51 @@
+/* Aksen identitas pasar. Tidak mengubah ukuran, posisi, atau komposisi dokumen. */
+.trader-id-card[data-market-id] {
+  background: linear-gradient(135deg, var(--market-color) 0%, var(--market-color-dark) 78%, #071426 135%) !important;
+  box-shadow: 0 12px 35px rgba(var(--market-color-rgb), .24), inset 0 0 0 .22mm rgba(255,255,255,.24);
+}
+.trader-id-card[data-market-id]::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.13),transparent 34%,rgba(0,0,0,.11));
+}
+.trader-id-card[data-market-id]::after { background:var(--market-color-light); }
+.trader-id-card[data-market-id] .card-name h1 {
+  border-color:rgba(255,255,255,.22);
+  background:linear-gradient(90deg,rgba(6,18,36,.76),rgba(var(--market-color-rgb),.52));
+}
+.trader-id-card[data-market-id] .card-code { background:rgba(5,16,34,.48); }
+.trader-id-card[data-market-id] .card-qr { box-shadow:0 0 0 .4mm rgba(255,255,255,.24); }
+
+.skpt-document[data-market-id] {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+.skpt-document[data-market-id]::after {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background-image:var(--market-frame-image, url("../assets/guilloche-border.svg")) !important;
+}
+.skpt-document[data-market-id] .official-letterhead { border-bottom-color:var(--market-color); }
+.skpt-document[data-market-id] .official-letterhead::after { background:var(--market-color); opacity:.55; }
+.skpt-document[data-market-id] .document-title-block h1,
+.skpt-document[data-market-id] .document-body h3,
+.skpt-document[data-market-id] .register-box > *:first-child { color:var(--market-color-dark); }
+.skpt-document[data-market-id] .document-title-block h1::after { background:linear-gradient(90deg,var(--market-color-dark),var(--market-color)); }
+.skpt-document[data-market-id] .identity-table { border-left-color:var(--market-color); background:rgba(var(--market-color-rgb),.055); }
+.skpt-document[data-market-id] .register-box,
+.skpt-document[data-market-id] .document-verification { border-top-color:var(--market-color); }
+.skpt-document[data-market-id] .document-status { border-color:rgba(var(--market-color-rgb),.46); background:var(--market-color-light); color:var(--market-color-dark); }
+.skpt-document[data-market-id] .document-qr-code { box-shadow:0 0 0 .35mm rgba(var(--market-color-rgb),.32); }
+.skpt-document[data-market-id]::before { background:linear-gradient(145deg,var(--market-color-dark),var(--market-color),#6F913F); }
+
+@media print {
+  .trader-id-card[data-market-id], .skpt-document[data-market-id] {
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
+}

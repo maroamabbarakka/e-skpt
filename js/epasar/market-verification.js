@@ -25,6 +25,16 @@
     message.textContent = text;
     message.className = error ? 'admin-message admin-error' : 'admin-message';
   };
+  const friendlyError = (error, fallback) => {
+    const message = String(error?.message || '');
+    if (/missing or insufficient permissions|permission-denied/i.test(message)) {
+      return 'Hak akses data pasar belum sesuai untuk operasi ini. Muat ulang halaman; jika tetap terjadi, hubungi administrator sistem.';
+    }
+    if (/failed-precondition.*index|requires an index|index/i.test(message)) {
+      return 'Index basis data untuk verifikasi unit belum tersedia. Hubungi administrator sistem.';
+    }
+    return message || fallback;
+  };
   const empty = (title, detail) => `<div class="internal-empty"><span>✓</span><b>${escapeHtml(title)}</b><p>${escapeHtml(detail)}</p></div>`;
 
   function stateLabel(state) {
@@ -141,7 +151,7 @@
         const values = Object.fromEntries(new FormData(form));
         values.conflict = form.elements.conflict.checked;
         const result = await window.EPASAR_WORKFLOW.verifyClaim(claim, values, profile);
-        notify(result.conflict ? 'Konflik unit tercatat. Berkas tidak diteruskan sampai konflik diselesaikan.' : `Unit ${result.unitId} terverifikasi dan berkas diteruskan untuk review Kadis.`);
+        notify(result.conflict ? 'Konflik unit tercatat dan dikirim ke antrean Admin. Admin akan menyampaikan perbaikan kepada pedagang via WhatsApp.' : `Unit ${result.unitId} terverifikasi dan berkas diteruskan untuk review Kadis.`);
         pendingRows = pendingRows.filter(row => row.id !== claim.id);
         directoryRows = directoryRows.map(row => row.id === claim.id ? { ...row, state: result.conflict ? 'CONFLICT' : 'VERIFIED', verificationStatus: result.conflict ? 'CONFLICT' : 'VERIFIED' } : row);
         renderDirectory(directoryRows);
@@ -149,7 +159,7 @@
         renderPending(pendingRows, profile);
         document.getElementById('pendingCount').textContent = String(pendingRows.length);
       } catch (error) {
-        notify(error.message || 'Verifikasi belum dapat disimpan.', true);
+        notify(friendlyError(error, 'Verifikasi belum dapat disimpan.'), true);
         button.disabled = false;
         button.textContent = 'Simpan Verifikasi';
       }
@@ -311,6 +321,11 @@
       notify(`Data berhasil dimuat untuk ${marketIds.length} pasar. Data lama yang statusnya ambigu hanya ditampilkan untuk pemeriksaan dan tidak dapat diverifikasi dari antrean baru.`);
     } catch (error) {
       console.error(error);
+      if (/kewenangan|memiliki kewenangan|MARKET_HEAD|Kepala Pasar/i.test(String(error?.message || ''))) {
+        notify('Verifikasi faktual hanya tersedia untuk Kepala Pasar yang memiliki penugasan pasar. Anda akan dikembalikan ke dashboard.', true);
+        setTimeout(() => { location.replace('admin-epasar.html'); }, 1200);
+        return;
+      }
       const detail = /index/i.test(String(error?.message || '')) ? 'Index antrean belum tersedia. Hubungi administrator sistem.' : 'Periksa penugasan pasar, koneksi, dan hak akses akun.';
       notify(`Ruang kerja Kepala Pasar belum dapat dimuat. ${detail}`, true);
     }

@@ -8,11 +8,13 @@
   <link rel="stylesheet" href="css/epasar.css">
   <link rel="stylesheet" href="css/official-documents.css">
   <link rel="stylesheet" href="css/skpt-compact.css">
-  <link rel="stylesheet" href="css/skpt-print-fix.css">
   <link rel="stylesheet" href="css/document-polish.css">
   <link rel="stylesheet" href="css/photo-documents.css">
   <link rel="stylesheet" href="css/header-logo-fix.css">
   <link rel="stylesheet" href="css/document-security-mark.css">
+  <link rel="stylesheet" href="css/skpt-print-fix.css">
+  <link rel="stylesheet" href="css/skpt-legal-appendix.css?v=20261009-3">
+  <link rel="stylesheet" href="css/market-document-themes.css">
 </head>
 <body class="document-screen">
   <div class="document-toolbar">
@@ -20,13 +22,16 @@
     <button class="button primary" type="button" onclick="window.print()">Simpan PDF / Cetak</button>
   </div>
   <main id="document" class="official-document skpt-document"><div class="loading-document">Memuat dokumen resmi…</div></main>
+  <section id="legalAppendix" class="skpt-appendix-set" aria-label="Lampiran ketentuan SKPT"></section>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="js/epasar/firebase-config.local.js"></script>
   <script src="js/epasar/auth-service.js"></script>
   <script src="js/epasar/config.js"></script>
+  <script src="js/epasar/market-colors.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/epasar/skpt-legal-appendix.js"></script>
   <script src="js/epasar/skpt-pdf.js"></script>
 </body>
 </html>

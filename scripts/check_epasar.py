@@ -18,7 +18,7 @@ def main() -> None:
     require("epasar-status.html")
     require("verifikasi-skpt.html")
     require("verifikasi-unit.html")
-    require("admin-epasar.html")
+    admin_html = require("admin-epasar.html")
     rules = require("firestore.rules")
     require("firestore.indexes.json")
     require("js/epasar/image-compress.js")
@@ -41,7 +41,11 @@ def main() -> None:
     js_source = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "js/epasar").glob("*.js"))
     assert "firebase.storage" not in js_source
     assert "match /trader_intake/{id}" in rules
-    assert "allow read, update, delete: if adminStaff();" in rules
+    assert "allow get: if canAccessIntake(resource.data);" in rules
+    assert "allow list: if adminStaff();" in rules
+    assert 'src="js/epasar/constants.js' in admin_html
+    assert "routingMarketIds" in rules
+    assert "canAccessNotification" in rules
     assert "dataBase64" in rules
     assert "publicToken" in rules
     assert not re.search(r"apiKey\s*:\s*['\"]", html)

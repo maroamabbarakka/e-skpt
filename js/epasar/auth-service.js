@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const ROLES=['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','KADIS','TECH_ADMIN'];
+  const ROLES=['SUPER_ADMIN','DISPERINDAG_ADMIN','TRADE_ADMIN','MARKET_ADMIN','MARKET_HEAD','UPTD_HEAD','KADIS','TECH_ADMIN'];
   function auth(){if(!window.epasarAuth)throw new Error('Firebase Authentication belum siap.');return window.epasarAuth}
   function loginEmail(identifier){
     const value=String(identifier||'').trim().toLowerCase();
@@ -19,7 +19,26 @@
   }
   async function signIn(identifier,password){const email=loginEmail(identifier);if(!email||!password)throw new Error('Email/username dan password wajib diisi.');try{const result=await auth().signInWithEmailAndPassword(email,password);return await loadProfile(result.user)}catch(error){if(error&&error.message&&error.message.startsWith('Akun belum memiliki'))throw error;throw friendlyAuthError(error)}}
   async function loadProfile(user){if(!user||!window.db)throw new Error('Profil akun belum dapat dibaca.');const snap=await window.db.collection('users').doc(user.uid).get();if(!snap.exists)throw new Error('Akun belum memiliki profil jabatan. Hubungi Super Admin.');const profile={uid:user.uid,email:user.email,...snap.data()};if(profile.status!=='ACTIVE'||!ROLES.includes(profile.role))throw new Error('Akun tidak aktif atau role belum ditetapkan.');window.EPASAR_CURRENT_PROFILE=profile;return profile}
-  function requireStaff(allowed){return new Promise((resolve,reject)=>{if(!window.epasarAuth)return reject(new Error('Firebase Authentication belum siap.'));const off=window.epasarAuth.onAuthStateChanged(async user=>{off();try{const profile=await loadProfile(user);if(allowed&&!allowed.includes(profile.role))throw new Error('Anda tidak memiliki kewenangan pada halaman ini.');resolve(profile)}catch(error){reject(error)}})})}
+  function watchProfile(profile,allowed){
+    if(window.EPASAR_PROFILE_UNSUBSCRIBE)window.EPASAR_PROFILE_UNSUBSCRIBE();
+    let fingerprint=JSON.stringify({role:profile.role,status:profile.status,marketIds:profile.marketIds||[]});
+    const reference=window.db.collection('users').doc(profile.uid);
+    window.EPASAR_PROFILE_UNSUBSCRIBE=reference.onSnapshot(async snapshot=>{
+      const next=snapshot.exists?{uid:profile.uid,email:profile.email,...snapshot.data()}:null;
+      const nextFingerprint=next?JSON.stringify({role:next.role,status:next.status,marketIds:next.marketIds||[]}):'MISSING';
+      if(nextFingerprint===fingerprint)return;
+      if(!next||next.status!=='ACTIVE'||!ROLES.includes(next.role)||(allowed&&!allowed.includes(next.role))){
+        if(window.EPASAR_PROFILE_UNSUBSCRIBE){window.EPASAR_PROFILE_UNSUBSCRIBE();window.EPASAR_PROFILE_UNSUBSCRIBE=null}
+        await signOut();
+        location.replace('login.html?reason=access-changed');
+        return;
+      }
+      fingerprint=nextFingerprint;
+      window.EPASAR_CURRENT_PROFILE=next;
+      location.reload();
+    },error=>console.warn('[e-PASAR] Sinkronisasi profil terputus',error));
+  }
+  function requireStaff(allowed){return new Promise((resolve,reject)=>{if(!window.epasarAuth)return reject(new Error('Firebase Authentication belum siap.'));const off=window.epasarAuth.onAuthStateChanged(async user=>{off();try{const profile=await loadProfile(user);if(allowed&&!allowed.includes(profile.role))throw new Error('Anda tidak memiliki kewenangan pada halaman ini.');watchProfile(profile,allowed);resolve(profile)}catch(error){reject(error)}})})}
   async function signOut(){if(window.epasarAuth)await window.epasarAuth.signOut();window.EPASAR_CURRENT_PROFILE=null}
-  window.EPASAR_AUTH={signIn,loadProfile,requireStaff,signOut,loginEmail,ROLES};
+  window.EPASAR_AUTH={signIn,loadProfile,requireStaff,signOut,loginEmail,watchProfile,ROLES};
 }());

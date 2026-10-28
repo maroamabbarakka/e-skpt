@@ -13,3 +13,7 @@ __pycache__/
 .env.*
 !.env.example
 firebase-debug.log
+
+# Inventaris akun live dan tangkapan audit hanya untuk penggunaan lokal.
+DAFTAR_AKUN_INTERNAL_EPASAR.md
+skpt-layout-audit.png

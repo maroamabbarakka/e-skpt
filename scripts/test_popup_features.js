@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
     console.log('1. Login Superadmin...');
     await page.goto('http://127.0.0.1:8090/login.html');
     await page.locator('#identifier').fill('superadmin@eskpt.id');
-    await page.locator('#password').fill('Pasar202#');
+    await page.locator('#password').fill(process.env.EPASAR_UAT_PASSWORD || (() => { throw new Error('EPASAR_UAT_PASSWORD wajib tersedia di environment lokal.'); })());
     await page.getByRole('button', { name: 'Masuk' }).click();
     await page.waitForURL(/admin-epasar/);
     await page.waitForTimeout(2000);

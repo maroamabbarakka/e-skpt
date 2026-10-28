@@ -6,12 +6,18 @@
   const error = document.getElementById('formError');
   const titles = ['Identitas Pedagang', 'Data Usaha', 'Lokasi & Unit Pasar', 'Dokumen & e-SKPT', 'Periksa Data'];
   let step = 1, submitting = false, hasDraft = false;
+  let createdIntake = null, submissionMediaQueue = null;
+  const uploadedMediaKeys = new Set();
+  let openSkptLegalDocument = () => {};
   const safe = value => String(value ?? '—').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
 
   function base() {
     const out = {};
     new FormData(form).forEach((value, key) => { if (!(value instanceof File)) out[key] = value; });
     if (out.birthDate) out.birthDate = V.formatDateId(out.birthDate);
+    if (out.district === 'Luar Kabupaten Pinrang' && !out.village) {
+      out.village = 'Luar Kabupaten Pinrang';
+    }
     out.businessDrafts = window.EPASAR_MULTI.collect();
     out.hasMarketUnit = window.EPASAR_MULTI.places().length > 0;
     out.applySkpt = window.EPASAR_MULTI.places().some(place => place.applySkpt);
@@ -98,6 +104,7 @@
         const field = form.elements[key];
         if (!field || field.type === 'file' || Array.isArray(value)) return;
         if (field.type === 'checkbox') {
+          if (key === 'skptAck') return;
           field.checked = Boolean(value);
         } else if (key === 'birthDate') {
           field.value = V.formatDateId(value);
@@ -109,7 +116,11 @@
       });
       if (draft.district) {
         syncIdentityVillage(false);
-        if (E.villagesByDistrict(draft.district).includes(draft.village)) form.elements.village.value = draft.village;
+        if (draft.district === 'Luar Kabupaten Pinrang') {
+          form.elements.village.value = 'Luar Kabupaten Pinrang';
+        } else if (E.villagesByDistrict(draft.district).includes(draft.village)) {
+          form.elements.village.value = draft.village;
+        }
       }
       window.EPASAR_MULTI.restore(draft.businessDrafts);
       document.getElementById('draftNotice').hidden = false;
@@ -166,10 +177,15 @@
     if (step === 4 && data.applySkpt && !data.skptAck) {
       const acknowledgement = form.elements.skptAck;
       markInvalid(acknowledgement, 'Centang persetujuan persyaratan pengajuan e-SKPT setelah membacanya.');
-      return showFailures([{ field: acknowledgement, message: 'Centang persetujuan persyaratan pengajuan e-SKPT setelah membacanya.' }], 'Persetujuan pengajuan e-SKPT belum lengkap.');
+      showError('Persetujuan pengajuan e-SKPT belum lengkap. Buka dan baca dokumen persyaratan sampai akhir, kemudian berikan persetujuan eksplisit.');
+      const readButton = document.getElementById('openSkptLegalModal');
+      readButton?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      requestAnimationFrame(() => readButton?.focus({ preventScroll: true }));
+      return false;
     }
-    if (step === 4 && data.applySkpt && !window.EPASAR_MEDIA_BUFFER?.PROFILE) message = 'Foto penjual belum ditambahkan. Ambil foto atau pilih dari galeri untuk melanjutkan pengajuan e-SKPT.';
-    else if (step === 4 && data.applySkpt && !window.EPASAR_MEDIA_BUFFER?.IDENTITY_KTP) message = 'Foto atau pindai KTP belum ditambahkan. Dokumen ini diperlukan hanya untuk pengajuan e-SKPT.';
+    if (step === 4 && !window.EPASAR_MEDIA_BUFFER?.IDENTITY_KTP) message = 'Foto atau pindai KTP belum ditambahkan. KTP diperlukan untuk pencocokan identitas pada seluruh pendataan pedagang.';
+    else if (step === 4 && data.applySkpt && !window.EPASAR_MEDIA_BUFFER?.PROFILE) message = 'Foto penjual/selfie belum ditambahkan. Dokumen ini wajib untuk pengajuan e-SKPT.';
+    else if (step === 4 && data.applySkpt && !window.EPASAR_MEDIA_BUFFER?.EVIDENCE) message = 'Foto dagangan atau kegiatan usaha belum ditambahkan. Dokumen ini wajib untuk pengajuan e-SKPT.';
     if (message) {
       if (step === 3) {
         const picker = [...current.querySelectorAll('.unit-type-picker')].find(item => !item.querySelector('select').value);
@@ -191,8 +207,13 @@
   }
   function renderReview() {
     const data = base(), places = window.EPASAR_MULTI.places(), applications = places.filter(place => place.applySkpt);
+    const media = window.EPASAR_MEDIA_BUFFER || {};
+    const status = value => value ? '✓ Siap' : 'Belum ditambahkan';
     const businesses = data.businessDrafts.map((business, index) => `<article class="review-card"><button type="button" data-edit-step="2">Ubah</button><h3>Usaha ${index + 1}</h3><p><b>${safe(business.name || business.category)}</b><br>${safe(business.type)} · ${safe(business.category)}<br>${business.locations.length} lokasi · Perkiraan omzet Rp ${Number(business.monthlyRevenue || 0).toLocaleString('id-ID')}</p></article>`).join('');
-    document.getElementById('review').innerHTML = `<article class="review-card"><button type="button" data-edit-step="1">Ubah</button><h3>Identitas</h3><p><b>${safe(data.name)}</b><br>NIK ${safe(data.nik).slice(0,2)}••••••••${safe(data.nik).slice(-2)}<br>${safe(data.phone)} · ${safe(data.address)}</p></article>${businesses}<article class="review-card"><button type="button" data-edit-step="3">Ubah</button><h3>Unit Pasar</h3><p>${places.length ? places.map(place => `${safe(place.marketName)} · ${safe(place.unitType)} ${safe(place.unitNumber)}`).join('<br>') : 'Tidak ada tempat pasar.'}${places.length ? '<br><span class="claim-badge">KLAIM AWAL · Perlu verifikasi petugas</span>' : ''}</p></article><article class="review-card"><button type="button" data-edit-step="4">Ubah</button><h3>Dokumen & e-SKPT</h3><p>Foto penjual: ${window.EPASAR_MEDIA_BUFFER?.PROFILE ? '✓ Siap' : 'Belum ditambahkan'}<br>e-SKPT: ${applications.length ? `${applications.length} permohonan akan dibuat` : 'Belum diajukan'}</p></article>`;
+    const skptDocuments = applications.length
+      ? `<br>Foto penjual/selfie: ${status(media.PROFILE)}<br>Foto dagangan/usaha: ${status(media.EVIDENCE)}`
+      : '<br>Dokumen khusus e-SKPT: Tidak diperlukan';
+    document.getElementById('review').innerHTML = `<article class="review-card"><button type="button" data-edit-step="1">Ubah</button><h3>Identitas</h3><p><b>${safe(data.name)}</b><br>NIK ${safe(data.nik).slice(0,2)}••••••••${safe(data.nik).slice(-2)}<br>${safe(data.phone)} · ${safe(data.address)}</p></article>${businesses}<article class="review-card"><button type="button" data-edit-step="3">Ubah</button><h3>Unit Pasar</h3><p>${places.length ? places.map(place => `${safe(place.marketName)} · ${safe(place.unitType)} ${safe(place.unitNumber)}`).join('<br>') : 'Tidak ada tempat pasar.'}${places.length ? '<br><span class="claim-badge">KLAIM AWAL · Perlu verifikasi petugas</span>' : ''}</p></article><article class="review-card"><button type="button" data-edit-step="4">Ubah</button><h3>Dokumen Identitas & e-SKPT</h3><p>KTP: ${status(media.IDENTITY_KTP)}<br>KK: ${media.IDENTITY_KK ? '✓ Ditambahkan' : 'Opsional—tidak ditambahkan'}<br>e-SKPT: ${applications.length ? `${applications.length} permohonan akan dibuat` : 'Tidak diajukan'}${skptDocuments}</p></article>`;
     document.querySelectorAll('[data-edit-step]').forEach(button => button.addEventListener('click', () => { step = Number(button.dataset.editStep); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }));
   }
   function render() {
@@ -212,27 +233,51 @@
     try { await navigator.clipboard.writeText(value); const button = document.querySelector(`[data-copy="${id}"]`); button.textContent = 'Tersalin ✓'; setTimeout(() => { button.textContent = id === 'registrationCode' ? 'Salin nomor' : 'Salin token'; }, 1600); } catch (_) {}
   }
   async function submit() {
-    if (submitting || !validate()) return;
+    if (submitting || (!createdIntake && !validate())) return;
     if (window.epasarAuth?.currentUser) {
       showError('Anda sedang masuk sebagai petugas. Keluar dari akun petugas atau buka formulir melalui jendela privat sebelum mengirim pendataan. Data yang sudah diisi tetap tersimpan.');
       return;
     }
-    submitting = true; const button = document.getElementById('nextButton'); button.disabled = true; button.textContent = 'Mengirim…';
-    let created = null;
+    submitting = true; const button = document.getElementById('nextButton'); button.disabled = true; button.textContent = createdIntake ? 'Melanjutkan unggahan…' : 'Mengirim…';
+    let currentMediaKey = '';
     try {
       if (!window.EPASAR_FIREBASE_READY) throw new Error('Pendataan belum terkirim. Periksa koneksi lalu coba lagi. Data Anda tetap tersimpan di halaman ini.');
-      created = await window.EPASAR_INTAKE.submit(base());
-      for (const key of Object.keys(window.EPASAR_MEDIA_BUFFER || {})) await window.EPASAR_INTAKE.submitMedia(window.EPASAR_MEDIA_BUFFER[key], created);
+      if (!createdIntake) {
+        const data = base();
+        const allowedMedia = data.applySkpt ? ['IDENTITY_KTP', 'IDENTITY_KK', 'PROFILE', 'EVIDENCE'] : ['IDENTITY_KTP', 'IDENTITY_KK'];
+        submissionMediaQueue = allowedMedia.map(key => [key, window.EPASAR_MEDIA_BUFFER?.[key]]).filter(([, media]) => Boolean(media));
+        createdIntake = await window.EPASAR_INTAKE.submit(data);
+        form.querySelectorAll('input,select,textarea').forEach(control => { control.disabled = true; });
+        form.querySelectorAll('button').forEach(control => { if (control.id !== 'nextButton') control.disabled = true; });
+      }
+      for (const [key, media] of submissionMediaQueue || []) {
+        if (uploadedMediaKeys.has(key)) continue;
+        currentMediaKey = key;
+        await window.EPASAR_INTAKE.submitMedia(media, createdIntake);
+        uploadedMediaKeys.add(key);
+      }
       form.hidden = true; document.querySelector('.stepper').hidden = true; document.querySelector('.registration-shell .page-header').hidden = true;
       document.getElementById('successPanel').hidden = false;
-      document.getElementById('registrationCode').textContent = created.registrationCode;
-      document.getElementById('privateToken').textContent = created.publicToken;
-      document.getElementById('statusLink').href = `epasar-status.html?registration=${encodeURIComponent(created.registrationCode)}&token=${encodeURIComponent(created.publicToken)}`;
+      document.getElementById('registrationCode').textContent = createdIntake.registrationCode;
+      document.getElementById('privateToken').textContent = createdIntake.publicToken;
+      document.getElementById('statusLink').href = `epasar-status.html?registration=${encodeURIComponent(createdIntake.registrationCode)}&token=${encodeURIComponent(createdIntake.publicToken)}`;
+      const cardLink = document.getElementById('directCardLink');
+      if (cardLink) {
+        cardLink.href = `trader-card.html?token=${encodeURIComponent(createdIntake.publicToken)}`;
+        cardLink.hidden = false;
+      }
       sessionStorage.removeItem(E.DRAFT_KEY);
     } catch (exception) {
       console.error('[e-PASAR] Pengiriman pendataan gagal.', exception);
-      showError(created ? `Pendataan utama tercatat dengan nomor ${created.registrationCode}, tetapi lampiran belum lengkap. Jangan kirim ulang; hubungi petugas.` : friendlySubmitError(exception));
-      button.disabled = false; button.textContent = 'Kirim Pendataan'; submitting = false;
+      if (createdIntake) {
+        const mediaNames = { IDENTITY_KTP: 'KTP', IDENTITY_KK: 'KK', PROFILE: 'foto penjual/selfie', EVIDENCE: 'foto dagangan/usaha' };
+        showError(`Pendataan utama sudah tercatat dengan nomor ${createdIntake.registrationCode}, tetapi ${mediaNames[currentMediaKey] || 'salah satu lampiran'} belum berhasil diunggah. Tekan tombol di bawah untuk melanjutkan unggahan ke pendaftaran yang sama. Jangan mengisi atau mengirim formulir baru.`);
+        button.textContent = 'Lanjutkan unggah lampiran';
+      } else {
+        showError(friendlySubmitError(exception));
+        button.textContent = 'Kirim Pendataan';
+      }
+      button.disabled = false; submitting = false;
     }
   }
   document.getElementById('nextButton').addEventListener('click', () => { if (step === E.STEPS) submit(); else if (validate()) { step += 1; save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
@@ -244,8 +289,19 @@
   document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', () => copy(button.dataset.copy)));
   const identityDistrict = document.getElementById('identityDistrict');
   const identityVillage = document.getElementById('identityVillage');
-  identityDistrict.innerHTML = '<option value="">Pilih kecamatan</option>' + E.DISTRICTS.map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('');
+  identityDistrict.innerHTML = '<option value="">Pilih kecamatan</option>' + E.DISTRICTS.map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('') + '<option value="Luar Kabupaten Pinrang">Luar Kabupaten Pinrang</option>';
   const syncIdentityVillage = preserve => {
+    const isOut = identityDistrict.value === 'Luar Kabupaten Pinrang';
+    if (isOut) {
+      identityVillage.innerHTML = '<option value="Luar Kabupaten Pinrang" selected>— Tidak Ada Pilihan (Luar Kabupaten) —</option>';
+      identityVillage.disabled = true;
+      identityVillage.removeAttribute('required');
+      identityVillage.classList.remove('is-invalid');
+      const err = identityVillage.parentElement?.querySelector('.field-error');
+      if (err) err.remove();
+      return;
+    }
+    identityVillage.setAttribute('required', 'required');
     const selected = preserve ? identityVillage.value : '';
     const villages = E.villagesByDistrict(identityDistrict.value);
     identityVillage.innerHTML = `<option value="">${villages.length ? 'Pilih desa/kelurahan' : 'Pilih kecamatan terlebih dahulu'}</option>` + villages.map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('');
@@ -327,6 +383,96 @@
     }
   }
 
+  function initSkptLegalConsent() {
+    const api = window.EPASAR_SKPT_LEGAL_APPENDIX;
+    const modal = document.getElementById('skptLegalModal');
+    const openButton = document.getElementById('openSkptLegalModal');
+    const closeButton = document.getElementById('closeSkptLegalModal');
+    const cancelButton = document.getElementById('cancelSkptLegalModal');
+    const acceptButton = document.getElementById('acceptSkptLegalDocument');
+    const scrollArea = document.getElementById('skptLegalScroll');
+    const content = document.getElementById('skptLegalContent');
+    const progressBar = document.getElementById('skptLegalProgressBar');
+    const progressPercent = document.getElementById('skptLegalProgressPercent');
+    const progressText = document.getElementById('skptLegalProgressText');
+    const consentHint = document.getElementById('skptLegalConsentHint');
+    const status = document.getElementById('skptLegalStatus');
+    const acknowledgement = form.elements.skptAck;
+    if (!api || !modal || !openButton || !acknowledgement) return;
+
+    let loaded = false;
+    let reachedEnd = false;
+    let previouslyFocused = null;
+
+    const updateProgress = () => {
+      const maximum = Math.max(1, scrollArea.scrollHeight - scrollArea.clientHeight);
+      const percent = Math.min(100, Math.round((scrollArea.scrollTop / maximum) * 100));
+      const atEnd = scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 12;
+      if (atEnd) reachedEnd = true;
+      progressBar.style.width = `${reachedEnd ? 100 : percent}%`;
+      progressPercent.textContent = `${reachedEnd ? 100 : percent}%`;
+      progressText.textContent = reachedEnd ? 'Dokumen telah dibaca sampai akhir' : 'Baca dokumen sampai selesai';
+      acceptButton.disabled = !reachedEnd;
+      consentHint.textContent = reachedEnd
+        ? 'Anda telah mencapai akhir dokumen. Berikan persetujuan jika seluruh ketentuan telah dipahami.'
+        : 'Tombol persetujuan aktif setelah dokumen dibaca sampai bagian akhir.';
+    };
+
+    const close = () => {
+      modal.hidden = true;
+      document.body.classList.remove('has-legal-modal');
+      previouslyFocused?.focus();
+    };
+
+    openSkptLegalDocument = async () => {
+      previouslyFocused = document.activeElement;
+      modal.hidden = false;
+      document.body.classList.add('has-legal-modal');
+      closeButton.focus();
+      if (!loaded) {
+        try {
+          const documentData = await api.load();
+          content.innerHTML = api.renderFull(documentData);
+          loaded = true;
+        } catch (exception) {
+          content.innerHTML = `<p class="field-message is-error">${safe(exception.message || 'Dokumen persyaratan gagal dimuat. Muat ulang halaman dan coba kembali.')}</p>`;
+          acceptButton.disabled = true;
+        }
+      }
+      scrollArea.scrollTop = acknowledgement.checked ? scrollArea.scrollHeight : 0;
+      requestAnimationFrame(updateProgress);
+    };
+
+    openButton.addEventListener('click', openSkptLegalDocument);
+    closeButton.addEventListener('click', close);
+    cancelButton.addEventListener('click', close);
+    scrollArea.addEventListener('scroll', updateProgress, { passive: true });
+    acceptButton.addEventListener('click', () => {
+      if (!reachedEnd) return;
+      acknowledgement.disabled = false;
+      acknowledgement.checked = true;
+      acknowledgement.classList.remove('is-invalid');
+      acknowledgement.removeAttribute('aria-invalid');
+      acknowledgement.closest('label')?.querySelector('.field-error')?.remove();
+      status.textContent = 'Sudah dibaca dan disetujui';
+      status.className = 'legal-read-status is-complete';
+      clearError();
+      save();
+      close();
+    });
+    modal.addEventListener('click', event => { if (event.target === modal) close(); });
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape') close();
+      if (event.key === 'Tab') {
+        const focusable = [...modal.querySelectorAll('button:not([disabled]), [tabindex="0"]')].filter(element => element.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
+  }
+
   form.addEventListener('input', event => {
     const field = event.target;
     if (field.matches('input, select, textarea')) {
@@ -339,7 +485,6 @@
     save();
   });
   document.addEventListener('epasar:entities-changed', save);
-  initBirthDatePicker(); restore(); syncIdentityVillage(true); render();
+  initBirthDatePicker(); initSkptLegalConsent(); restore(); syncIdentityVillage(true); render();
   form.dataset.ready = 'true';
 }());
-

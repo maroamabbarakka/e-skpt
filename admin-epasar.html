@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Dashboard | e-PASAR</title><link rel="icon" href="favicon.png"><link rel="stylesheet" href="css/epasar.css"><link rel="stylesheet" href="css/internal-ui.css"></head>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Dashboard | e-PASAR</title><link rel="icon" href="favicon.png"><link rel="stylesheet" href="css/epasar.css"><link rel="stylesheet" href="css/internal-ui.css"><link rel="stylesheet" href="css/market-identity.css"><script src="js/epasar/market-colors.js"></script></head>
 <body><main class="admin-shell">
   <header class="admin-head"><div><p class="eyebrow">RUANG KERJA INTERNAL</p><h1>Dashboard</h1><p id="adminUser" class="admin-user">Ringkasan pekerjaan dan data e-PASAR hari ini.</p></div><div class="legacy-admin-actions" hidden><button id="refreshButton" type="button">Muat ulang</button><button id="logoutButton" type="button">Keluar</button></div></header>
   <div id="adminMessage" class="admin-message">Memeriksa akses dan antrean pekerjaan…</div>
@@ -12,9 +12,17 @@
       <article class="kpi kpi-soft-purple" data-admin-kpi="kpiKadis" title="Klik untuk permohonan siap keputusan Kadis"><small>Menunggu Kadis</small><strong id="kpiKadis">—</strong><p>Siap diputuskan</p></article>
       <article class="kpi kpi-soft-teal" data-admin-kpi="kpiIssued" title="Klik untuk rincian SKPT terbit"><small>SKPT Terbit</small><strong id="kpiIssued">—</strong><p>Dokumen terdaftar</p></article>
       <article class="kpi kpi-soft-indigo" data-admin-kpi="kpiAnnual" title="Klik untuk validasi tahunan"><small>Pengesahan Tahunan</small><strong id="kpiAnnual">—</strong><p>Menunggu keputusan</p></article>
+      <article class="kpi kpi-soft-cyan" data-admin-kpi="kpiNonMarketTraders" title="Klik untuk rincian pedagang non-pasar / mandiri"><small>Pedagang Non-Pasar</small><strong id="kpiNonMarketTraders">—</strong><p>Mandiri luar pasar</p></article>
       <article class="kpi kpi-soft-slate" data-admin-kpi="kpiPage" title="Klik untuk informasi navigasi"><small>Halaman Antrean</small><strong id="kpiPage">1</strong><p>Pagination aktif</p></article>
     </div>
     <div class="command-grid"><section class="app-panel"><h2>Perlu Tindakan</h2><p class="app-panel-sub">Prioritas pekerjaan yang dapat Anda selesaikan sekarang.</p><div class="action-list"><a class="action-item" href="#pendaftaran"><span><b>Review pendaftaran terbaru</b><small>Periksa identitas, usaha, lokasi, dan pilihan SKPT.</small></span><strong>Lihat antrean →</strong></a><a class="action-item" href="annual-validation.html"><span><b>Pengesahan tahunan</b><small>Periksa pengesahan yang jatuh tempo atau menunggu keputusan.</small></span><strong>Buka →</strong></a><a class="action-item" href="occupancy-change.html"><span><b>Perubahan pemegang unit</b><small>Tinjau pelepasan atau pengalihan tanpa menimpa data lama.</small></span><strong>Buka →</strong></a></div></section><aside class="app-panel"><h2>Prinsip pemeriksaan</h2><p class="app-panel-sub">Data klaim pedagang belum menjadi data resmi sebelum diverifikasi petugas berwenang.</p><div class="notice"><b>Jejak audit wajib</b><br>Setiap koreksi material harus menyimpan nilai awal, hasil pemeriksaan, alasan, dan petugas.</div></aside></div>
+    <section class="app-panel" id="notificationQueue" style="margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <div><h2>Notifikasi Pedagang</h2><p class="app-panel-sub" style="margin:2px 0 0;">Semua penolakan dan permintaan perbaikan dari Admin, Kepala Pasar, dan Kadis masuk ke sini. Hanya Admin yang meneruskannya ke pedagang melalui WhatsApp.</p></div>
+        <span id="notificationCountBadge" style="background:#fff3cd;color:#7a4b00;font-weight:700;font-size:.75rem;padding:6px 14px;border-radius:99px;">Memuat…</span>
+      </div>
+      <div class="table-wrap"><table class="admin-table"><thead><tr><th>Pedagang</th><th>Keputusan</th><th>Sumber</th><th>Alasan</th><th>WhatsApp</th><th>Tindakan</th></tr></thead><tbody id="notificationRows"><tr><td colspan="6">Memuat antrean notifikasi…</td></tr></tbody></table></div>
+    </section>
     <section class="app-panel" id="pendaftaran">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
         <div>
@@ -110,4 +118,4 @@
     </div>
   </div>
 </main>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/auth-service.js"></script><script src="js/epasar/internal-shell.js?v=20260928"></script><script src="js/epasar/admin-intake-service.js"></script><script src="js/epasar/admin-epasar.js?v=20260928"></script></body></html>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/constants.js?v=20261012"></script><script src="js/epasar/config.js"></script><script src="js/epasar/auth-service.js"></script><script src="js/epasar/internal-shell.js?v=20260928"></script><script src="js/epasar/admin-intake-service.js?v=20261012b"></script><script src="js/epasar/admin-notification-service.js?v=20261012c"></script><script src="js/epasar/admin-epasar.js?v=20261029-clear-metrics"></script></body></html>
