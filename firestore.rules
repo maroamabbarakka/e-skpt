@@ -9,17 +9,17 @@ service cloud.firestore {
     function scopedMarketAdmin(data) {
       return activeStaff() && profile().role == 'MARKET_ADMIN'
         && profile().marketIds is list && data.routingMarketIds is list
-        && ((profile().marketIds.hasAny(['MKT-001']) && data.routingMarketIds.hasAny(['MKT-001']))
-          || (profile().marketIds.hasAny(['MKT-002']) && data.routingMarketIds.hasAny(['MKT-002']))
-          || (profile().marketIds.hasAny(['MKT-003']) && data.routingMarketIds.hasAny(['MKT-003']))
-          || (profile().marketIds.hasAny(['MKT-004']) && data.routingMarketIds.hasAny(['MKT-004']))
-          || (profile().marketIds.hasAny(['MKT-005']) && data.routingMarketIds.hasAny(['MKT-005']))
-          || (profile().marketIds.hasAny(['MKT-006']) && data.routingMarketIds.hasAny(['MKT-006']))
-          || (profile().marketIds.hasAny(['MKT-007']) && data.routingMarketIds.hasAny(['MKT-007']))
-          || (profile().marketIds.hasAny(['MKT-008']) && data.routingMarketIds.hasAny(['MKT-008']))
-          || (profile().marketIds.hasAny(['MKT-009']) && data.routingMarketIds.hasAny(['MKT-009']))
-          || (profile().marketIds.hasAny(['MKT-010']) && data.routingMarketIds.hasAny(['MKT-010']))
-          || (profile().marketIds.hasAny(['MKT-011']) && data.routingMarketIds.hasAny(['MKT-011'])));
+        && ((('MKT-001' in profile().marketIds) && ('MKT-001' in data.routingMarketIds))
+          || (('MKT-002' in profile().marketIds) && ('MKT-002' in data.routingMarketIds))
+          || (('MKT-003' in profile().marketIds) && ('MKT-003' in data.routingMarketIds))
+          || (('MKT-004' in profile().marketIds) && ('MKT-004' in data.routingMarketIds))
+          || (('MKT-005' in profile().marketIds) && ('MKT-005' in data.routingMarketIds))
+          || (('MKT-006' in profile().marketIds) && ('MKT-006' in data.routingMarketIds))
+          || (('MKT-007' in profile().marketIds) && ('MKT-007' in data.routingMarketIds))
+          || (('MKT-008' in profile().marketIds) && ('MKT-008' in data.routingMarketIds))
+          || (('MKT-009' in profile().marketIds) && ('MKT-009' in data.routingMarketIds))
+          || (('MKT-010' in profile().marketIds) && ('MKT-010' in data.routingMarketIds))
+          || (('MKT-011' in profile().marketIds) && ('MKT-011' in data.routingMarketIds)));
     }
     function canAccessIntake(data) { return centralAdmin() || scopedMarketAdmin(data); }
     function canAccessIntakeId(intakeId) { return intakeId is string && exists(/databases/$(database)/documents/trader_intake/$(intakeId)) && canAccessIntake(get(/databases/$(database)/documents/trader_intake/$(intakeId)).data); }
@@ -261,12 +261,39 @@ service cloud.firestore {
     match /trader_intake/{id} {
       allow create: if !signedIn() && validIntake();
       allow get: if canAccessIntake(resource.data);
-      // Firestore tidak dapat membuktikan irisan dua array dinamis untuk query
-      // list (profile.marketIds vs routingMarketIds). UI tetap mengirim query
-      // wilayah; akses dokumen tunggal dan mutasi tetap diperiksa per pasar.
-      allow list: if adminStaff();
+      // Admin Wilayah membaca proyeksi market_intake_queue terlebih dahulu lalu
+      // mengambil dokumen tunggal yang tetap diperiksa oleh canAccessIntake.
+      allow list: if centralAdmin();
       allow update: if canAccessIntake(resource.data)
         && request.resource.data.routingMarketIds == resource.data.routingMarketIds;
+      allow delete: if false;
+    }
+    match /market_intake_queue/{id} {
+      allow get, list: if centralAdmin() || operationalAdminForMarket(resource.data.marketId);
+      allow create: if !signedIn()
+        && request.resource.data.keys().hasOnly(['intakeId','marketId','registrationCode','status','submittedAt','updatedAt','schemaVersion'])
+        && id == request.resource.data.marketId + '__' + request.resource.data.intakeId
+        && request.resource.data.status == 'SUBMITTED'
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId))
+        && getAfter(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.registrationCode == request.resource.data.registrationCode
+        && request.resource.data.marketId in getAfter(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.routingMarketIds;
+      allow create: if centralAdmin()
+        && request.resource.data.keys().hasOnly(['intakeId','marketId','registrationCode','status','submittedAt','updatedAt','schemaVersion'])
+        && id == request.resource.data.marketId + '__' + request.resource.data.intakeId
+        && request.resource.data.status in ['SUBMITTED','CORRECTION_REQUIRED']
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.updatedAt == request.time
+        && exists(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId))
+        && get(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.registrationCode == request.resource.data.registrationCode
+        && request.resource.data.marketId in get(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.routingMarketIds;
+      allow update: if operationalAdminForMarket(resource.data.marketId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.resource.data.marketId == resource.data.marketId
+        && request.resource.data.status in ['SUBMITTED','CORRECTION_REQUIRED','REJECTED','MARKET_VERIFICATION','REGISTERED']
+        && request.resource.data.updatedAt == request.time;
       allow delete: if false;
     }
     match /correction_requests/{id} {

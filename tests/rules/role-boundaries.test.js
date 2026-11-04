@@ -1,5 +1,5 @@
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore';
 import fs from 'node:fs';
 
 const projectId = 'demo-epasar-role-boundaries';
@@ -68,15 +68,34 @@ try {
     await setDoc(doc(db, 'public_status', 'public-reject-token'), {
       publicToken: 'public-reject-token', publicStatus: true, status: 'KADIS_REVIEW'
     });
+    await setDoc(doc(db, 'public_status', 'public-market-1'), {
+      intakeId: 'intake-market-1', publicToken: 'public-market-1', registrationCode: 'REG-MKT-001',
+      status: 'SUBMITTED', publicStatus: true, displayName: 'Pedagang Uji', traderId: '', businessType: 'Sayuran',
+      marketName: 'Pasar Bungi', marketRoutes: [], statementVersion: 'TEST', statementAcceptedAt: new Date(),
+      photoMediaToken: '', reviewMessage: '', correctionSections: [], canResubmit: false,
+      environment: 'PROD', isDemo: false, schemaVersion: 2, updatedAt: new Date()
+    });
+    await setDoc(doc(db, 'public_stats', 'summary'), {
+      totalTraders: 0, totalIssuedSkpt: 0, totalBusinesses: 0, totalLocations: 0, totalCategories: 0,
+      marketTraders: 0, nonMarketTraders: 0, topCategories: [], updatedAt: new Date(), schemaVersion: 1
+    });
     await setDoc(doc(db, 'market_trader_directory', 'MKT-001__T1'), { marketId: 'MKT-001', traderId: 'T1', status: 'ACTIVE' });
     await setDoc(doc(db, 'market_trader_directory', 'MKT-003__T2'), { marketId: 'MKT-003', traderId: 'T2', status: 'ACTIVE' });
     await setDoc(doc(db, 'market_units', 'unit-1'), { unitId: 'unit-1', marketId: 'MKT-001', unitType: 'KIOS', unitNumber: '1', status: 'AVAILABLE', currentTraderId: '', currentOccupancyId: '' });
     await setDoc(doc(db, 'market_units', 'unit-2'), { unitId: 'unit-2', marketId: 'MKT-003', unitType: 'KIOS', unitNumber: '2', status: 'AVAILABLE', currentTraderId: '', currentOccupancyId: '' });
     await setDoc(doc(db, 'trader_intake', 'intake-market-1'), {
-      registrationCode: 'REG-MKT-001', status: 'SUBMITTED', routingMarketIds: ['MKT-001'], submittedAt: new Date()
+      registrationCode: 'REG-MKT-001', publicToken: 'public-market-1', status: 'SUBMITTED', routingMarketIds: ['MKT-001'], submittedAt: new Date()
     });
     await setDoc(doc(db, 'trader_intake', 'intake-market-3'), {
       registrationCode: 'REG-MKT-003', status: 'SUBMITTED', routingMarketIds: ['MKT-003'], submittedAt: new Date()
+    });
+    await setDoc(doc(db, 'market_intake_queue', 'MKT-001__intake-market-1'), {
+      intakeId: 'intake-market-1', marketId: 'MKT-001', registrationCode: 'REG-MKT-001', status: 'SUBMITTED',
+      submittedAt: new Date(), updatedAt: new Date(), schemaVersion: 1
+    });
+    await setDoc(doc(db, 'market_intake_queue', 'MKT-003__intake-market-3'), {
+      intakeId: 'intake-market-3', marketId: 'MKT-003', registrationCode: 'REG-MKT-003', status: 'SUBMITTED',
+      submittedAt: new Date(), updatedAt: new Date(), schemaVersion: 1
     });
     await setDoc(doc(db, 'notifications', 'notification-market-1'), {
       type: 'TRADER_DECISION', deliveryStatus: 'PENDING_ADMIN', routingMarketIds: ['MKT-001'], marketId: 'MKT-001'
@@ -147,14 +166,39 @@ try {
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'skpt_documents'), where('documentSnapshot.marketId', '==', 'MKT-001'), where('status', '==', 'ISSUED'))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'skpt_annual_validations'), where('marketId', '==', 'MKT-001'))));
   const ownIntakeQuery = query(
-    collection(marketAdminDb, 'trader_intake'),
+    collection(marketAdminDb, 'market_intake_queue'),
     where('status', 'in', ['SUBMITTED', 'CORRECTION_REQUIRED']),
-    where('routingMarketIds', 'array-contains-any', ['MKT-001']),
+    where('marketId', '==', 'MKT-001'),
     orderBy('submittedAt', 'desc'),
     limit(20)
   );
   await assertSucceeds(getDocs(ownIntakeQuery));
-  await assertSucceeds(getDocs(query(collection(marketAdminDb, 'trader_intake'), where('status', '==', 'SUBMITTED'))));
+  await assertFails(getDocs(query(collection(marketAdminDb, 'trader_intake'), where('status', '==', 'SUBMITTED'))));
+  await assertFails(getDocs(query(collection(marketAdminDb, 'market_intake_queue'), where('marketId', '==', 'MKT-003'), limit(20))));
+  await assertSucceeds(runTransaction(marketAdminDb, async transaction => {
+    const intakeRef = doc(marketAdminDb, 'trader_intake', 'intake-market-1');
+    const registryRef = doc(marketAdminDb, 'nik_registry', 'new-nik-hash');
+    const statsRef = doc(marketAdminDb, 'public_stats', 'summary');
+    const [intakeSnapshot, registrySnapshot, statsSnapshot] = await Promise.all([
+      transaction.get(intakeRef), transaction.get(registryRef), transaction.get(statsRef)
+    ]);
+    if (!intakeSnapshot.exists() || registrySnapshot.exists() || !statsSnapshot.exists()) throw new Error('Fixture transaksi tidak valid.');
+    const stamp = serverTimestamp();
+    transaction.set(doc(marketAdminDb, 'traders', 'new-trader-doc'), { traderId: 'T-NEW', intakeId: 'intake-market-1', displayName: 'Pedagang Uji', status: 'ACTIVE', source: 'PUBLIC_INTAKE', schemaVersion: 2, createdAt: stamp });
+    transaction.set(doc(marketAdminDb, 'trader_private', 'new-trader-doc'), { traderId: 'T-NEW', nik: '7315010101010099', accessClass: 'RESTRICTED', schemaVersion: 2, createdAt: stamp });
+    transaction.set(registryRef, { traderId: 'T-NEW', traderDocumentId: 'new-trader-doc', nikHash: 'new-nik-hash', schemaVersion: 2, createdAt: stamp });
+    transaction.set(doc(marketAdminDb, 'market_trader_directory', 'MKT-001__T-NEW'), { marketId: 'MKT-001', traderId: 'T-NEW', displayName: 'Pedagang Uji', status: 'ACTIVE', source: 'PUBLIC_INTAKE', schemaVersion: 1, createdAt: stamp, updatedAt: stamp });
+    transaction.set(doc(marketAdminDb, 'businesses', 'new-business'), { businessId: 'new-business', traderId: 'T-NEW', name: 'Sayuran', status: 'CLAIMED', schemaVersion: 2, createdAt: stamp });
+    transaction.set(doc(marketAdminDb, 'business_locations', 'new-location'), { locationId: 'new-location', businessId: 'new-business', traderId: 'T-NEW', locationType: 'MARKET', schemaVersion: 2, createdAt: stamp });
+    transaction.set(doc(marketAdminDb, 'business_classifications', 'new-classification'), { classificationId: 'new-classification', businessId: 'new-business', traderId: 'T-NEW', code: 'TRADE', source: 'PUBLIC_INTAKE', status: 'CLAIMED', schemaVersion: 2, createdAt: stamp });
+    transaction.set(doc(marketAdminDb, 'trader_market_place_ledgers', 'T-NEW__MKT-001'), { ledgerId: 'T-NEW__MKT-001', traderId: 'T-NEW', marketId: 'MKT-001', claimIds: ['new-claim'], activePlaceCount: 1, maximumPlaces: 2, schemaVersion: 1, createdAt: stamp, updatedAt: stamp });
+    transaction.set(doc(marketAdminDb, 'market_claims', 'new-claim'), { traderId: 'T-NEW', marketId: 'MKT-001', claimId: 'new-claim', verificationStatus: 'UNVERIFIED', schemaVersion: 2, createdAt: stamp });
+    transaction.set(doc(marketAdminDb, 'skpt_applications', 'new-application'), { applicationId: 'new-application', traderId: 'T-NEW', claimId: 'new-claim', marketId: 'MKT-001', status: 'MARKET_VERIFICATION', schemaVersion: 2, submittedAt: stamp });
+    transaction.update(intakeRef, { status: 'MARKET_VERIFICATION', traderId: 'T-NEW', workflow: { claimIds: ['new-claim'], applicationIds: ['new-application'] }, processedBy: 'market-admin-1', updatedAt: stamp });
+    transaction.update(doc(marketAdminDb, 'market_intake_queue', 'MKT-001__intake-market-1'), { status: 'MARKET_VERIFICATION', updatedAt: stamp });
+    transaction.set(doc(marketAdminDb, 'public_status', 'public-market-1'), { intakeId: 'intake-market-1', publicToken: 'public-market-1', registrationCode: 'REG-MKT-001', status: 'MARKET_VERIFICATION', publicStatus: true, displayName: 'Pedagang Uji', traderId: 'T-NEW', businessType: 'Sayuran', marketName: 'Pasar Bungi', marketRoutes: [{ marketId: 'MKT-001', claimId: 'new-claim', label: 'Pasar Bungi - KIOS 1' }], statementVersion: 'TEST', statementAcceptedAt: new Date(), photoMediaToken: '', reviewMessage: '', correctionSections: [], canResubmit: false, environment: 'PROD', isDemo: false, schemaVersion: 2, updatedAt: stamp });
+    transaction.update(statsRef, { totalTraders: 1, totalBusinesses: 1, totalLocations: 1, totalCategories: 1, marketTraders: 1, nonMarketTraders: 0, topCategories: [{ label: 'TRADE', count: 1 }], updatedAt: stamp });
+  }));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('routingMarketIds', 'array-contains-any', ['MKT-001']), limit(40))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('marketId', '==', 'MKT-001'), limit(40))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('type', '==', 'TRADER_DECISION'), limit(40))));

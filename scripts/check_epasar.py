@@ -44,7 +44,9 @@ def main() -> None:
     assert "firebase.storage" not in js_source
     assert "match /trader_intake/{id}" in rules
     assert "allow get: if canAccessIntake(resource.data);" in rules
-    assert "allow list: if adminStaff();" in rules
+    assert "match /market_intake_queue/{id}" in rules
+    assert "allow list: if centralAdmin();" in rules
+    assert "collection('market_intake_queue')" in require("js/epasar/admin-intake-service.js")
     admin_dashboard = require("js/epasar/admin-epasar.js")
     assert "rowsForAssignedMarkets" in admin_dashboard
     assert "data halaman ditolak oleh aturan akses" in admin_dashboard

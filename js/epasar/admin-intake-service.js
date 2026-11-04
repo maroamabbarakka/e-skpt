@@ -30,14 +30,31 @@
     return assigned.length > 0 && intakeMarketIds(intake).some(marketId => assigned.includes(marketId));
   }
 
+  async function rowsForAssignedMarkets(profile, statuses = ['SUBMITTED', 'CORRECTION_REQUIRED'], perMarketLimit = PAGE_SIZE) {
+    const marketIds = assignedMarketIds(profile);
+    if (!marketIds.length) return [];
+    const snapshots = await Promise.all(marketIds.map(marketId => window.db.collection('market_intake_queue')
+      .where('marketId', '==', marketId)
+      .where('status', 'in', statuses)
+      .orderBy('submittedAt', 'desc')
+      .limit(perMarketLimit)
+      .get()));
+    const intakeIds = [...new Set(snapshots.flatMap(snapshot => snapshot.docs.map(document => document.data().intakeId)).filter(Boolean))];
+    const documents = await Promise.all(intakeIds.map(intakeId => window.db.collection('trader_intake').doc(intakeId).get()));
+    return documents.filter(document => document.exists).map(document => ({ id: document.id, ...document.data() }))
+      .filter(row => canAccess(profile, row))
+      .sort((left, right) => Number(right.submittedAt?.toMillis?.() || 0) - Number(left.submittedAt?.toMillis?.() || 0));
+  }
+
   async function page(profile, cursor) {
     if (!window.db) throw new Error('Firebase belum dikonfigurasi.');
-    let query = window.db.collection('trader_intake').where('status', 'in', ['SUBMITTED', 'CORRECTION_REQUIRED']);
     if (profile?.role === 'MARKET_ADMIN') {
-      const marketIds = assignedMarketIds(profile);
-      if (!marketIds.length) return { rows: [], last: null, hasMore: false };
-      query = query.where('routingMarketIds', 'array-contains-any', marketIds);
-    } else if (!CENTRAL_ROLES.includes(profile?.role)) {
+      if (cursor) return { rows: [], last: null, hasMore: false };
+      const rows = await rowsForAssignedMarkets(profile);
+      return { rows, last: null, hasMore: false };
+    }
+    let query = window.db.collection('trader_intake').where('status', 'in', ['SUBMITTED', 'CORRECTION_REQUIRED']);
+    if (!CENTRAL_ROLES.includes(profile?.role)) {
       throw new Error('Role ini tidak berwenang membaca antrean administrasi.');
     }
     query = query.orderBy('submittedAt', 'desc').limit(PAGE_SIZE);
@@ -47,5 +64,5 @@
     return { rows, last: snapshot.docs[snapshot.docs.length - 1] || null, hasMore: snapshot.size === PAGE_SIZE };
   }
 
-  window.EPASAR_ADMIN_INTAKE = { page, canAccess, assignedMarketIds, intakeMarketIds, canonicalMarketId, CENTRAL_ROLES, PAGE_SIZE };
+  window.EPASAR_ADMIN_INTAKE = { page, rowsForAssignedMarkets, canAccess, assignedMarketIds, intakeMarketIds, canonicalMarketId, CENTRAL_ROLES, PAGE_SIZE };
 }());

@@ -101,6 +101,15 @@
     const statusReference = database().collection('public_status').doc(document.publicToken);
     const batch = database().batch();
     batch.set(reference, document);
+    document.routingMarketIds.forEach(marketId => batch.set(database().collection('market_intake_queue').doc(`${marketId}__${reference.id}`), {
+      intakeId: reference.id,
+      marketId,
+      registrationCode: document.registrationCode,
+      status: 'SUBMITTED',
+      submittedAt: document.submittedAt,
+      updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      schemaVersion: 1
+    }));
     const firstBusiness = document.businessDrafts[0] || {};
     const defaultMarketName = document.hasMarketUnit
       ? (document.marketDraft?.marketName || 'Pasar Rakyat')

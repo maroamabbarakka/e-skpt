@@ -557,34 +557,34 @@
   async function loadMetrics(options = {}) {
     if (metricsPromise) return metricsPromise;
     metricsPromise = (async () => {
-      const targets = {
-        kpiTotalTraders: count('traders', 'status', '==', 'ACTIVE'),
-        kpiSubmitted: count('trader_intake', 'status', '==', 'SUBMITTED'),
-        kpiMarket: count('market_claims', 'verificationStatus', '==', 'UNVERIFIED'),
-        kpiConflict: count('market_claims', 'verificationStatus', '==', 'CONFLICT'),
-        kpiUptd: count('skpt_applications', 'status', '==', 'UPTD_REVIEW'),
-        kpiKadis: count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
-        kpiTte: Promise.all(['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].map(status => count('skpt_applications', 'status', '==', status))).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0)),
-        kpiIssued: count('skpt_documents', 'status', '==', 'ISSUED'),
-        kpiAnnual: count('skpt_annual_validations', 'status', '==', 'PENDING_REVIEW')
-      };
+      let targets;
       if (currentProfile?.role === 'MARKET_ADMIN') {
         const marketIds = window.EPASAR_ADMIN_INTAKE.assignedMarketIds(currentProfile);
-        targets.kpiTotalTraders = countForAssignedMarkets('market_trader_directory', marketIds, 'status', '==', 'ACTIVE');
-        targets.kpiSubmitted = marketIds.length
-          ? window.db.collection('trader_intake').where('routingMarketIds', 'array-contains-any', marketIds).where('status', '==', 'SUBMITTED').get().then(snapshot => snapshot.size)
-          : Promise.resolve(0);
-        targets.kpiMarket = countForAssignedMarkets('market_claims', marketIds, 'verificationStatus', '==', 'UNVERIFIED');
-        targets.kpiConflict = countForAssignedMarkets('market_claims', marketIds, 'verificationStatus', '==', 'CONFLICT');
-        targets.kpiUptd = countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', 'UPTD_REVIEW');
-        targets.kpiKadis = countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', 'KADIS_REVIEW');
-        targets.kpiTte = Promise.all(['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].map(status =>
-          countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', status)
-        )).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0));
-        targets.kpiIssued = countForAssignedMarkets('skpt_documents', marketIds, 'status', '==', 'ISSUED', 'documentSnapshot.marketId');
-        targets.kpiAnnual = countForAssignedMarkets('skpt_annual_validations', marketIds, 'status', '==', 'PENDING_REVIEW');
+        targets = {
+          kpiTotalTraders: countForAssignedMarkets('market_trader_directory', marketIds, 'status', '==', 'ACTIVE'),
+          kpiSubmitted: marketIds.length ? window.EPASAR_ADMIN_INTAKE.rowsForAssignedMarkets(currentProfile, ['SUBMITTED']).then(rows => rows.length) : Promise.resolve(0),
+          kpiMarket: countForAssignedMarkets('market_claims', marketIds, 'verificationStatus', '==', 'UNVERIFIED'),
+          kpiConflict: countForAssignedMarkets('market_claims', marketIds, 'verificationStatus', '==', 'CONFLICT'),
+          kpiUptd: countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', 'UPTD_REVIEW'),
+          kpiKadis: countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', 'KADIS_REVIEW'),
+          kpiTte: Promise.all(['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].map(status => countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', status))).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0)),
+          kpiIssued: countForAssignedMarkets('skpt_documents', marketIds, 'status', '==', 'ISSUED', 'documentSnapshot.marketId'),
+          kpiAnnual: countForAssignedMarkets('skpt_annual_validations', marketIds, 'status', '==', 'PENDING_REVIEW')
+        };
         const nonMarketCard = document.getElementById('kpiNonMarketTraders')?.closest('.kpi');
         if (nonMarketCard) nonMarketCard.hidden = true;
+      } else {
+        targets = {
+          kpiTotalTraders: count('traders', 'status', '==', 'ACTIVE'),
+          kpiSubmitted: count('trader_intake', 'status', '==', 'SUBMITTED'),
+          kpiMarket: count('market_claims', 'verificationStatus', '==', 'UNVERIFIED'),
+          kpiConflict: count('market_claims', 'verificationStatus', '==', 'CONFLICT'),
+          kpiUptd: count('skpt_applications', 'status', '==', 'UPTD_REVIEW'),
+          kpiKadis: count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
+          kpiTte: Promise.all(['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].map(status => count('skpt_applications', 'status', '==', status))).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0)),
+          kpiIssued: count('skpt_documents', 'status', '==', 'ISSUED'),
+          kpiAnnual: count('skpt_annual_validations', 'status', '==', 'PENDING_REVIEW')
+        };
       }
       await Promise.all(Object.entries(targets).map(async ([id, promise]) => {
         try { document.getElementById(id).textContent = await promise; }
@@ -800,15 +800,13 @@
           snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
         }
       } else if (type === 'kpiSubmitted') {
-        let query = window.db.collection('trader_intake').where('status', '==', 'SUBMITTED');
         if (currentProfile?.role === 'MARKET_ADMIN') {
-          const marketIds = window.EPASAR_ADMIN_INTAKE.assignedMarketIds(currentProfile);
-          if (!marketIds.length) { currentKpiData = []; filterAndRenderAdminKpi(); return; }
-          query = query.where('routingMarketIds', 'array-contains-any', marketIds);
+          currentKpiData = await window.EPASAR_ADMIN_INTAKE.rowsForAssignedMarkets(currentProfile, ['SUBMITTED'], 80);
+        } else {
+          const snap = await window.db.collection('trader_intake').where('status', '==', 'SUBMITTED').limit(80).get();
+          currentKpiData = [];
+          snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
         }
-        const snap = await query.limit(80).get();
-        currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
       } else if (type === 'kpiMarket') {
         if (isMarketAdmin) currentKpiData = await rowsForAssignedMarkets('market_claims', assignedMarketIds, 'verificationStatus', '==', 'UNVERIFIED');
         else {
