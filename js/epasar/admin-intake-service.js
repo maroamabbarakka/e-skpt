@@ -35,15 +35,16 @@
     if (!marketIds.length) return [];
     const snapshots = await Promise.all(marketIds.map(marketId => window.db.collection('market_intake_queue')
       .where('marketId', '==', marketId)
-      .where('status', 'in', statuses)
-      .orderBy('submittedAt', 'desc')
-      .limit(perMarketLimit)
       .get()));
-    const intakeIds = [...new Set(snapshots.flatMap(snapshot => snapshot.docs.map(document => document.data().intakeId)).filter(Boolean))];
+    const allowedStatuses = new Set(statuses);
+    const intakeIds = [...new Set(snapshots.flatMap(snapshot => snapshot.docs
+      .filter(document => allowedStatuses.has(document.data().status))
+      .map(document => document.data().intakeId)).filter(Boolean))];
     const documents = await Promise.all(intakeIds.map(intakeId => window.db.collection('trader_intake').doc(intakeId).get()));
     return documents.filter(document => document.exists).map(document => ({ id: document.id, ...document.data() }))
       .filter(row => canAccess(profile, row))
-      .sort((left, right) => Number(right.submittedAt?.toMillis?.() || 0) - Number(left.submittedAt?.toMillis?.() || 0));
+      .sort((left, right) => Number(right.submittedAt?.toMillis?.() || 0) - Number(left.submittedAt?.toMillis?.() || 0))
+      .slice(0, perMarketLimit * marketIds.length);
   }
 
   async function page(profile, cursor) {
