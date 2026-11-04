@@ -45,6 +45,11 @@ def main() -> None:
     assert "match /trader_intake/{id}" in rules
     assert "allow get: if canAccessIntake(resource.data);" in rules
     assert "allow list: if adminStaff();" in rules
+    admin_dashboard = require("js/epasar/admin-epasar.js")
+    assert "rowsForAssignedMarkets" in admin_dashboard
+    assert "data halaman ditolak oleh aturan akses" in admin_dashboard
+    uptd_workspace = require("js/epasar/uptd-approval.js")
+    assert ".where('marketId','==',marketId).where('status','==','UPTD_REVIEW')" in uptd_workspace
     assert "function kadis() { return activeStaff() && profile().role == 'KADIS'; }" in rules
     assert "allow read: if centralAdmin();" in rules
     assert 'src="js/epasar/constants.js' in admin_html

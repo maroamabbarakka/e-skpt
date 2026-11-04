@@ -56,6 +56,15 @@ try {
       status: 'KADIS_REVIEW', statusHistory: [], publicToken: 'public-reject-token', updatedAt: new Date()
     });
     await setDoc(doc(db, 'skpt_applications', 'app-photo'), { applicationId:'app-photo', claimId:'claim-1', marketId:'MKT-001', traderId:'T1', status:'MARKET_VERIFICATION' });
+    await setDoc(doc(db, 'skpt_documents', 'document-market-1'), {
+      status: 'ISSUED', documentSnapshot: { marketId: 'MKT-001' }, traderId: 'T1'
+    });
+    await setDoc(doc(db, 'skpt_documents', 'document-market-3'), {
+      status: 'ISSUED', documentSnapshot: { marketId: 'MKT-003' }, traderId: 'T2'
+    });
+    await setDoc(doc(db, 'skpt_annual_validations', 'annual-market-1'), {
+      marketId: 'MKT-001', status: 'PENDING_REVIEW', skptId: 'document-market-1'
+    });
     await setDoc(doc(db, 'public_status', 'public-reject-token'), {
       publicToken: 'public-reject-token', publicStatus: true, status: 'KADIS_REVIEW'
     });
@@ -74,6 +83,9 @@ try {
     });
     await setDoc(doc(db, 'notifications', 'notification-market-3'), {
       type: 'TRADER_DECISION', deliveryStatus: 'PENDING_ADMIN', routingMarketIds: ['MKT-003'], marketId: 'MKT-003'
+    });
+    await setDoc(doc(db, 'trader_media', 'media-intake-market-1'), {
+      ownerType: 'TRADER_INTAKE', ownerId: 'intake-market-1', mediaType: 'PROFILE', mime: 'image/webp', dataBase64: 'aaaa'
     });
   });
 
@@ -127,6 +139,8 @@ try {
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'market_trader_directory'), where('marketId', '==', 'MKT-001'), where('status', '==', 'ACTIVE'))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'market_claims'), where('marketId', '==', 'MKT-001'), where('verificationStatus', '==', 'VERIFIED'))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'skpt_applications'), where('marketId', '==', 'MKT-001'), where('status', '==', 'UPTD_REVIEW'))));
+  await assertSucceeds(getDocs(query(collection(marketAdminDb, 'skpt_documents'), where('documentSnapshot.marketId', '==', 'MKT-001'), where('status', '==', 'ISSUED'))));
+  await assertSucceeds(getDocs(query(collection(marketAdminDb, 'skpt_annual_validations'), where('marketId', '==', 'MKT-001'))));
   const ownIntakeQuery = query(
     collection(marketAdminDb, 'trader_intake'),
     where('status', 'in', ['SUBMITTED', 'CORRECTION_REQUIRED']),
@@ -139,6 +153,15 @@ try {
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('routingMarketIds', 'array-contains-any', ['MKT-001']), limit(40))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('marketId', '==', 'MKT-001'), limit(40))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('type', '==', 'TRADER_DECISION'), limit(40))));
+  await assertSucceeds(getDocs(query(collection(marketAdminDb, 'trader_media'), where('ownerId', '==', 'intake-market-1'), limit(20))));
+  await assertSucceeds(getDocs(query(collection(marketHeadDb, 'trader_media'), where('ownerId', '==', 'intake-market-1'), where('mediaType', '==', 'PROFILE'), limit(5))));
+  await assertSucceeds(getDocs(query(collection(marketAdminDb, 'market_claims'), where('marketId', 'in', ['MKT-001']), limit(30))));
+  await assertSucceeds(getDocs(query(collection(marketHeadDb, 'market_claims'), where('marketId', 'in', ['MKT-001']), limit(30))));
+  await assertSucceeds(getDocs(query(collection(marketHeadDb, 'market_units'), where('marketId', '==', 'MKT-001'), limit(50))));
+  await assertSucceeds(getDocs(query(collection(marketHeadDb, 'skpt_documents'), where('documentSnapshot.marketId', '==', 'MKT-001'), where('status', '==', 'ISSUED'), limit(40))));
+  await assertSucceeds(getDocs(query(collection(marketHeadDb, 'skpt_annual_validations'), where('marketId', '==', 'MKT-001'), limit(100))));
+  await assertSucceeds(setDoc(doc(superDb, 'app_settings', 'general'), { signatory: { tteMode: 'MANUAL_UPLOAD' } }));
+  await assertFails(setDoc(doc(tradeAdminDb, 'app_settings', 'general'), { signatory: { tteMode: 'MANUAL_UPLOAD' } }));
   await assertSucceeds(setDoc(doc(tradeAdminDb, 'market_claims', 'central-claim'), {
     claimId: 'central-claim', marketId: 'MKT-003', traderId: 'T5', verificationStatus: 'UNVERIFIED'
   }));
@@ -152,6 +175,7 @@ try {
   await assertFails(getDoc(doc(uptdDb, 'market_claims', 'claim-2')));
   await assertSucceeds(getDoc(doc(uptdDb, 'skpt_applications', 'app-1')));
   await assertFails(getDoc(doc(uptdDb, 'skpt_applications', 'app-2')));
+  await assertSucceeds(getDocs(query(collection(uptdDb, 'skpt_applications'), where('marketId', '==', 'MKT-001'), where('status', '==', 'UPTD_REVIEW'), orderBy('updatedAt', 'asc'), limit(100))));
 
   const returnBatch = writeBatch(uptdDb);
   returnBatch.update(doc(uptdDb, 'market_claims', 'claim-1'), {

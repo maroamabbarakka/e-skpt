@@ -751,7 +751,7 @@ service cloud.firestore {
     }
     match /app_settings/{docId} {
       allow read: if true;
-      allow write: if kadis()
+      allow write: if (kadis() || superAdmin())
         && docId == 'general'
         && request.resource.data.signatory is map
         && request.resource.data.signatory.tteMode in ['BSRE_INTEGRATED','MANUAL_UPLOAD'];

@@ -33,7 +33,7 @@
 
   function friendlyError(error) {
     const raw = String(error?.message || error || '');
-    if (/permission|insufficient permissions/i.test(raw)) return 'Akun Anda berhasil masuk, tetapi ruang kerja untuk role ini belum tersedia.';
+    if (/permission|insufficient permissions/i.test(raw)) return 'Akun berhasil masuk, tetapi data halaman ditolak oleh aturan akses. Muat ulang halaman; jika tetap terjadi, hubungi administrator sistem.';
     if (/Firebase|configured|konfigurasi/i.test(raw)) return 'Layanan sedang disiapkan. Silakan coba lagi beberapa saat kemudian.';
     return raw.replace(/Missing or insufficient permissions\.?/i, 'Akses ke data ini belum tersedia untuk akun Anda.');
   }
@@ -467,6 +467,18 @@
     return values.reduce((total, value) => total + Number(value || 0), 0);
   }
 
+  async function rowsForAssignedMarkets(collectionName, marketIds, field, operator, value, marketField = 'marketId', limit = 100) {
+    if (!Array.isArray(marketIds) || marketIds.length === 0) return [];
+    const snapshots = await Promise.all(marketIds.map(marketId => {
+      let query = window.db.collection(collectionName).where(marketField, '==', marketId);
+      if (field) query = query.where(field, operator, value);
+      return query.limit(limit).get();
+    }));
+    const unique = new Map();
+    snapshots.forEach(snapshot => snapshot.forEach(document => unique.set(document.id, { id: document.id, ...document.data() })));
+    return [...unique.values()];
+  }
+
   async function getNonMarketTradersData(options = {}) {
     const force = options.force === true;
     const now = Date.now();
@@ -571,6 +583,8 @@
         )).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0));
         targets.kpiIssued = countForAssignedMarkets('skpt_documents', marketIds, 'status', '==', 'ISSUED', 'documentSnapshot.marketId');
         targets.kpiAnnual = countForAssignedMarkets('skpt_annual_validations', marketIds, 'status', '==', 'PENDING_REVIEW');
+        const nonMarketCard = document.getElementById('kpiNonMarketTraders')?.closest('.kpi');
+        if (nonMarketCard) nonMarketCard.hidden = true;
       }
       await Promise.all(Object.entries(targets).map(async ([id, promise]) => {
         try { document.getElementById(id).textContent = await promise; }
@@ -595,7 +609,7 @@
 
       try {
         const nonMarketEl = document.getElementById('kpiNonMarketTraders');
-        if (nonMarketEl) {
+        if (nonMarketEl && currentProfile?.role !== 'MARKET_ADMIN') {
           const stats = await getPublicStatsSummary(options);
           const projectedCount = Number(stats?.nonMarketTraders);
           if (Number.isFinite(projectedCount)) nonMarketEl.textContent = projectedCount;
@@ -774,12 +788,17 @@
     subtitleEl.textContent = cfg.subtitle;
 
     try {
+      const isMarketAdmin = currentProfile?.role === 'MARKET_ADMIN';
+      const assignedMarketIds = isMarketAdmin ? window.EPASAR_ADMIN_INTAKE.assignedMarketIds(currentProfile) : [];
       if (type === 'kpiNonMarketTraders' || type === 'kpiKadisNonMarket') {
         currentKpiData = await getNonMarketTradersData();
       } else if (type === 'kpiIssued' || type === 'kpiKadisIssued') {
-        const snap = await window.db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(100).get();
-        currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        if (isMarketAdmin) currentKpiData = await rowsForAssignedMarkets('skpt_documents', assignedMarketIds, 'status', '==', 'ISSUED', 'documentSnapshot.marketId');
+        else {
+          const snap = await window.db.collection('skpt_documents').where('status', '==', 'ISSUED').limit(100).get();
+          currentKpiData = [];
+          snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        }
       } else if (type === 'kpiSubmitted') {
         let query = window.db.collection('trader_intake').where('status', '==', 'SUBMITTED');
         if (currentProfile?.role === 'MARKET_ADMIN') {
@@ -791,26 +810,43 @@
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
       } else if (type === 'kpiMarket') {
-        const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'UNVERIFIED').limit(80).get();
-        currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        if (isMarketAdmin) currentKpiData = await rowsForAssignedMarkets('market_claims', assignedMarketIds, 'verificationStatus', '==', 'UNVERIFIED');
+        else {
+          const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'UNVERIFIED').limit(80).get();
+          currentKpiData = [];
+          snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        }
       } else if (type === 'kpiConflict') {
-        const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'CONFLICT').limit(80).get();
-        currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        if (isMarketAdmin) currentKpiData = await rowsForAssignedMarkets('market_claims', assignedMarketIds, 'verificationStatus', '==', 'CONFLICT');
+        else {
+          const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'CONFLICT').limit(80).get();
+          currentKpiData = [];
+          snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        }
       } else if (type === 'kpiUptd' || type === 'kpiKadis' || type === 'kpiKadisPending' || type === 'kpiTte') {
         const statuses = type === 'kpiUptd' ? ['UPTD_REVIEW'] : type === 'kpiTte' ? ['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'] : ['KADIS_REVIEW'];
-        const snapshots = await Promise.all(statuses.map(status => window.db.collection('skpt_applications').where('status', '==', status).limit(100).get()));
-        currentKpiData = [];
-        snapshots.forEach(snap => snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() })));
+        if (isMarketAdmin) {
+          const groups = await Promise.all(statuses.map(status => rowsForAssignedMarkets('skpt_applications', assignedMarketIds, 'status', '==', status)));
+          currentKpiData = groups.flat();
+        } else {
+          const snapshots = await Promise.all(statuses.map(status => window.db.collection('skpt_applications').where('status', '==', status).limit(100).get()));
+          currentKpiData = [];
+          snapshots.forEach(snap => snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() })));
+        }
       } else if (type === 'kpiTotalTraders' || type === 'kpiKadisTraders') {
-        const snap = await window.db.collection('traders').limit(150).get();
-        currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        if (isMarketAdmin) currentKpiData = await rowsForAssignedMarkets('market_trader_directory', assignedMarketIds, 'status', '==', 'ACTIVE');
+        else {
+          const snap = await window.db.collection('traders').limit(150).get();
+          currentKpiData = [];
+          snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        }
       } else if (type === 'kpiAnnual') {
-        const snap = await window.db.collection('skpt_annual_validations').limit(80).get();
-        currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        if (isMarketAdmin) currentKpiData = await rowsForAssignedMarkets('skpt_annual_validations', assignedMarketIds, null, null, null);
+        else {
+          const snap = await window.db.collection('skpt_annual_validations').limit(80).get();
+          currentKpiData = [];
+          snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        }
       } else if (type === 'kpiMarketTraders' || type === 'kpiMarketPending' || type === 'kpiMarketVerified' || type === 'kpiMarketConflict') {
         const assignedIds = context.assignedIds || (currentProfile?.marketIds ? currentProfile.marketIds : (currentProfile?.marketId ? [currentProfile.marketId] : []));
         let claims = [];
