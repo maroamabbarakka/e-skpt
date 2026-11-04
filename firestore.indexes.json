@@ -5,11 +5,14 @@
     {"collectionGroup":"correction_requests","queryScope":"COLLECTION","fields":[{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
     {"collectionGroup":"trader_media","queryScope":"COLLECTION","fields":[{"fieldPath":"ownerId","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
     {"collectionGroup":"trader_media","queryScope":"COLLECTION","fields":[{"fieldPath":"ownerId","order":"ASCENDING"},{"fieldPath":"mediaType","order":"ASCENDING"}]},
+    {"collectionGroup":"trader_media","queryScope":"COLLECTION","fields":[{"fieldPath":"claimId","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]},
     {"collectionGroup":"skpt_documents","queryScope":"COLLECTION","fields":[{"fieldPath":"documentSnapshot.marketId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"}]},
     {"collectionGroup":"market_claims","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"verificationStatus","order":"ASCENDING"},{"fieldPath":"createdAt","order":"ASCENDING"}]},
     {"collectionGroup":"market_trader_directory","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"traderId","order":"ASCENDING"}]},
+    {"collectionGroup":"market_trader_directory","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"}]},
     {"collectionGroup":"market_units","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"unitType","order":"ASCENDING"},{"fieldPath":"unitNumber","order":"ASCENDING"}]},
-    {"collectionGroup":"skpt_applications","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"updatedAt","order":"ASCENDING"}]}
+    {"collectionGroup":"skpt_applications","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"updatedAt","order":"ASCENDING"}]},
+    {"collectionGroup":"skpt_annual_validations","queryScope":"COLLECTION","fields":[{"fieldPath":"marketId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"}]}
   ],
   "fieldOverrides": [
     {"collectionGroup":"trader_media","fieldPath":"dataBase64","indexes":[]}

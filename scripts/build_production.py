@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-EXCLUDED_DIRS = {".git", ".firebase", "dist", "node_modules", "scripts", "scratch", "tests", "artifacts", "EPASAR_SATU_DATA_DEVELOPER_PACK_V1"}
+EXCLUDED_DIRS = {".git", ".firebase", "backend", "dist", "node_modules", "scripts", "scratch", "tests", "artifacts", "EPASAR_SATU_DATA_DEVELOPER_PACK_V1"}
 EXCLUDED_SUFFIXES = {".md", ".py", ".log"}
 EXCLUDED_FILES = {
     "firebase.json",
@@ -18,6 +18,8 @@ EXCLUDED_FILES = {
     "playwright.config.js",
     "skpt-layout-audit.png",
     "Perda 2024 - Pengelolaan Pasar Rakyat.pdf",
+    "demo-epasar.html",
+    "demo-training.html",
 }
 EXCLUDED_ASSETS = {
     "Alur Verifikasi Pasar.mp4",
@@ -40,7 +42,7 @@ def copy_sources() -> None:
             continue
         target = DIST / source.name
         if source.is_dir():
-            shutil.copytree(source, target, ignore=shutil.ignore_patterns('node_modules', '__pycache__', '.pytest_cache', 'panduan-pendataan.mp4', *EXCLUDED_ASSETS))
+            shutil.copytree(source, target, ignore=shutil.ignore_patterns('node_modules', '__pycache__', '.pytest_cache', 'uat', 'stamp-uat.png', 'demo-mode.js', 'panduan-pendataan.mp4', *EXCLUDED_ASSETS))
         else:
             shutil.copy2(source, target)
 
@@ -58,7 +60,6 @@ def validate() -> None:
         "login.html",
         "admin-akun.html",
         "profil.html",
-        "demo-training.html",
         "market-verification.html",
         "annual-validation.html",
         "occupancy-change.html",
@@ -139,6 +140,12 @@ def validate() -> None:
         DIST / "package.json",
         DIST / "package-lock.json",
         DIST / "skpt-layout-audit.png",
+        DIST / "backend",
+        DIST / "demo-epasar.html",
+        DIST / "demo-training.html",
+        DIST / "assets" / "uat",
+        DIST / "assets" / "stamp-uat.png",
+        DIST / "js" / "epasar" / "demo-mode.js",
     ]
     leaked = [str(path.relative_to(DIST)) for path in forbidden if path.exists()]
     if leaked:

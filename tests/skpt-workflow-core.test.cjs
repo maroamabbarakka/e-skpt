@@ -26,4 +26,22 @@ assert.equal(storage.canIssue(verified), true);
 assert.equal(storage.canIssue({ provider: 'GOOGLE_DRIVE', syncStatus: 'UPLOADED', documentHash: 'a'.repeat(64), binaryBytes: 1234 }), false);
 assert.throws(() => storage.descriptor({ provider: 'UNKNOWN', syncStatus: 'VERIFIED' }), /belum didukung/);
 
-console.log('PASS skpt workflow and storage core');
+const intakeSource = fs.readFileSync('js/epasar/intake-service.js', 'utf8');
+const reviewSource = fs.readFileSync('js/epasar/intake-review-service.js', 'utf8');
+const rulesSource = fs.readFileSync('firestore.rules', 'utf8');
+const customizationHtml = fs.readFileSync('admin-kustomisasi.html', 'utf8');
+const traderDatabaseHtml = fs.readFileSync('database-pedagang.html', 'utf8');
+const traderDatabaseSource = fs.readFileSync('js/epasar/database-pedagang.js', 'utf8');
+assert.match(intakeSource, /environment:\s*'PROD'[\s\S]*?isDemo:\s*false/);
+assert.doesNotMatch(intakeSource, /environment:\s*'UAT'[\s\S]*?isDemo:\s*true/);
+assert.match(reviewSource, /environment:\s*'PROD',\s*isDemo:\s*false/);
+assert.match(rulesSource, /request\.resource\.data\.environment == 'PROD' && request\.resource\.data\.isDemo == false/);
+assert.doesNotMatch(customizationHtml, /value="UAT_SIMULATED"/);
+assert.match(traderDatabaseHtml, /js\/vendor\/exceljs\.min\.js/);
+assert.doesNotMatch(traderDatabaseHtml, /xlsx\.full\.min\.js/);
+assert.match(traderDatabaseSource, /new ExcelJS\.Workbook\(\)/);
+assert.doesNotMatch(traderDatabaseSource, /XLSX\./);
+assert.match(rulesSource, /match \/skpt_documents\/\{id\}[\s\S]*?allow create: if false;/);
+assert.match(rulesSource, /match \/public_skpt_verification\/\{token\}[\s\S]*?allow create: if false;/);
+
+console.log('PASS skpt workflow, storage, and production-mode guards');

@@ -343,7 +343,7 @@
     document.getElementById('kadisRank').value = sig.rank || '';
     document.getElementById('kadisPosition').value = sig.position || '';
     document.getElementById('kadisAuthority').value = sig.authority || '';
-    document.getElementById('tteMode').value = sig.tteMode || 'UAT_SIMULATED';
+    document.getElementById('tteMode').value = ['BSRE_INTEGRATED', 'MANUAL_UPLOAD'].includes(sig.tteMode) ? sig.tteMode : 'MANUAL_UPLOAD';
     document.getElementById('tteNotice').value = sig.tteNotice || '';
 
     // Handle Manual Signature Image

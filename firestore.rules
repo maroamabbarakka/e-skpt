@@ -32,9 +32,13 @@ service cloud.firestore {
         || (('sourceIntakeId' in data) && canAccessIntakeId(data.sourceIntakeId))
         || (('sourceType' in data) && data.sourceType == 'ADMIN_INTAKE_REVIEW' && ('sourceId' in data) && canAccessIntakeId(data.sourceId));
     }
-    function kadis() { return activeStaff() && profile().role in ['SUPER_ADMIN','KADIS']; }
+    function kadis() { return activeStaff() && profile().role == 'KADIS'; }
     function superAdmin() { return activeStaff() && profile().role == 'SUPER_ADMIN'; }
     function assignedMarket(marketId) { return activeStaff() && profile().role == 'MARKET_HEAD' && marketId is string && profile().marketIds is list && profile().marketIds.hasAny([marketId]); }
+    function assignedMarketIntake(intakeId) { return activeStaff() && profile().role == 'MARKET_HEAD' && intakeId is string
+      && exists(/databases/$(database)/documents/trader_intake/$(intakeId))
+      && get(/databases/$(database)/documents/trader_intake/$(intakeId)).data.routingMarketIds is list
+      && profile().marketIds.hasAny(get(/databases/$(database)/documents/trader_intake/$(intakeId)).data.routingMarketIds); }
     function assignedUptd(marketId) { return activeStaff() && profile().role == 'UPTD_HEAD' && marketId is string && profile().marketIds is list && profile().marketIds.hasAny([marketId]); }
     function validOfficialMarkets(marketIds) {
       return marketIds is list && marketIds.size() > 0 && marketIds.size() <= 11
@@ -257,6 +261,9 @@ service cloud.firestore {
     match /trader_intake/{id} {
       allow create: if !signedIn() && validIntake();
       allow get: if canAccessIntake(resource.data);
+      // Firestore tidak dapat membuktikan irisan dua array dinamis untuk query
+      // list (profile.marketIds vs routingMarketIds). UI tetap mengirim query
+      // wilayah; akses dokumen tunggal dan mutasi tetap diperiksa per pasar.
       allow list: if adminStaff();
       allow update: if canAccessIntake(resource.data)
         && request.resource.data.routingMarketIds == resource.data.routingMarketIds;
@@ -310,12 +317,14 @@ service cloud.firestore {
           && resource.data.mediaType == 'PROFILE_PUBLIC')
         || (centralAdmin() && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','IDENTITY_KTP','IDENTITY_KK','PROFILE_PUBLIC'])
         || (activeStaff() && profile().role == 'MARKET_ADMIN' && canAccessIntakeId(resource.data.ownerId))
-        || (activeStaff() && profile().role in ['KADIS','MARKET_HEAD'] && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC']);
+        || (activeStaff() && profile().role == 'KADIS' && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC'])
+        || (activeStaff() && profile().role == 'MARKET_HEAD' && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC']
+          && ((resource.data.ownerType == 'MARKET_CORRECTION' && assignedMarket(resource.data.marketId)) || assignedMarketIntake(resource.data.ownerId)));
       allow list: if centralAdmin()
         || (activeStaff() && profile().role == 'MARKET_ADMIN' && canAccessIntakeId(resource.data.ownerId))
-        || (activeStaff()
-        && profile().role in ['KADIS','MARKET_HEAD']
-        && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC']);
+        || (activeStaff() && profile().role == 'KADIS' && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC'])
+        || (activeStaff() && profile().role == 'MARKET_HEAD' && resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE','PROFILE_PUBLIC']
+          && ((resource.data.ownerType == 'MARKET_CORRECTION' && assignedMarket(resource.data.marketId)) || assignedMarketIntake(resource.data.ownerId)));
       allow create: if (adminStaff() || kadis())
         && request.resource.data.keys().hasOnly(['ownerType','ownerId','mediaType','mime','width','height','binaryBytes','base64Bytes','dataBase64','status','schemaVersion','sourceMediaId','publishedAt'])
         && request.resource.data.ownerType == 'PUBLIC_DOCUMENT'
@@ -331,6 +340,26 @@ service cloud.firestore {
         && request.resource.data.schemaVersion == 2
         && request.resource.data.sourceMediaId is string
         && request.resource.data.publishedAt == request.time;
+      allow create: if assignedMarket(request.resource.data.marketId)
+        && request.resource.data.keys().hasOnly(['ownerType','ownerId','claimId','applicationId','traderId','marketId','mediaType','mime','width','height','binaryBytes','base64Bytes','dataBase64','status','previousMediaId','reason','actorUid','actorRole','schemaVersion','createdAt'])
+        && request.resource.data.ownerType == 'MARKET_CORRECTION'
+        && request.resource.data.ownerId == request.resource.data.claimId
+        && request.resource.data.mediaType in ['PROFILE','LOCATION','EVIDENCE']
+        && request.resource.data.mime == 'image/webp'
+        && request.resource.data.width is number && request.resource.data.width > 0 && request.resource.data.width <= 2048
+        && request.resource.data.height is number && request.resource.data.height > 0 && request.resource.data.height <= 2048
+        && request.resource.data.binaryBytes is number && request.resource.data.binaryBytes > 0 && request.resource.data.binaryBytes <= 85000
+        && request.resource.data.base64Bytes is number && request.resource.data.base64Bytes > 0 && request.resource.data.base64Bytes <= 120000
+        && request.resource.data.dataBase64 is string && request.resource.data.dataBase64.size() <= 120000
+        && request.resource.data.status == 'ACTIVE'
+        && request.resource.data.reason is string && request.resource.data.reason.size() >= 10 && request.resource.data.reason.size() <= 500
+        && request.resource.data.actorUid == request.auth.uid && request.resource.data.actorRole == 'MARKET_HEAD'
+        && request.resource.data.schemaVersion == 3 && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId))
+        && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.marketId == request.resource.data.marketId
+        && get(/databases/$(database)/documents/market_claims/$(request.resource.data.claimId)).data.traderId == request.resource.data.traderId
+        && exists(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId))
+        && get(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.status == 'MARKET_VERIFICATION';
       allow update: if centralAdmin()
         || (activeStaff() && profile().role == 'MARKET_ADMIN'
           && resource.data.ownerType == 'TRADER_INTAKE'
@@ -338,7 +367,9 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /traders/{id} {
-      allow read: if adminStaff() || kadis() || legacyMarketHead();
+      // MARKET_ADMIN dan MARKET_HEAD memakai proyeksi market_trader_directory;
+      // master kabupaten tidak boleh dapat didaftar lintas wilayah.
+      allow read: if centralAdmin() || kadis() || legacyMarketHead();
       allow create: if adminStaff();
       allow update: if adminStaff() && request.resource.data.traderId == resource.data.traderId;
       allow delete: if false;
@@ -355,23 +386,29 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /trader_private/{id} {
-      allow read: if adminStaff();
+      allow read: if centralAdmin();
+      // Admin wilayah boleh membentuk record privat saat memproses intake yang
+      // ditugaskan, tetapi tidak boleh membaca/menyisir koleksi privat.
       allow create: if adminStaff() && request.resource.data.accessClass == 'RESTRICTED';
-      allow update: if adminStaff() && request.resource.data.accessClass == resource.data.accessClass;
+      allow update: if centralAdmin() && request.resource.data.accessClass == resource.data.accessClass;
       allow delete: if false;
     }
     match /nik_registry/{id} {
-      allow read, create: if adminStaff();
+      // Lookup dokumen tunggal diperlukan untuk transaksi anti-duplikasi NIK;
+      // listing registry tetap hanya untuk admin pusat.
+      allow get: if adminStaff();
+      allow list: if centralAdmin();
+      allow create: if adminStaff();
       allow update, delete: if false;
     }
     match /businesses/{id} {
-      allow read: if activeStaff();
-      allow create, update: if adminStaff();
+      allow read: if centralAdmin() || kadis();
+      allow create, update: if centralAdmin();
       allow delete: if false;
     }
     match /business_locations/{id} {
-      allow read: if activeStaff();
-      allow create, update: if adminStaff();
+      allow read: if centralAdmin() || kadis();
+      allow create, update: if centralAdmin();
       allow delete: if false;
     }
     match /business_classifications/{id} {
@@ -380,9 +417,39 @@ service cloud.firestore {
       allow update: if adminStaff() && request.resource.data.traderId == resource.data.traderId;
       allow delete: if false;
     }
+    match /trader_market_place_ledgers/{id} {
+      allow read: if operationalAdminForMarket(resource.data.marketId) || kadis() || assignedMarket(resource.data.marketId) || assignedUptd(resource.data.marketId);
+      allow create: if operationalAdminForMarket(request.resource.data.marketId)
+        && id == request.resource.data.traderId + '__' + request.resource.data.marketId
+        && request.resource.data.keys().hasOnly(['ledgerId','traderId','marketId','claimIds','activePlaceCount','maximumPlaces','schemaVersion','createdAt','updatedAt'])
+        && request.resource.data.ledgerId == id
+        && request.resource.data.claimIds is list
+        && request.resource.data.claimIds.size() > 0
+        && request.resource.data.claimIds.size() <= 2
+        && request.resource.data.activePlaceCount == request.resource.data.claimIds.size()
+        && request.resource.data.maximumPlaces == 2
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if operationalAdminForMarket(resource.data.marketId)
+        && request.resource.data.traderId == resource.data.traderId
+        && request.resource.data.marketId == resource.data.marketId
+        && request.resource.data.claimIds is list
+        && request.resource.data.claimIds.size() > 0
+        && request.resource.data.claimIds.size() <= 2
+        && request.resource.data.claimIds.hasAll(resource.data.claimIds)
+        && request.resource.data.activePlaceCount == request.resource.data.claimIds.size()
+        && request.resource.data.maximumPlaces == 2
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
     match /market_claims/{id} {
       allow read: if operationalAdminForMarket(resource.data.marketId) || kadis() || assignedMarket(resource.data.marketId) || assignedUptd(resource.data.marketId);
-      allow create: if operationalAdminForMarket(request.resource.data.marketId);
+      allow create: if operationalAdminForMarket(request.resource.data.marketId)
+        && ((!('schemaVersion' in request.resource.data) || request.resource.data.schemaVersion != 2)
+          || (existsAfter(/databases/$(database)/documents/trader_market_place_ledgers/$(request.resource.data.traderId + '__' + request.resource.data.marketId))
+            && getAfter(/databases/$(database)/documents/trader_market_place_ledgers/$(request.resource.data.traderId + '__' + request.resource.data.marketId)).data.claimIds.hasAny([id])
+            && getAfter(/databases/$(database)/documents/trader_market_place_ledgers/$(request.resource.data.traderId + '__' + request.resource.data.marketId)).data.claimIds.size() <= 2));
       allow update: if (operationalAdminForMarket(resource.data.marketId)
           && operationalAdminForMarket(request.resource.data.marketId)
           && request.resource.data.marketId == resource.data.marketId)
@@ -480,15 +547,14 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['uptdApproval','approval','draftNumber','numberReservationId','verificationToken','activeStorage','storageStatus','skptDocumentId']))
         || (kadis()
           && resource.data.status == 'KADIS_REVIEW'
-          && request.resource.data.status in ['TTE_PENDING','REJECTED']
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approval','draftNumber','numberReservationId','verificationToken','storageStatus','statusHistory','updatedAt'])
-          && request.resource.data.approval.decision in ['APPROVED','REJECTED']
+          && request.resource.data.status == 'REJECTED'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approval','statusHistory','updatedAt'])
+          && request.resource.data.approval.decision == 'REJECTED'
           && request.resource.data.approval.actorUid == request.auth.uid
           && request.resource.data.approval.actorRole == 'KADIS'
-          && request.resource.data.draftNumber is string
-          && request.resource.data.numberReservationId is string
-          && request.resource.data.verificationToken is string
-          && request.resource.data.verificationToken.matches('^[a-f0-9]{32}$'))
+          && request.resource.data.approval.note is string
+          && request.resource.data.approval.note.size() > 0
+          && request.resource.data.approval.note.size() <= 500)
         || (assignedUptd(resource.data.marketId)
           && resource.data.status == 'UPTD_REVIEW'
           && request.resource.data.marketId == resource.data.marketId
@@ -501,13 +567,6 @@ service cloud.firestore {
           && request.resource.data.uptdApproval.note is string
           && request.resource.data.uptdApproval.note.size() > 0
           && request.resource.data.uptdApproval.note.size() <= 500)
-        || (kadis()
-          && resource.data.status == 'TTE_PENDING'
-          && request.resource.data.status == 'ISSUED'
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','skptDocumentId','statusHistory','updatedAt'])
-          && request.resource.data.skptDocumentId is string
-          && existsAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptDocumentId))
-          && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.skptDocumentId)).data.applicationId == id)
         || (assignedMarket(resource.data.marketId)
           && resource.data.status == 'MARKET_VERIFICATION'
           && request.resource.data.marketId == resource.data.marketId
@@ -518,55 +577,16 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /skpt_number_counters/{yearId} {
-      allow read: if activeStaff() && profile().role == 'KADIS';
-      allow create: if activeStaff() && profile().role == 'KADIS'
-        && yearId.matches('^[0-9]{4}$')
-        && request.resource.data.keys().hasOnly(['year','nextSerial','updatedAt'])
-        && request.resource.data.nextSerial == 1
-        && request.resource.data.updatedAt == request.time;
-      allow update: if activeStaff() && profile().role == 'KADIS'
-        && request.resource.data.keys().hasOnly(['year','nextSerial','updatedAt'])
-        && request.resource.data.year == resource.data.year
-        && request.resource.data.nextSerial == resource.data.nextSerial + 1
-        && request.resource.data.nextSerial <= 9999
-        && request.resource.data.updatedAt == request.time;
-      allow delete: if false;
+      allow read, write: if false;
     }
     match /skpt_number_reservations/{reservationId} {
-      allow get: if activeStaff() && profile().role == 'KADIS';
-      allow list: if false;
-      allow create: if activeStaff() && profile().role == 'KADIS'
-        && request.resource.data.keys().hasOnly(['reservationId','applicationId','marketId','number','year','serial','status','reservedBy','createdAt'])
-        && request.resource.data.reservationId == reservationId
-        && request.resource.data.status == 'RESERVED'
-        && request.resource.data.reservedBy == request.auth.uid
-        && request.resource.data.createdAt == request.time
-        && getAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.numberReservationId == reservationId;
-      allow update: if activeStaff() && profile().role == 'KADIS'
-        && resource.data.status == 'RESERVED'
-        && request.resource.data.status in ['ISSUED','VOID']
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','issuedAt','voidedAt','voidReason'])
-        && request.resource.data.number == resource.data.number;
-      allow delete: if false;
+      allow read, write: if false;
     }
     match /skpt_documents/{id} {
-      allow read: if adminStaff() || kadis() || assignedMarket(resource.data.documentSnapshot.marketId) || legacyMarketHead();
-      allow create: if kadis()
-        && request.resource.data.skptId == id
-        && request.resource.data.applicationId is string
-        && request.resource.data.status == 'ISSUED'
-        && request.resource.data.environment == 'UAT'
-        && request.resource.data.isDemo == true
-        && request.resource.data.tteStatus == 'UAT_SIMULATED'
-        && request.resource.data.documentHash is string && request.resource.data.documentHash.size() == 64
-        && request.resource.data.verificationToken is string && request.resource.data.verificationToken.size() >= 20
-        && request.resource.data.issuedBy == request.auth.uid
-        && request.resource.data.issuedAt == request.time
-        && exists(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId))
-        && get(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.status == 'TTE_PENDING'
-        && existsAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId))
-        && getAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.status == 'ISSUED'
-        && getAfter(/databases/$(database)/documents/skpt_applications/$(request.resource.data.applicationId)).data.skptDocumentId == id;
+      allow read: if operationalAdminForMarket(resource.data.documentSnapshot.marketId) || kadis() || assignedMarket(resource.data.documentSnapshot.marketId) || legacyMarketHead();
+      // Dokumen final hanya boleh dibuat backend tepercaya melalui Admin SDK
+      // setelah arsip PDF TTE diverifikasi. Client browser selalu ditolak.
+      allow create: if false;
       allow update: if annualReviewer()
         && resource.data.status == 'ISSUED'
         && request.resource.data.status == 'ISSUED'
@@ -675,7 +695,7 @@ service cloud.firestore {
         && request.resource.data.status == 'SUBMITTED' && request.resource.data.publicStatus == true
         && request.resource.data.traderId == '' && request.resource.data.marketRoutes.size() == 0
         && request.resource.data.reviewMessage == '' && request.resource.data.correctionSections.size() == 0 && request.resource.data.canResubmit == false
-        && request.resource.data.environment == 'UAT' && request.resource.data.isDemo == true
+        && request.resource.data.environment == 'PROD' && request.resource.data.isDemo == false
         && request.resource.data.schemaVersion == 2 && request.resource.data.updatedAt == request.time;
       allow create, update: if adminStaff()
         && request.resource.data.keys().hasOnly(['intakeId','publicToken','registrationCode','status','publicStatus','displayName','traderId','businessType','marketName','marketRoutes','statementVersion','statementAcceptedAt','photoMediaToken','reviewMessage','correctionSections','canResubmit','environment','isDemo','schemaVersion','updatedAt'])
@@ -685,6 +705,8 @@ service cloud.firestore {
         && request.resource.data.status is string
         && request.resource.data.displayName is string
         && request.resource.data.traderId is string
+        && request.resource.data.environment == 'PROD'
+        && request.resource.data.isDemo == false
         && request.resource.data.schemaVersion in [1,2]
         && (!('reviewMessage' in request.resource.data) || (request.resource.data.reviewMessage is string && request.resource.data.reviewMessage.size() <= 500))
         && (!('correctionSections' in request.resource.data) || (request.resource.data.correctionSections is list && request.resource.data.correctionSections.size() <= 5))
@@ -700,32 +722,8 @@ service cloud.firestore {
     }
     match /public_skpt_verification/{token} {
       allow get: if resource.data.verificationToken == token && resource.data.status == 'ISSUED';
-      allow create: if kadis()
-        && request.resource.data.keys().hasOnly(['verificationToken','documentId','applicationId','number','displayName','status','traderId','marketUnitId','issueDate','validUntil','documentHash','hashAlgorithm','hashScope','tteStatus','officialReference','documentSnapshot','signatory','annualValidations','photoMediaToken','legalBasisVersion','environment','isDemo','schemaVersion'])
-        && request.resource.data.verificationToken == token
-        && request.resource.data.status == 'ISSUED'
-        && request.resource.data.environment == 'UAT'
-        && request.resource.data.isDemo == true
-        && request.resource.data.tteStatus == 'UAT_SIMULATED'
-        && request.resource.data.documentId is string
-        && request.resource.data.applicationId is string
-        && existsAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId))
-        && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId)).data.verificationToken == token
-        && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId)).data.applicationId == request.resource.data.applicationId
-        && getAfter(/databases/$(database)/documents/skpt_documents/$(request.resource.data.documentId)).data.documentHash == request.resource.data.documentHash
-        && request.resource.data.number is string
-        && request.resource.data.displayName is string
-        && request.resource.data.traderId is string
-        && request.resource.data.marketUnitId is string
-        && request.resource.data.validUntil is string
-        && request.resource.data.documentSnapshot is map
-        && request.resource.data.documentSnapshot.keys().hasOnly(['displayName','address','businessType','marketName','marketId','unitType','unitNumber','block','floor','areaM2'])
-        && request.resource.data.signatory is map
-        && request.resource.data.signatory.keys().hasOnly(['name','nip','rank','position','authority'])
-        && request.resource.data.annualValidations is list
-        && request.resource.data.annualValidations.size() <= 3
-        && request.resource.data.documentHash is string && request.resource.data.documentHash.size() == 64
-        && request.resource.data.schemaVersion == 3;
+      // Cermin verifikasi publik dibuat atomik oleh backend bersama dokumen final.
+      allow create: if false;
       allow update: if annualReviewer()
         && resource.data.status == 'ISSUED'
         && request.resource.data.status == 'ISSUED'
@@ -753,7 +751,10 @@ service cloud.firestore {
     }
     match /app_settings/{docId} {
       allow read: if true;
-      allow write: if kadis();
+      allow write: if kadis()
+        && docId == 'general'
+        && request.resource.data.signatory is map
+        && request.resource.data.signatory.tteMode in ['BSRE_INTEGRATED','MANUAL_UPLOAD'];
     }
     match /{collection}/{id} {
       allow read, write: if false;

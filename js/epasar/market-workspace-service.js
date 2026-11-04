@@ -156,6 +156,8 @@
         console.warn(`Media ${mediaType} tidak dapat dimuat.`, error);
         return null;
       })));
+    const correctionSnapshot = await database().collection('trader_media').where('claimId', '==', claim.id).limit(10).get().catch(() => null);
+    if (correctionSnapshot) snapshots.push(correctionSnapshot);
     return snapshots.filter(Boolean).flatMap(snapshot => snapshot.docs.map(document => ({ id: document.id, ...document.data() })))
       .filter(media => allowedTypes.includes(media.mediaType) && media.mime === 'image/webp' && media.dataBase64);
   }

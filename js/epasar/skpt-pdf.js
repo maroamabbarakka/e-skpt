@@ -158,7 +158,7 @@
 
       const annual = Array.isArray(d.annualValidations) ? d.annualValidations : [{year:issueYear,status:'INITIAL_ISSUE'},{year:issueYear+1,status:'DUE'}];
       const annualCell = (item, fallbackYear) => { const labels = {VALIDATED:'DISAHKAN',INITIAL_ISSUE:'PENERBITAN AWAL',DUE:'MENUNGGU PEMERIKSAAN',RETURNED:'DIKEMBALIKAN'}; const status = labels[item?.status] || 'BELUM TERCATAT'; return `<span>Tahun ${esc(item?.year || fallbackYear)}<small class="annual-status ${item?.status === 'DUE' || item?.status === 'RETURNED' ? 'due' : ''}">${status}</small></span>`; };
-      const photoUrl = await publicPhoto(d.photoMediaToken, s.photoUrl || (d.isDemo ? 'assets/uat/pedagang-contoh-3x4.jpg' : ''));
+      const photoUrl = await publicPhoto(d.photoMediaToken, s.photoUrl || '');
       const photoBlock = photoUrl ? `<div class="document-verification-photo"><img class="document-photo" src="${esc(photoUrl)}" alt="Foto pedagang"></div>` : '<div class="document-verification-photo document-photo document-photo-empty">Foto belum tersedia</div>';
       root.innerHTML = `${isTrainingDocument ? '<div class="uat-document-banner"><strong>DOKUMEN UJI COBA</strong><span>Tidak berlaku sebagai dokumen resmi</span></div>' : ''}
         <header class="official-letterhead"><img class="document-crest" src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div class="document-agency">PEMERINTAH KABUPATEN PINRANG</div><div class="document-agency document-agency-dept">DINAS PERINDUSTRIAN, PERDAGANGAN,<br>ENERGI DAN SUMBER DAYA MINERAL</div><div class="document-address">${esc(officeAddress)}</div></header>

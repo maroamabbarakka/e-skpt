@@ -7,6 +7,7 @@
 @media(max-width:380px){.two-col{grid-template-columns:1fr}.form-shell{padding-left:12px;padding-right:12px}.form-step{padding:16px}}
 @media(prefers-reduced-motion:reduce){.progress-bar{transition:none}}
 .media-status{display:block;margin-top:6px;color:#1261a0;font-size:.82rem}.photo-preview{display:block;max-width:160px;max-height:160px;margin-top:10px;border-radius:10px;border:1px solid #cbd8e6;object-fit:cover}
+.upload-choices{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.upload-choices label{margin:0}.upload-choices input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.upload-choices .upload-action{display:inline-flex;min-height:38px;padding:8px 12px;align-items:center;border:1px solid #8ab7df;border-radius:9px;background:#f4f9ff;color:#075dab;font-weight:800;cursor:pointer}.upload-choices .upload-action:hover{background:#e6f2ff}
 .form-shell{padding-top:92px;background-image:url('../logo_pinrang_opt.png');background-repeat:no-repeat;background-position:16px 16px;background-size:68px auto}
 .admin-shell{background-image:url('../logo_pinrang_opt.png');background-repeat:no-repeat;background-position:16px 16px;background-size:68px auto;padding-top:100px}
 .admin-shell{background-image:none;padding-top:32px;max-width:1180px}

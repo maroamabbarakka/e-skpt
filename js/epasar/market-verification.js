@@ -136,6 +136,18 @@
     identityPanel.insertAdjacentHTML('beforeend', `<div><small>Jenis usaha</small><strong>${escapeHtml(applicant.businessType || 'Belum tersedia')}</strong></div><div><small>ID pedagang</small><strong>${escapeHtml(claim.traderId || 'Belum tersedia')}</strong></div><div><small>ID klaim</small><strong>${escapeHtml(claim.id)}</strong></div>`);
     const form = items.querySelector('form[data-id]');
     form.insertAdjacentHTML('beforebegin', `<section class="verification-evidence"><div><h3>BUKTI VISUAL PENDAFTARAN</h3><p>Gunakan foto untuk mencocokkan orang, usaha, dan lokasi. Foto KTP/KK tidak ditampilkan karena merupakan dokumen administratif terbatas.</p></div><div class="verification-photo-gallery" data-media-for="${escapeHtml(claim.id)}"><div class="verification-photo-loading">Memuat foto terkait…</div></div></section>`);
+    form.insertAdjacentHTML('beforebegin', `<form class="photo-correction-form" data-photo-correction="${escapeHtml(claim.id)}"><h3>Koreksi foto tanpa menghapus riwayat</h3><p class="notice">Foto pengganti disimpan sebagai revisi baru. Foto sebelumnya tetap tersedia dalam audit.</p><div class="workflow-grid"><label>Jenis foto<select name="mediaType" required><option value="PROFILE">Foto pedagang</option><option value="EVIDENCE">Foto usaha</option><option value="LOCATION">Foto lokasi/unit</option></select></label><label>Foto pengganti<input name="photo" type="file" accept="image/*" required></label></div><label>Alasan koreksi<textarea name="reason" minlength="10" maxlength="500" required placeholder="Jelaskan ketidaksesuaian foto lama dan dasar penggantian."></textarea></label><button class="button secondary" type="submit">Simpan Revisi Foto</button></form>`);
+    const photoForm = items.querySelector('[data-photo-correction]');
+    photoForm.addEventListener('submit', async event => {
+      event.preventDefault(); const button = photoForm.querySelector('[type="submit"]'); button.disabled = true;
+      try {
+        const media = mediaCache.get(claim.id) || await window.EPASAR_MARKET_WORKSPACE.claimMedia(claim), type = photoForm.elements.mediaType.value;
+        const previous = [...media].reverse().find(item => item.mediaType === type);
+        await window.EPASAR_MARKET_PHOTO_CORRECTION.save({ claim, application: claim.application, actor: profile, mediaType: type, reason: photoForm.elements.reason.value, file: photoForm.elements.photo.files?.[0], previousMediaId: previous?.id || '' });
+        mediaCache.delete(claim.id); photoForm.reset(); await populateMedia(claim); notify('Revisi foto tersimpan tanpa menghapus foto sebelumnya.');
+      } catch (error) { notify(friendlyError(error, 'Revisi foto belum dapat disimpan.'), true); }
+      finally { button.disabled = false; }
+    });
     populateMedia(claim).catch(error => {
       console.error(error);
       const gallery = items.querySelector(`[data-media-for="${CSS.escape(claim.id)}"]`);
@@ -151,7 +163,7 @@
         const values = Object.fromEntries(new FormData(form));
         values.conflict = form.elements.conflict.checked;
         const result = await window.EPASAR_WORKFLOW.verifyClaim(claim, values, profile);
-        notify(result.conflict ? 'Konflik unit tercatat dan dikirim ke antrean Admin. Admin akan menyampaikan perbaikan kepada pedagang via WhatsApp.' : `Unit ${result.unitId} terverifikasi dan berkas diteruskan untuk review Kadis.`);
+        notify(result.conflict ? 'Konflik unit tercatat dan dikirim ke antrean Admin. Admin akan menyampaikan perbaikan kepada pedagang via WhatsApp.' : `Unit ${result.unitId} terverifikasi dan berkas diteruskan untuk telaah Kepala UPTD.`);
         pendingRows = pendingRows.filter(row => row.id !== claim.id);
         directoryRows = directoryRows.map(row => row.id === claim.id ? { ...row, state: result.conflict ? 'CONFLICT' : 'VERIFIED', verificationStatus: result.conflict ? 'CONFLICT' : 'VERIFIED' } : row);
         renderDirectory(directoryRows);

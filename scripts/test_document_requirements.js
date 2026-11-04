@@ -28,6 +28,8 @@ assert(form.includes("step === 4 && !window.EPASAR_MEDIA_BUFFER?.IDENTITY_KTP"),
 assert(form.includes("data.applySkpt && !window.EPASAR_MEDIA_BUFFER?.PROFILE"), 'Selfie wajib divalidasi hanya untuk e-SKPT.');
 assert(form.includes("data.applySkpt && !window.EPASAR_MEDIA_BUFFER?.EVIDENCE"), 'Foto usaha wajib divalidasi hanya untuk e-SKPT.');
 assert(form.includes("data.applySkpt ? ['IDENTITY_KTP', 'IDENTITY_KK', 'PROFILE', 'EVIDENCE'] : ['IDENTITY_KTP', 'IDENTITY_KK']"), 'Pendataan biasa tidak boleh mengunggah media khusus e-SKPT.');
+assert(!html.includes('id="identityKtpPhoto" name="identityKtpPhoto" type="file" accept="image/*" capture='), 'Input file KTP tidak boleh memaksa kamera.');
+assert(html.includes('id="identityKtpCamera"') && html.includes('Pilih File/Galeri'), 'Kamera dan file/galeri KTP harus menjadi pilihan terpisah.');
 assert(form.includes('if (!createdIntake) {'), 'Retry lampiran tidak boleh membuat intake utama kedua.');
 assert(form.includes('if (uploadedMediaKeys.has(key)) continue;'), 'Retry tidak boleh mengunggah ulang media yang sudah berhasil dalam sesi berjalan.');
 assert(form.includes("button.textContent = 'Lanjutkan unggah lampiran';"), 'Kegagalan parsial harus menyediakan tindakan retry yang jelas.');

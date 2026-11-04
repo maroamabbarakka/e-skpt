@@ -239,7 +239,7 @@
         <div class="kpi-grid dashboard-kpis" style="margin-bottom: 24px;">
           <article class="kpi kpi-soft-blue" data-kadis-kpi="kpiKadisTraders" title="Klik untuk rincian sebaran pedagang di 11 pasar"><small>Total Pedagang Terdata</small><strong id="kpiKadisTraders">...</strong><p>11 Pasar se-Kab. Pinrang</p></article>
           <article class="kpi kpi-soft-amber" data-kadis-kpi="kpiKadisPending" title="Klik untuk berkas menunggu persetujuan Kadis"><small>Menunggu Persetujuan Kadis</small><strong id="kpiKadisPending">...</strong><p>Siap diputuskan & TTE</p></article>
-          <article class="kpi kpi-soft-green" data-kadis-kpi="kpiKadisIssued" title="Klik untuk SKPT resmi yang telah diterbitkan"><small>SKPT Resmi Diterbitkan</small><strong id="kpiKadisIssued">...</strong><p>Tervalidasi TTE Elektronik</p></article>
+          <article class="kpi kpi-soft-green" data-kadis-kpi="kpiKadisIssued" title="Klik untuk SKPT yang tercatat telah diterbitkan"><small>SKPT Tercatat Terbit</small><strong id="kpiKadisIssued">...</strong><p>Periksa metadata dan arsip TTE</p></article>
           <article class="kpi kpi-soft-cyan" data-kadis-kpi="kpiKadisNonMarket" title="Klik untuk rincian pedagang non-pasar / mandiri"><small>Pedagang Non-Pasar</small><strong id="kpiKadisNonMarket">...</strong><p>Mandiri Luar Pasar</p></article>
           <article class="kpi kpi-soft-purple" data-kadis-kpi="kpiKadisMarkets" title="Klik untuk direktori 11 pasar resmi & jadwal aktif"><small>Unit Pasar Resmi Terkelola</small><strong id="kpiKadisMarkets">11 Pasar</strong><p>Jadwal Operasional Dinamis</p></article>
         </div>
@@ -271,9 +271,9 @@
           <aside class="app-panel">
             <h2>Otoritas Tanda Tangan Elektronik</h2>
             <p class="app-panel-sub">Dasar hukum penerbitan SKPT Kabupaten Pinrang.</p>
-            <div class="notice" style="margin-bottom: 12px; border-left-color: #2563eb; background:#eff6ff; color:#1e40af;">
-              <b>Sertifikasi Digital Resmi</b><br>
-              SKPT yang disetujui Kepala Dinas langsung dilengkapi QR Code cryptographic yang dapat diverifikasi oleh publik secara real-time.
+            <div class="notice" style="margin-bottom: 12px; border-left-color: #d97706; background:#fffbeb; color:#92400e;">
+              <b>Penerbitan Digital Belum Diaktifkan</b><br>
+              Persetujuan Kepala Dinas baru mereservasi nomor dan menghasilkan draft. SKPT resmi hanya boleh terbit setelah backend penyimpanan memverifikasi PDF hasil TTE, ukuran berkas, lokasi arsip, dan hash SHA-256.
             </div>
             <div style="background: #f8fafc; border:1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-size: 0.82rem; color: #475569;">
               ⚖️ Perda Kab. Pinrang No. 6 Tahun 2024 tentang Pengelolaan Pasar Rakyat dan Retribusi Jasa Umum.
@@ -453,6 +453,20 @@
     return snapshot.size;
   }
 
+  async function countForAssignedMarkets(collectionName, marketIds, field, operator, value, marketField = 'marketId') {
+    if (!Array.isArray(marketIds) || marketIds.length === 0) return 0;
+    const values = await Promise.all(marketIds.map(async marketId => {
+      let query = window.db.collection(collectionName).where(marketField, '==', marketId);
+      if (field) query = query.where(field, operator, value);
+      if (typeof query.count === 'function') {
+        const aggregate = await query.count().get();
+        return aggregate.data().count;
+      }
+      return (await query.get()).size;
+    }));
+    return values.reduce((total, value) => total + Number(value || 0), 0);
+  }
+
   async function getNonMarketTradersData(options = {}) {
     const force = options.force === true;
     const now = Date.now();
@@ -536,18 +550,27 @@
         kpiSubmitted: count('trader_intake', 'status', '==', 'SUBMITTED'),
         kpiMarket: count('market_claims', 'verificationStatus', '==', 'UNVERIFIED'),
         kpiConflict: count('market_claims', 'verificationStatus', '==', 'CONFLICT'),
+        kpiUptd: count('skpt_applications', 'status', '==', 'UPTD_REVIEW'),
         kpiKadis: count('skpt_applications', 'status', '==', 'KADIS_REVIEW'),
+        kpiTte: Promise.all(['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].map(status => count('skpt_applications', 'status', '==', status))).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0)),
         kpiIssued: count('skpt_documents', 'status', '==', 'ISSUED'),
         kpiAnnual: count('skpt_annual_validations', 'status', '==', 'PENDING_REVIEW')
       };
       if (currentProfile?.role === 'MARKET_ADMIN') {
-        delete targets.kpiSubmitted;
         const marketIds = window.EPASAR_ADMIN_INTAKE.assignedMarketIds(currentProfile);
-        const submitted = marketIds.length
-          ? await window.db.collection('trader_intake').where('routingMarketIds', 'array-contains-any', marketIds).where('status', '==', 'SUBMITTED').get()
-          : { size: 0 };
-        const submittedElement = document.getElementById('kpiSubmitted');
-        if (submittedElement) submittedElement.textContent = submitted.size;
+        targets.kpiTotalTraders = countForAssignedMarkets('market_trader_directory', marketIds, 'status', '==', 'ACTIVE');
+        targets.kpiSubmitted = marketIds.length
+          ? window.db.collection('trader_intake').where('routingMarketIds', 'array-contains-any', marketIds).where('status', '==', 'SUBMITTED').get().then(snapshot => snapshot.size)
+          : Promise.resolve(0);
+        targets.kpiMarket = countForAssignedMarkets('market_claims', marketIds, 'verificationStatus', '==', 'UNVERIFIED');
+        targets.kpiConflict = countForAssignedMarkets('market_claims', marketIds, 'verificationStatus', '==', 'CONFLICT');
+        targets.kpiUptd = countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', 'UPTD_REVIEW');
+        targets.kpiKadis = countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', 'KADIS_REVIEW');
+        targets.kpiTte = Promise.all(['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].map(status =>
+          countForAssignedMarkets('skpt_applications', marketIds, 'status', '==', status)
+        )).then(values => values.reduce((sum, value) => sum + Number(value || 0), 0));
+        targets.kpiIssued = countForAssignedMarkets('skpt_documents', marketIds, 'status', '==', 'ISSUED', 'documentSnapshot.marketId');
+        targets.kpiAnnual = countForAssignedMarkets('skpt_annual_validations', marketIds, 'status', '==', 'PENDING_REVIEW');
       }
       await Promise.all(Object.entries(targets).map(async ([id, promise]) => {
         try { document.getElementById(id).textContent = await promise; }
@@ -557,7 +580,10 @@
       const metricLabels = {
         kpiTotalTraders: ['Total Pedagang Aktif', 'Master pedagang resmi', 'Jumlah master pedagang aktif; tidak termasuk pengajuan yang belum disetujui.'],
         kpiSubmitted: ['Pengajuan Baru', 'Belum menjadi master pedagang', 'Berkas berstatus SUBMITTED yang masih menunggu review admin.'],
-        kpiMarket: ['Klaim Menunggu Verifikasi', 'Bukan jumlah pedagang atau unit fisik', 'Klaim lokasi atau unit berstatus UNVERIFIED; satu pedagang dapat memiliki lebih dari satu klaim.']
+        kpiMarket: ['Klaim Menunggu Verifikasi', 'Bukan jumlah pedagang atau unit fisik', 'Klaim lokasi atau unit berstatus UNVERIFIED; satu pedagang dapat memiliki lebih dari satu klaim.'],
+        kpiUptd: ['Menunggu Kepala UPTD', 'Permohonan, bukan jumlah pedagang', 'Permohonan berstatus UPTD_REVIEW setelah verifikasi lapangan selesai.'],
+        kpiKadis: ['Menunggu Kepala Dinas', 'Permohonan siap diputuskan', 'Permohonan berstatus KADIS_REVIEW setelah disetujui Kepala UPTD.'],
+        kpiTte: ['Proses Dokumen TTE', 'Belum termasuk SKPT terbit', 'Gabungan TTE_PENDING, TTE_UPLOADING, TTE_UPLOADED, dan TTE_REJECTED.']
       };
       Object.entries(metricLabels).forEach(([id, text]) => {
         const value = document.getElementById(id);
@@ -725,7 +751,9 @@
       kpiSubmitted: { title: 'Antrean Pendaftaran Baru Masuk', subtitle: 'PENDAFTARAN MENUNGGU TINJAUAN ADMIN' },
       kpiMarket: { title: 'Klaim Menunggu Verifikasi Fisik Pasar', subtitle: 'PEMERIKSAAN KEPALA PASAR' },
       kpiConflict: { title: 'Daftar Unit Tercatat Konflik', subtitle: 'PENANGANAN & KOREKSI LAPANGAN' },
+      kpiUptd: { title: 'Permohonan Menunggu Keputusan Kepala UPTD', subtitle: 'TELAAH HASIL VERIFIKASI LAPANGAN' },
       kpiKadis: { title: 'Permohonan Siap Pengesahan Kadis', subtitle: 'KEPUTUSAN KEPALA DINAS' },
+      kpiTte: { title: 'Permohonan dalam Proses Dokumen TTE', subtitle: 'BELUM BERSTATUS SKPT TERBIT' },
       kpiIssued: { title: 'Dokumen SKPT Resmi Diterbitkan', subtitle: 'DOKUMEN LEGALITAS AKTIF' },
       kpiAnnual: { title: 'Pemeriksaan & Validasi Tahunan', subtitle: 'MONITORING SKPT DUA TAHUN' },
       kpiPage: { title: 'Informasi Paginasi & Navigasi Antrean', subtitle: 'KONTROL ANTREAN PENDAFTARAN' },
@@ -770,10 +798,11 @@
         const snap = await window.db.collection('market_claims').where('verificationStatus', '==', 'CONFLICT').limit(80).get();
         currentKpiData = [];
         snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
-      } else if (type === 'kpiKadis' || type === 'kpiKadisPending') {
-        const snap = await window.db.collection('skpt_applications').where('status', '==', 'KADIS_REVIEW').limit(100).get();
+      } else if (type === 'kpiUptd' || type === 'kpiKadis' || type === 'kpiKadisPending' || type === 'kpiTte') {
+        const statuses = type === 'kpiUptd' ? ['UPTD_REVIEW'] : type === 'kpiTte' ? ['TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'] : ['KADIS_REVIEW'];
+        const snapshots = await Promise.all(statuses.map(status => window.db.collection('skpt_applications').where('status', '==', status).limit(100).get()));
         currentKpiData = [];
-        snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() }));
+        snapshots.forEach(snap => snap.forEach(d => currentKpiData.push({ id: d.id, ...d.data() })));
       } else if (type === 'kpiTotalTraders' || type === 'kpiKadisTraders') {
         const snap = await window.db.collection('traders').limit(150).get();
         currentKpiData = [];
@@ -1058,15 +1087,19 @@
           <td><a href="market-verification.html" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Tindak Lanjuti →</a></td>
         </tr>`).join('')
       }</tbody></table>`;
-    } else if (currentKpiType === 'kpiKadis' || currentKpiType === 'kpiKadisPending') {
+    } else if (['kpiUptd','kpiKadis','kpiKadisPending','kpiTte'].includes(currentKpiType)) {
       bodyEl.innerHTML = `<table class="db-popup-table"><thead><tr><th>No</th><th>ID Permohonan</th><th>Pemohon</th><th>Pasar & Unit</th><th>Status</th><th>Aksi Pengesahan</th></tr></thead><tbody>${
         matching.map((r, i) => `<tr>
           <td>${i + 1}</td>
           <td><b>${esc(r.id)}</b><br><small>Pedagang: ${esc(r.traderId)}</small></td>
           <td>${esc(r.applicantSnapshot?.displayName || r.traderDisplayName || 'Pemohon')}<br><small>${esc(r.applicantSnapshot?.businessName || '')}</small></td>
           <td>${esc(r.applicantSnapshot?.marketName || r.marketId)}<br><small>${esc(r.applicantSnapshot?.claimedUnitType || r.unitType)} ${esc(r.applicantSnapshot?.claimedUnitNumber || r.unitNumber)}</small></td>
-          <td><span class="db-badge db-badge-info">SIAP KEPUTUSAN</span></td>
-          <td><a href="kadis-approval.html?id=${encodeURIComponent(r.id)}" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Tinjau & Setujui Kadis →</a></td>
+          <td><span class="db-badge db-badge-info">${esc(r.status || 'DALAM PROSES')}</span></td>
+          <td>${currentKpiType === 'kpiUptd'
+            ? `<a href="uptd-approval.html?id=${encodeURIComponent(r.id)}" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Telaah UPTD</a>`
+            : currentKpiType === 'kpiTte'
+              ? `<a href="kadis-approval.html?id=${encodeURIComponent(r.id)}" class="button secondary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Lihat Proses Dokumen</a>`
+              : `<a href="kadis-approval.html?id=${encodeURIComponent(r.id)}" class="button primary" style="min-height:28px;padding:2px 8px;font-size:0.68rem;text-decoration:none;">Tinjau Kadis</a>`}</td>
         </tr>`).join('')
       }</tbody></table>`;
     } else if (currentKpiType === 'kpiKadisMarkets') {

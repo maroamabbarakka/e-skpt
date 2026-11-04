@@ -17,7 +17,10 @@
     <select id="kadisStageFilter" style="min-height:38px; font-size:0.85rem; padding:6px 10px; margin:0; border-radius:8px;">
       <option value="">Semua Tahapan</option>
       <option value="KADIS_REVIEW">Menunggu Persetujuan Kadis</option>
-      <option value="TTE_PENDING">Menunggu Penerbitan TTE</option>
+      <option value="TTE_PENDING">Menunggu Unggah PDF TTE</option>
+      <option value="TTE_UPLOADING">Sedang Disinkronkan Backend</option>
+      <option value="TTE_UPLOADED">PDF Terverifikasi, Menunggu Finalisasi</option>
+      <option value="TTE_REJECTED">PDF Ditolak / Perlu Diganti</option>
     </select>
   </div>
   <div>
@@ -28,5 +31,5 @@
   <span id="kadisCountText">Menampilkan seluruh permohonan aktif</span>
 </div>
 <div id="items"></div></section></main>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/constants.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/auth-service.js"></script><script src="js/epasar/internal-shell.js"></script><script src="js/epasar/workflow-service.js"></script><script src="js/epasar/kadis-approval.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/epasar/firebase-config.local.js"></script><script src="js/epasar/backend-config.js"></script><script src="js/epasar/constants.js"></script><script src="js/epasar/config.js"></script><script src="js/epasar/auth-service.js"></script><script src="js/epasar/internal-shell.js"></script><script src="js/epasar/skpt-storage.js"></script><script src="js/epasar/workflow-service.js"></script><script src="js/epasar/kadis-approval.js"></script>
 </body></html>

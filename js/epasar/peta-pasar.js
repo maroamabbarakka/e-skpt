@@ -159,6 +159,12 @@
   // 2b. Memuat Data Sebaran Pelaku Usaha di Luar Pasar (Mandiri & UMKM)
   async function loadNonMarketTraders() {
     try {
+      // Dataset ini adalah contoh desain lama, bukan registrasi terverifikasi.
+      // Jangan publikasikan nama/alamat contoh pada mode produksi.
+      if (new URLSearchParams(location.search).get('demo') !== '1') {
+        allNonMarkets = [];
+        return;
+      }
       const response = await fetch('assets/data/non_market_traders_geo.json');
       if (!response.ok) return;
       allNonMarkets = await response.json();

@@ -24,6 +24,8 @@ def main() -> None:
     require("js/epasar/image-compress.js")
     require("js/epasar/intake-service.js")
     require("js/epasar/skpt-document-service.js")
+    require("js/epasar/place-limit.js")
+    reads_audit = require("AUDIT_FIRESTORE_READS.md")
     require("js/epasar/public-unit-verification.js")
     markets = require("assets/data/markets.json")
     constants = require("js/epasar/constants.js")
@@ -43,9 +45,15 @@ def main() -> None:
     assert "match /trader_intake/{id}" in rules
     assert "allow get: if canAccessIntake(resource.data);" in rules
     assert "allow list: if adminStaff();" in rules
+    assert "function kadis() { return activeStaff() && profile().role == 'KADIS'; }" in rules
+    assert "allow read: if centralAdmin();" in rules
     assert 'src="js/epasar/constants.js' in admin_html
     assert "routingMarketIds" in rules
     assert "canAccessNotification" in rules
+    assert "match /trader_market_place_ledgers/{id}" in rules
+    assert "EPASAR_READ_TELEMETRY" in require("js/epasar/database-pedagang.js")
+    assert "get('demo') !== '1'" in require("js/epasar/peta-pasar.js")
+    assert "Firebase Usage dashboard" in reads_audit
     assert "dataBase64" in rules
     assert "publicToken" in rules
     assert not re.search(r"apiKey\s*:\s*['\"]", html)

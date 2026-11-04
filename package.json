@@ -1,10 +1,16 @@
 {
   "scripts": {
     "test:skpt": "node tests/skpt-workflow-core.test.cjs",
+    "test:flow": "node scripts/test_full_workflow_contract.js",
+    "test:place-limit": "node --test tests/place-limit.test.cjs",
+    "audit:place-limit": "node scripts/audit_place_limit_ledger.js",
     "test:rules": "firebase emulators:exec --only firestore --config firebase.test.json --project demo-epasar-role-boundaries \"npm --prefix tests/rules test\"",
     "check": "python scripts/check_epasar.py"
   },
-  "dependencies": {
-    "xlsx": "0.18.5"
+  "overrides": {
+    "uuid": "11.1.1"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0"
   }
 }

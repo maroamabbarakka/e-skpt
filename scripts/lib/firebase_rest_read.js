@@ -37,6 +37,9 @@ function createReadClient({ email, password }) {
   }
 
   async function list(idToken, collectionName) {
+    if (process.env.EPASAR_ALLOW_FULL_SCAN !== 'YES') {
+      throw new Error(`Pemindaian penuh ${collectionName} diblokir. Tetapkan EPASAR_ALLOW_FULL_SCAN=YES hanya untuk audit terencana.`);
+    }
     const rows = [];
     let pageToken = '';
     do {

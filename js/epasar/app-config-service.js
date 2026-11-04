@@ -22,7 +22,7 @@
       rank: 'Pembina Tingkat I (IV/b)',
       position: 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral',
       authority: 'a.n. BUPATI PINRANG',
-      tteMode: 'UAT_SIMULATED', // 'UAT_SIMULATED', 'BSRE_OFFICIAL', 'MANUAL_UPLOAD'
+      tteMode: 'MANUAL_UPLOAD', // 'BSRE_INTEGRATED' setelah integrasi resmi, selain itu 'MANUAL_UPLOAD'
       manualSignatureImage: null, // base64 string jika upload manual
       tteNotice: 'Telah ditandatangani secara elektronik menggunakan sertifikat digital terverifikasi'
     },
@@ -73,6 +73,10 @@
     return null;
   };
 
+  function normalizeTteMode(value) {
+    return ['BSRE_INTEGRATED', 'MANUAL_UPLOAD'].includes(value) ? value : 'MANUAL_UPLOAD';
+  }
+
   async function getSettings(forceRefresh) {
     if (cachedSettings && !forceRefresh) return cachedSettings;
 
@@ -85,7 +89,7 @@
         const data = snap.data();
         // Gabungkan dengan default untuk menjaga properti lengkap
         cachedSettings = {
-          signatory: { ...DEFAULT_SETTINGS.signatory, ...(data.signatory || {}) },
+          signatory: { ...DEFAULT_SETTINGS.signatory, ...(data.signatory || {}), tteMode: normalizeTteMode(data.signatory?.tteMode) },
           cardDesign: { ...DEFAULT_SETTINGS.cardDesign, ...(data.cardDesign || {}) },
           frontpage: { ...DEFAULT_SETTINGS.frontpage, ...(data.frontpage || {}) },
           marketsSchedule: { ...DEFAULT_SETTINGS.marketsSchedule, ...(data.marketsSchedule || {}) },
@@ -111,7 +115,7 @@
     if (!db) throw new Error('Koneksi basis data Firestore tidak tersedia.');
 
     const payload = {
-      signatory: newSettings.signatory || DEFAULT_SETTINGS.signatory,
+      signatory: { ...(newSettings.signatory || DEFAULT_SETTINGS.signatory), tteMode: normalizeTteMode(newSettings.signatory?.tteMode) },
       cardDesign: newSettings.cardDesign || DEFAULT_SETTINGS.cardDesign,
       frontpage: newSettings.frontpage || DEFAULT_SETTINGS.frontpage,
       marketsSchedule: newSettings.marketsSchedule || DEFAULT_SETTINGS.marketsSchedule,

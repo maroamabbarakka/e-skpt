@@ -1,5 +1,9 @@
 'use strict';
 
+if (process.env.EPASAR_ALLOW_FULL_SCAN !== 'YES') {
+  throw new Error('Inventory live membaca seluruh koleksi. Tetapkan EPASAR_ALLOW_FULL_SCAN=YES hanya setelah menyiapkan anggaran baca.');
+}
+
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');

@@ -1,0 +1,129 @@
+.account-kpis {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.rbac-overview {
+  margin-bottom: 18px;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.rbac-role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 22px 22px;
+}
+
+.rbac-role-card {
+  min-height: 166px;
+  padding: 14px;
+  border: 1px solid #dce6f0;
+  border-top: 3px solid #1681d8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.rbac-role-card.empty {
+  border-top-color: #a9b6c5;
+  background: #f8fafc;
+  opacity: .78;
+}
+
+.rbac-role-card header,
+.rbac-role-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rbac-role-card header strong {
+  color: #173c67;
+  font-size: .75rem;
+  text-align: right;
+}
+
+.rbac-role-code {
+  color: #0871c9;
+  font: 700 .55rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.rbac-role-count {
+  margin-top: 12px;
+  justify-content: flex-start;
+}
+
+.rbac-role-count b {
+  color: #072e67;
+  font-size: 1.65rem;
+}
+
+.rbac-role-count span,
+.rbac-role-card p,
+.rbac-role-card small {
+  color: #647991;
+  font-size: .64rem;
+}
+
+.rbac-role-card p {
+  min-height: 38px;
+  margin: 9px 0 7px;
+  line-height: 1.45;
+}
+
+.rbac-role-card small {
+  display: block;
+  padding-top: 7px;
+  border-top: 1px solid #e7edf4;
+  font-weight: 700;
+}
+
+.account-group-head code {
+  margin-left: 5px;
+  color: #718399;
+  font-size: .58rem;
+}
+
+.staff-scope {
+  display: block;
+  margin-top: 8px;
+  color: #4f657c;
+  font-size: .61rem;
+  line-height: 1.4;
+}
+
+.staff-scope b {
+  display: block;
+  color: #73869a;
+  font-size: .54rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.account-table-wrap { overflow-x: auto; padding: 0 22px 24px; }
+.rbac-user-table { width: 100%; min-width: 1120px; border-collapse: separate; border-spacing: 0; color: #263f5b; font-size: .7rem; }
+.rbac-user-table th { padding: 11px 10px; border-block: 1px solid #dce6f0; background: #f3f7fb; color: #47617d; text-align: left; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.rbac-user-table td { padding: 12px 10px; border-bottom: 1px solid #e5ecf3; vertical-align: top; }
+.rbac-user-table tbody tr:hover { background: #f8fbfe; }
+.rbac-user-table strong, .rbac-user-table small, .rbac-user-table code { display: block; }
+.rbac-user-table strong { color: #173c67; }
+.rbac-user-table small { margin-top: 3px; color: #72859a; font-size: .61rem; }
+.rbac-user-table code { margin-top: 3px; color: #086ab9; font-size: .63rem; }
+.rbac-user-table .row-number { color: #718399; text-align: center; }
+.password-protected { display: inline-block; padding: 4px 7px; border-radius: 7px; background: #fff3d8; color: #885b00; font-size: .61rem; font-weight: 800; white-space: nowrap; }
+.scope-value { display: block; max-width: 220px; line-height: 1.45; }
+.table-edit-button { padding: 6px 10px; border: 1px solid #9fc5e8; border-radius: 8px; background: #fff; color: #075dab; font-weight: 800; cursor: pointer; }
+.table-edit-button:hover { background: #eaf4ff; }
+
+@media (max-width: 1050px) {
+  .account-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rbac-role-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .account-kpis,
+  .rbac-role-grid { grid-template-columns: 1fr; }
+  .rbac-role-grid { padding-inline: 14px; }
+  .account-table-wrap { padding-inline: 14px; }
+}

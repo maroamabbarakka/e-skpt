@@ -123,8 +123,8 @@
       reviewMessage: '',
       correctionSections: [],
       canResubmit: false,
-      environment: 'UAT',
-      isDemo: true,
+      environment: 'PROD',
+      isDemo: false,
       schemaVersion: 2,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });

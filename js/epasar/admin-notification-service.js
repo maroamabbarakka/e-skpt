@@ -35,20 +35,36 @@
 
     pendingCache.key = key;
     pendingCache.promise = (async () => {
-    // Filter di server agar notifikasi yang sudah dikirim tidak ikut dihitung sebagai document read.
-    // Fallback mempertahankan kompatibilitas jika indeks project belum selesai dibangun.
-    let snap;
-    try {
-      snap = await window.db.collection('notifications')
-        .where('type', '==', 'TRADER_DECISION')
-        .where('deliveryStatus', '==', 'PENDING_ADMIN')
-        .limit(PENDING_LIMIT)
-        .get();
-    } catch (error) {
-      if (!/index|failed-precondition/i.test(String(error?.code || error?.message || error))) throw error;
-      snap = await window.db.collection('notifications').where('type', '==', 'TRADER_DECISION').limit(100).get();
+    let docs = [];
+    if (profile?.role === 'MARKET_ADMIN') {
+      // Firestore Rules bukan filter. Setiap query Admin Wilayah wajib membawa
+      // batas pasar agar server dapat membuktikan seluruh hasil berada dalam cakupan.
+      const marketIds = window.EPASAR_ADMIN_INTAKE?.assignedMarketIds(profile) || [];
+      if (!marketIds.length) return [];
+      const snapshots = await Promise.all([
+        window.db.collection('notifications').where('routingMarketIds', 'array-contains-any', marketIds).limit(PENDING_LIMIT).get(),
+        ...marketIds.map(marketId => window.db.collection('notifications').where('marketId', '==', marketId).limit(PENDING_LIMIT).get())
+      ]);
+      const unique = new Map();
+      snapshots.forEach(snapshot => snapshot.docs.forEach(document => unique.set(document.id, document)));
+      docs = [...unique.values()];
+    } else {
+      // Role pusat boleh memakai filter antrean langsung. Fallback dipakai bila
+      // composite index produksi belum selesai dibangun.
+      try {
+        const snapshot = await window.db.collection('notifications')
+          .where('type', '==', 'TRADER_DECISION')
+          .where('deliveryStatus', '==', 'PENDING_ADMIN')
+          .limit(PENDING_LIMIT)
+          .get();
+        docs = snapshot.docs;
+      } catch (error) {
+        if (!/index|failed-precondition/i.test(String(error?.code || error?.message || error))) throw error;
+        docs = (await window.db.collection('notifications').where('type', '==', 'TRADER_DECISION').limit(100).get()).docs;
+      }
     }
-    const rows = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    const rows = docs.map(document => ({ id: document.id, ...document.data() }))
+      .filter(row => row.type === 'TRADER_DECISION')
       .filter(row => row.deliveryStatus === 'PENDING_ADMIN')
       .slice(0, PENDING_LIMIT);
     const visible = [];

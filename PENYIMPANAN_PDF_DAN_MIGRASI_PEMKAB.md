@@ -32,7 +32,9 @@ Dokumen hanya boleh diterbitkan ketika `activeStorage.syncStatus` bernilai `VERI
 
 ## Tahap Google Drive
 
-Gunakan Shared Drive milik organisasi, bukan My Drive pribadi. Upload harus dilakukan backend; kredensial service account tidak boleh berada di JavaScript browser. File tidak dibagikan menggunakan `anyone with the link`.
+Folder sementara telah ditetapkan dengan ID `1q0k68owb_9tLiPlUlu6orwvcIaTlkpM7`. Penggunaannya berstatus `TEMPORARY_ACTIVE` berdasarkan persetujuan 29 Oktober 2026. Konektor Google Drive berhasil membaca folder dan memastikan folder masih kosong pada saat audit. PDF tidak boleh dibagikan melalui URL Drive langsung dan migrasi ke server Pemkab tetap wajib dilakukan.
+
+Selama fase sementara, folder yang telah disetujui dapat digunakan. Upload harus tetap dilakukan backend; kredensial service account tidak boleh berada di JavaScript browser. Saat server Pemkab tersedia, metadata penyimpanan dipindahkan tanpa mengubah nomor, token verifikasi, atau QR.
 
 Backend melakukan:
 

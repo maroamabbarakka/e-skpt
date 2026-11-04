@@ -1,5 +1,9 @@
 'use strict';
 
+if (process.env.EPASAR_ALLOW_FULL_SCAN !== 'YES') {
+  throw new Error('Penyegaran statistik melakukan full scan. Jalankan terjadwal dengan EPASAR_ALLOW_FULL_SCAN=YES, bukan dari alur harian.');
+}
+
 // Membaca data privat dengan akun staf, lalu menulis SATU dokumen agregat
 // tanpa identitas pribadi. Credential wajib berasal dari environment lokal.
 const fs = require('fs');

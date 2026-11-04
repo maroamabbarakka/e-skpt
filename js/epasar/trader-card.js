@@ -321,7 +321,7 @@
         }
       }
 
-      const photoUrl = showPhoto ? await publicPhoto(d.photoMediaToken, d.photoUrl || (isTraining ? 'assets/uat/pedagang-contoh-transparan.png' : '')) : '';
+      const photoUrl = showPhoto ? await publicPhoto(d.photoMediaToken, d.photoUrl || '') : '';
       card.classList.toggle('has-photo', Boolean(photoUrl));
 
       const photoBlock = (showPhoto && photoUrl) ? `<img class="card-photo" src="${esc(photoUrl)}" alt="Foto pedagang">` : '';
@@ -339,7 +339,7 @@
         ? 'Diterbitkan oleh DINAS PERINDAG-ESDM Kabupaten Pinrang melalui <strong>e-PASAR</strong>'
         : 'Diterbitkan oleh DINAS PERINDAG-ESDM Kabupaten Pinrang melalui <strong>e-SKPT</strong>';
 
-      card.innerHTML = `${isTraining ? '<img class="card-uat-stamp" src="assets/stamp-uat.png" alt="Uji coba, bukan kartu resmi">' : ''}<div class="card-brand"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div><b data-fit-one-line data-min-pt="7.5">${esc(oneLine(cardTitle))}</b><small data-fit-one-line data-min-pt="5">${esc(oneLine(cardSubtitle))}</small></div></div><div class="card-name"><h1 data-fit-one-line data-min-pt="8">${esc(oneLine(d.displayName, 'Pelaku Usaha').toLocaleUpperCase('id-ID'))}</h1></div>${photoBlock}<div class="card-person ${unitText ? 'has-unit' : 'no-unit'}"><p class="card-business" data-fit-one-line data-min-pt="6.5">${esc(businessText)}</p><p class="card-market" data-fit-one-line data-min-pt="6.1">${esc(marketText)}</p>${unitText ? `<p class="card-unit" data-fit-one-line data-min-pt="6.1">${esc(unitText)}</p>` : ''}<p class="card-code" data-fit-one-line data-min-pt="6.2">${esc(oneLine(publicNumber(d)))}</p><p class="card-valid-until" data-fit-one-line data-min-pt="5.2">Berlaku s.d.: ${esc(validUntilText)}</p></div>${qrBlock}<div class="card-issuer">${issuerText}</div>`;
+      card.innerHTML = `<div class="card-brand"><img src="logo_pinrang_opt.png" alt="Logo Kabupaten Pinrang"><div><b data-fit-one-line data-min-pt="7.5">${esc(oneLine(cardTitle))}</b><small data-fit-one-line data-min-pt="5">${esc(oneLine(cardSubtitle))}</small></div></div><div class="card-name"><h1 data-fit-one-line data-min-pt="8">${esc(oneLine(d.displayName, 'Pelaku Usaha').toLocaleUpperCase('id-ID'))}</h1></div>${photoBlock}<div class="card-person ${unitText ? 'has-unit' : 'no-unit'}"><p class="card-business" data-fit-one-line data-min-pt="6.5">${esc(businessText)}</p><p class="card-market" data-fit-one-line data-min-pt="6.1">${esc(marketText)}</p>${unitText ? `<p class="card-unit" data-fit-one-line data-min-pt="6.1">${esc(unitText)}</p>` : ''}<p class="card-code" data-fit-one-line data-min-pt="6.2">${esc(oneLine(publicNumber(d)))}</p><p class="card-valid-until" data-fit-one-line data-min-pt="5.2">Berlaku s.d.: ${esc(validUntilText)}</p></div>${qrBlock}<div class="card-issuer">${issuerText}</div>`;
 
       fitCardText();
       requestAnimationFrame(fitCardText);

@@ -6,7 +6,12 @@
   let filteredRecords = [];
   let currentPage = 1;
   const pageSize = 15;
+  const SERVER_PAGE_SIZE = 30;
+  const REFRESH_COOLDOWN_MS = 30 * 1000;
+  let lastOperationalLoadAt = 0;
+  let operationalLoadPromise = null;
   let currentReportScope = null;
+  let readTelemetry = { documents: 0, queries: 0, startedAt: 0 };
   let metricSource = {
     activeTraderIds: new Set(),
     businesses: [],
@@ -21,6 +26,22 @@
 
   const esc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const formatRupiah = num => 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+  const skptStatusLabel = status => ({
+    BELUM_PENGAJUAN: 'Belum mengajukan SKPT',
+    MARKET_VERIFICATION: 'Menunggu verifikasi pasar',
+    MARKET_VERIFIED: 'Verifikasi pasar selesai',
+    UPTD_REVIEW: 'Menunggu keputusan Kepala UPTD',
+    KADIS_REVIEW: 'Menunggu keputusan Kepala Dinas',
+    TTE_PENDING: 'Menunggu penyiapan PDF TTE',
+    TTE_UPLOADING: 'PDF TTE sedang diunggah',
+    TTE_UPLOADED: 'PDF TTE menunggu penerbitan final',
+    TTE_REJECTED: 'PDF TTE perlu diperbaiki',
+    CONFLICT: 'Ditangguhkan karena konflik unit',
+    CORRECTION_REQUIRED: 'Perlu koreksi data',
+    REJECTED: 'Permohonan ditolak',
+    ISSUED: 'SKPT terbit',
+    TIDAK_MEMERLUKAN: 'Tidak memerlukan SKPT'
+  }[status] || status || 'Status belum tersedia');
   const formatDateId = val => {
     if (!val) return '—';
     try {
@@ -74,6 +95,8 @@
       let pageQuery = query.orderBy(firebase.firestore.FieldPath.documentId()).limit(batchSize);
       if (cursor) pageQuery = pageQuery.startAfter(cursor);
       const snapshot = await pageQuery.get();
+      readTelemetry.queries += 1;
+      readTelemetry.documents += snapshot.size;
       snapshot.forEach(doc => rows.push({ id: doc.id, ...doc.data() }));
       cursor = snapshot.docs[snapshot.docs.length - 1] || null;
       if (snapshot.size < batchSize) break;
@@ -139,7 +162,9 @@
     return String(raw).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
   }
 
-  async function loadDatabase(profile) {
+  async function loadDatabaseLegacyFull(profile) {
+    throw new Error('Pemindaian penuh dinonaktifkan pada aplikasi produksi. Gunakan ekspor terjadwal dari backend atau emulator.');
+    readTelemetry = { documents: 0, queries: 0, startedAt: Date.now() };
     notice('Mengumpulkan master database pedagang dan lokasi pasar…');
     if (window.EPASAR_CONFIG_SERVICE && typeof window.EPASAR_CONFIG_SERVICE.getSettings === 'function') {
       try {
@@ -379,12 +404,149 @@
 
       allRecords = isScoped ? records.filter(record => marketInScope(record.marketId, currentReportScope)) : records;
       allRecords = allRecords.filter(record => metricSource.activeTraderIds.has(record.traderId));
+      window.EPASAR_READ_TELEMETRY = Object.freeze({ page: 'database-pedagang', documents: readTelemetry.documents, queries: readTelemetry.queries, durationMs: Date.now() - readTelemetry.startedAt, scope: currentReportScope?.id || 'KABUPATEN' });
+      console.info('[e-PASAR reads]', window.EPASAR_READ_TELEMETRY);
       notice('');
       populateMarketFilter(profile);
       applyFilters();
     } catch (err) {
       console.error('Error memuat database pedagang:', err);
       notice('Gagal memuat master database: ' + err.message, true);
+    }
+  }
+
+  async function safeDocument(collection, id) {
+    if (!id) return null;
+    try {
+      const snapshot = await getDb().collection(collection).doc(id).get();
+      readTelemetry.queries += 1;
+      readTelemetry.documents += snapshot.exists ? 1 : 0;
+      return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null;
+    } catch (error) {
+      console.warn(`Dokumen ${collection}/${id} tidak dapat dibaca:`, error);
+      return null;
+    }
+  }
+
+  async function loadDatabase(profile) {
+    if (operationalLoadPromise) return operationalLoadPromise;
+    if (allRecords.length && Date.now() - lastOperationalLoadAt < REFRESH_COOLDOWN_MS) {
+      applyFilters();
+      notice('Data masih baru. Muat ulang tersedia kembali setelah 30 detik.');
+      return;
+    }
+    operationalLoadPromise = loadDatabaseBounded(profile);
+    try {
+      return await operationalLoadPromise;
+    } finally {
+      operationalLoadPromise = null;
+    }
+  }
+
+  async function loadDatabaseBounded(profile) {
+    readTelemetry = { documents: 0, queries: 0, startedAt: Date.now() };
+    currentReportScope = resolveReportScope(profile);
+    const assignedIds = currentReportScope.marketIds;
+    notice('Memuat 30 data operasional terbaru…');
+
+    try {
+      if (currentReportScope.scoped && !assignedIds.length) {
+        throw new Error('Akun belum memiliki penugasan pasar.');
+      }
+
+      let query = getDb().collection('market_claims');
+      if (assignedIds.length === 1) query = query.where('marketId', '==', assignedIds[0]);
+      else if (assignedIds.length > 1) query = query.where('marketId', 'in', assignedIds.slice(0, 10));
+      const claimSnapshot = await query.limit(SERVER_PAGE_SIZE).get();
+      readTelemetry.queries += 1;
+      readTelemetry.documents += claimSnapshot.size;
+      const claims = claimSnapshot.docs.map(document => ({ id: document.id, ...document.data() }));
+
+      const records = await Promise.all(claims.map(async claim => {
+        const [application, business] = await Promise.all([
+          safeDocument('skpt_applications', claim.applicationId),
+          safeDocument('businesses', claim.businessId)
+        ]);
+        const skptDocument = application?.skptDocumentId
+          ? await safeDocument('skpt_documents', application.skptDocumentId)
+          : null;
+        const market = window.EPASAR?.marketById?.(claim.marketId);
+        const applicant = application?.applicantSnapshot || {};
+        const unitType = claim.claimedUnitType || applicant.claimedUnitType || 'KIOS';
+        return {
+          traderId: claim.traderId || application?.traderId || '',
+          traderDocId: '',
+          displayName: claim.traderDisplayName || applicant.displayName || 'Pedagang',
+          phone: applicant.phone || business?.phone || '',
+          businessName: business?.name || applicant.businessName || 'Usaha belum dilengkapi',
+          businessType: business?.type || applicant.businessType || '',
+          businessCategory: business?.category || business?.group || '',
+          monthlyRevenue: business?.monthlyRevenue ?? null,
+          workerCount: business?.workerCount ?? null,
+          marketId: claim.marketId || 'NON_MARKET',
+          marketName: market?.name || claim.marketName || applicant.marketName || claim.marketId || 'Pasar Rakyat',
+          unitType,
+          unitNumber: claim.claimedUnitNumber || applicant.claimedUnitNumber || '—',
+          block: claim.claimedBlock || '—',
+          floor: claim.claimedFloor || '—',
+          areaM2: claim.claimedAreaM2 ?? applicant.claimedAreaM2 ?? null,
+          operatingSchedule: getMarketSchedule(claim.marketId, market?.name || claim.marketName),
+          verificationStatus: claim.verificationStatus || 'UNVERIFIED',
+          skptStatus: skptDocument?.status || application?.status || 'BELUM_PENGAJUAN',
+          hasSkpt: Boolean(skptDocument && skptDocument.status === 'ISSUED'),
+          skptNumber: skptDocument?.number || application?.skptNumber || '—',
+          skptDocumentId: skptDocument?.id || application?.skptDocumentId || '',
+          verificationToken: skptDocument?.verificationToken || application?.verificationToken || '',
+          documentHash: skptDocument?.documentHash || '',
+          publicToken: application?.publicToken || '',
+          registrationCode: application?.registrationCode || '',
+          claimId: claim.id,
+          applicationId: application?.id || claim.applicationId || '',
+          registeredAt: claim.createdAt?.toDate ? claim.createdAt.toDate().toISOString() : claim.createdAt || ''
+        };
+      }));
+
+      allRecords = records;
+      metricSource = {
+        activeTraderIds: new Set(records.map(record => record.traderId).filter(Boolean)),
+        businesses: records.map(record => ({
+          id: record.claimId,
+          traderId: record.traderId,
+          monthlyRevenue: record.monthlyRevenue,
+          status: 'ACTIVE'
+        })),
+        units: records.map(record => ({
+          id: record.claimId,
+          unitId: record.claimId,
+          marketId: record.marketId,
+          unitType: record.unitType,
+          areaM2: record.areaM2
+        })),
+        occupancies: records.map(record => ({
+          id: record.claimId,
+          traderId: record.traderId,
+          marketId: record.marketId,
+          marketUnitId: record.claimId,
+          status: 'ACTIVE'
+        }))
+      };
+      window.EPASAR_READ_TELEMETRY = Object.freeze({
+        page: 'database-pedagang',
+        mode: 'bounded-operational-page',
+        maximumDocuments: SERVER_PAGE_SIZE * 4,
+        documents: readTelemetry.documents,
+        queries: readTelemetry.queries,
+        durationMs: Date.now() - readTelemetry.startedAt,
+        scope: currentReportScope?.id || 'KABUPATEN'
+      });
+      console.info('[e-PASAR reads]', window.EPASAR_READ_TELEMETRY);
+      lastOperationalLoadAt = Date.now();
+      populateMarketFilter(profile);
+      applyFilters();
+      notice(`Menampilkan maksimal ${SERVER_PAGE_SIZE} klaim operasional. Filter dan ekspor berlaku pada data yang sedang dimuat.`);
+    } catch (error) {
+      console.error('Error memuat database pedagang:', error);
+      notice('Gagal memuat database operasional: ' + error.message, true);
     }
   }
 
@@ -595,9 +757,9 @@
       if (row.hasSkpt) {
         skptBadge = '<span class="db-badge db-badge-success">✓ SKPT Terbit</span>';
         skptDetail = `<span class="db-code-badge" title="Nomor SKPT">${esc(row.skptNumber)}</span>`;
-      } else if (row.skptStatus === 'KADIS_REVIEW' || row.skptStatus === 'TTE_PENDING') {
-        skptBadge = '<span class="db-badge db-badge-info">⏳ Proses Kadis</span>';
-        skptDetail = '<span class="db-sub-hint">Siap TTE</span>';
+      } else if (['UPTD_REVIEW','KADIS_REVIEW','TTE_PENDING','TTE_UPLOADING','TTE_UPLOADED','TTE_REJECTED'].includes(row.skptStatus)) {
+        skptBadge = `<span class="db-badge db-badge-info">${esc(skptStatusLabel(row.skptStatus))}</span>`;
+        skptDetail = '<span class="db-sub-hint">Belum berstatus terbit</span>';
       } else if (row.skptStatus === 'MARKET_VERIFICATION') {
         skptBadge = '<span class="db-badge db-badge-warning">🔍 Verifikasi Pasar</span>';
         skptDetail = '<span class="db-sub-hint">Cek Lapangan</span>';
@@ -999,7 +1161,7 @@
         const skptStatusClass = r.hasSkpt ? 'print-status-success' : (r.skptStatus === 'TIDAK_MEMERLUKAN' ? 'print-status-neutral' : 'print-status-warning');
         const skptText = r.hasSkpt
           ? `✓ ${esc(r.skptNumber)}`
-          : (r.skptStatus === 'TIDAK_MEMERLUKAN' ? 'Bebas SKPT' : (r.skptStatus === 'KADIS_REVIEW' ? 'Telaah Kadis' : 'Dalam Proses'));
+          : skptStatusLabel(r.skptStatus);
 
         const verifyClass = r.verificationStatus === 'VERIFIED' ? 'print-status-success' : (r.verificationStatus === 'CONFLICT' ? 'print-status-danger' : 'print-status-warning');
         const verifyText = r.verificationStatus === 'VERIFIED' ? '✓ VALID' : (r.verificationStatus === 'CONFLICT' ? '⚠ KONFLIK' : 'PENDING');
@@ -1088,18 +1250,22 @@
   }
 
   // EKSPOR KE EXCEL (.XLSX) MULTI-SHEET & LAYOUT PROFESIONAL SIAP CETAK
-  function exportXlsx() {
+  async function exportXlsx() {
     if (!filteredRecords.length) {
       alert('Tidak ada data pedagang yang dapat diekspor.');
       return;
     }
 
-    if (typeof XLSX === 'undefined') {
-      alert('Modul SheetJS Excel belum siap dimuat di peramban Anda. Silakan muat ulang halaman.');
+    if (typeof ExcelJS === 'undefined') {
+      alert('Modul Excel belum siap dimuat di peramban Anda. Silakan muat ulang halaman.');
       return;
     }
 
-    const wb = XLSX.utils.book_new();
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'e-PASAR Kabupaten Pinrang';
+    wb.company = 'Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang';
+    wb.subject = 'Buku induk dan rekapitulasi pedagang pasar rakyat';
+    wb.created = new Date();
     const timeStamp = new Date().toISOString().slice(0, 10);
     const printDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const scopeLabel = selectedReportLabel();
@@ -1171,27 +1337,32 @@
       grandTotal.totalOmzet
     ]);
 
-    const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+    const ws1 = wb.addWorksheet('Rekapitulasi Pasar', {
+      pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
+    });
+    ws1.addRows(sheet1Data);
+    ws1.mergeCells('A1:N1');
+    ws1.mergeCells('A2:N2');
+    ws1.mergeCells('A3:N3');
+    ws1.mergeCells('A4:N4');
+    ws1.mergeCells('A5:N5');
+    ws1.views = [{ state: 'frozen', ySplit: 7 }];
+    ws1.autoFilter = { from: 'A7', to: `N${Math.max(7, ws1.rowCount - 1)}` };
 
     // Atur Lebar Kolom Sheet 1
-    ws1['!cols'] = [
-      { wch: 5 },  // No
-      { wch: 12 }, // Kode Pasar
-      { wch: 32 }, // Nama Pasar
-      { wch: 18 }, // Kecamatan
-      { wch: 30 }, // Hari Operasional
-      { wch: 16 }, // Jumlah Pedagang
-      { wch: 10 }, // Kios
-      { wch: 10 }, // Los
-      { wch: 10 }, // Lapak
-      { wch: 12 }, // Pelataran
-      { wch: 16 }, // Total Unit
-      { wch: 18 }, // SKPT Terbit
-      { wch: 18 }, // Fisik Terverifikasi
-      { wch: 32 }  // Omzet Bulanan
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws1, 'Rekapitulasi Pasar');
+    ws1.columns = [5, 12, 32, 18, 30, 16, 10, 10, 10, 12, 16, 18, 18, 24].map((width) => ({ width }));
+    ws1.getRow(1).font = { bold: true, size: 14 };
+    ws1.getRow(2).font = { bold: true, size: 12 };
+    ws1.getRow(3).font = { bold: true, size: 13, color: { argb: 'FF0B3768' } };
+    [1, 2, 3, 4, 5].forEach((rowNumber) => {
+      ws1.getRow(rowNumber).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
+    ws1.getRow(7).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    ws1.getRow(7).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B3768' } };
+    ws1.getRow(7).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    ws1.getRow(ws1.rowCount).font = { bold: true };
+    ws1.getRow(ws1.rowCount).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEBFA' } };
+    ws1.getColumn(14).numFmt = '[$Rp-id-ID] #,##0';
 
     // -------------------------------------------------------------
     // SHEET 2: BUKU INDUK DAFTAR RINCIAN PEDAGANG RESMI
@@ -1265,55 +1436,54 @@
       ]);
     });
 
-    const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
+    const ws2 = wb.addWorksheet('Buku Induk Pedagang', {
+      pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
+    });
+    ws2.addRows(sheet2Data);
+    ws2.mergeCells('A1:X1');
+    ws2.mergeCells('A2:X2');
+    ws2.mergeCells('A3:X3');
+    ws2.views = [{ state: 'frozen', ySplit: 5 }];
+    ws2.autoFilter = { from: 'A5', to: `X${Math.max(5, ws2.rowCount)}` };
 
     // Format Kolom NIK dan Nomor Telepon secara eksplisit sebagai Teks (String) agar tidak ilmiah/terpotong
-    const range = XLSX.utils.decode_range(ws2['!ref']);
-    for (let R = 5; R <= range.e.r; ++R) {
-      // Kolom E (index 4) adalah NIK
-      const cellNik = ws2[XLSX.utils.encode_cell({ r: R, c: 4 })];
-      if (cellNik) {
-        cellNik.t = 's';
-      }
-      // Kolom F (index 5) adalah Phone
-      const cellPhone = ws2[XLSX.utils.encode_cell({ r: R, c: 5 })];
-      if (cellPhone) {
-        cellPhone.t = 's';
-      }
-    }
+    ws2.getColumn(5).numFmt = '@';
+    ws2.getColumn(6).numFmt = '@';
 
     // Atur Lebar Kolom Sheet 2
-    ws2['!cols'] = [
-      { wch: 5 },  // No
-      { wch: 14 }, // ID Pedagang
-      { wch: 22 }, // No Registrasi
-      { wch: 28 }, // Nama Lengkap
-      { wch: 20 }, // NIK
-      { wch: 18 }, // No HP/WA
-      { wch: 28 }, // Nama Usaha
-      { wch: 16 }, // Jenis Usaha
-      { wch: 24 }, // Kategori
-      { wch: 12 }, // Kode Pasar
-      { wch: 30 }, // Nama Pasar
-      { wch: 14 }, // Jenis Tempat
-      { wch: 12 }, // Nomor Unit
-      { wch: 8 },  // Blok
-      { wch: 8 },  // Lantai
-      { wch: 14 }, // Luas
-      { wch: 26 }, // Hari Pasar
-      { wch: 18 }, // Status SKPT
-      { wch: 24 }, // No SKPT
-      { wch: 16 }, // Masa Berlaku
-      { wch: 22 }, // Status Verifikasi
-      { wch: 20 }, // Omzet
-      { wch: 14 }, // Tenaga Kerja
-      { wch: 22 }  // Waktu Registrasi
-    ];
+    ws2.columns = [5, 14, 22, 28, 20, 18, 28, 16, 24, 12, 30, 14, 12, 8, 8, 14, 26, 20, 24, 16, 24, 20, 14, 22]
+      .map((width) => ({ width }));
+    ws2.getRow(1).font = { bold: true, size: 14 };
+    ws2.getRow(2).font = { bold: true, size: 13, color: { argb: 'FF0B3768' } };
+    [1, 2, 3].forEach((rowNumber) => {
+      ws2.getRow(rowNumber).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
+    ws2.getRow(5).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    ws2.getRow(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B3768' } };
+    ws2.getRow(5).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    ws2.getColumn(16).numFmt = '0.00';
+    ws2.getColumn(22).numFmt = '[$Rp-id-ID] #,##0';
+    ws2.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber >= 6) row.alignment = { vertical: 'top', wrapText: true };
+    });
 
-    XLSX.utils.book_append_sheet(wb, ws2, 'Buku Induk Pedagang');
-
-    // Memicu unduhan file .xlsx
-    XLSX.writeFile(wb, `BUKU_INDUK_DAN_REKAPITULASI_${reportFileScope()}_${timeStamp}.xlsx`);
+    try {
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = URL.createObjectURL(blob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = url;
+      downloadLink.download = `BUKU_INDUK_DAN_REKAPITULASI_${reportFileScope()}_${timeStamp}.xlsx`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Gagal membuat berkas Excel:', error);
+      alert('Berkas Excel gagal dibuat. Silakan coba lagi atau gunakan Cetak Laporan Resmi.');
+    }
   }
 
   // EKSPOR KE JSON (UNTUK PEMETAAN SPASIAL / GIS)
@@ -1531,7 +1701,7 @@
     if (modalDaysEl) modalDaysEl.textContent = record.operatingSchedule || 'Jadwal Reguler';
     const modalRetEl = document.getElementById('modalRetribution');
     if (modalRetEl) modalRetEl.textContent = 'Mengikuti intensitas hari pasar aktif sesuai Perda Pajak & Retribusi Daerah';
-    document.getElementById('modalSkpt').textContent = record.hasSkpt ? record.skptNumber : (record.skptStatus === 'KADIS_REVIEW' ? 'Menunggu Telaah Kadis' : (record.skptStatus === 'CONFLICT' ? 'Ditangguhkan (Konflik Lapangan)' : record.skptStatus));
+    document.getElementById('modalSkpt').textContent = record.hasSkpt ? record.skptNumber : skptStatusLabel(record.skptStatus);
 
     // Status Verifikasi Fisik
     const verifyEl = document.getElementById('modalVerification');

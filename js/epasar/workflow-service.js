@@ -31,6 +31,7 @@
     };
   }
   const marketDirectoryId = (marketId, traderId) => `${clean(marketId,100)}__${clean(traderId,100)}`.replaceAll('/', '_');
+  const placeLedgerId = (traderId, marketId) => `${clean(traderId,100)}__${clean(marketId,100)}`.replaceAll('/', '_');
   function publicCategory(value) {
     const code = clean(value || 'OTHER',80).toUpperCase().replace(/\s+/g,'_');
     if (['MAKANAN_DAN_MINUMAN','MAKANAN_&_MINUMAN','KULINER','FOOD_PROCESSING'].includes(code)) return 'FOOD_PROCESSING';
@@ -76,6 +77,8 @@
       row.place.marketId = market.id;
       row.place.marketName = market.name;
     });
+    if (!window.EPASAR_PLACE_LIMIT) throw new Error('Validator batas tempat belum dimuat.');
+    window.EPASAR_PLACE_LIMIT.assertProposalLimit(places.map(row => ({ marketId: row.place.marketId, place: row.place })), 2);
     const normalizedNikHash = await nikHash(intake.identity.nik);
     const nikRef=db().collection('nik_registry').doc(normalizedNikHash),traderRef=db().collection('traders').doc(),traderId=`PDG-PIN-${String(new Date().getFullYear()).slice(-2)}-${Math.random().toString(36).slice(2,8).toUpperCase()}`,createdAt=stamp();
     const profile=await profileMedia(intake.id),photoMediaToken=profile?(crypto.randomUUID?crypto.randomUUID().replaceAll('-',''):Math.random().toString(36).slice(2)+Date.now()):'';
@@ -83,12 +86,14 @@
     const classificationRefs=businesses.map(()=>db().collection('business_classifications').doc());
     const caseRows=places.map(row=>({...row,claimRef:db().collection('market_claims').doc(),appRef:row.place.applySkpt?db().collection('skpt_applications').doc():null}));
     const directoryMarkets=[...new Set(caseRows.map(row=>row.place.marketId))];
-    const sameMarketCounts={};caseRows.filter(x=>x.appRef).forEach(x=>{sameMarketCounts[x.place.marketId]=(sameMarketCounts[x.place.marketId]||0)+1});
-    await db().runTransaction(async transaction=>{const statsRef=db().collection('public_stats').doc('summary');const [current,registry,statsSnapshot]=await Promise.all([transaction.get(db().collection('trader_intake').doc(intake.id)),transaction.get(nikRef),transaction.get(statsRef)]);if(registry.exists)throw new Error('NIK sudah terdaftar. Gunakan proses penambahan usaha/lokasi pada data pedagang yang sudah ada.');if(!current.exists||!['SUBMITTED','CORRECTION_REQUIRED'].includes(current.data().status)||current.data().traderId)throw new Error('Pendaftaran telah diproses petugas lain.');
+    const ledgerRows=directoryMarkets.map(marketId=>({marketId,ref:db().collection('trader_market_place_ledgers').doc(placeLedgerId(traderId,marketId)),claimIds:caseRows.filter(row=>row.place.marketId===marketId).map(row=>row.claimRef.id)}));
+    const sameMarketCounts={};caseRows.forEach(x=>{sameMarketCounts[x.place.marketId]=(sameMarketCounts[x.place.marketId]||0)+1});
+    await db().runTransaction(async transaction=>{const statsRef=db().collection('public_stats').doc('summary');const [current,registry,statsSnapshot,...ledgerSnapshots]=await Promise.all([transaction.get(db().collection('trader_intake').doc(intake.id)),transaction.get(nikRef),transaction.get(statsRef),...ledgerRows.map(row=>transaction.get(row.ref))]);if(registry.exists)throw new Error('NIK sudah terdaftar. Gunakan proses penambahan usaha/lokasi pada data pedagang yang sudah ada.');if(!current.exists||!['SUBMITTED','CORRECTION_REQUIRED'].includes(current.data().status)||current.data().traderId)throw new Error('Pendaftaran telah diproses petugas lain.');
+      ledgerRows.forEach((row,index)=>{const existing=ledgerSnapshots[index].exists?(ledgerSnapshots[index].data().claimIds||[]):[];const claimIds=window.EPASAR_PLACE_LIMIT.mergeLedger(existing,row.claimIds,2);transaction.set(row.ref,{ledgerId:row.ref.id,traderId,marketId:row.marketId,claimIds,activePlaceCount:claimIds.length,maximumPlaces:2,schemaVersion:1,createdAt:ledgerSnapshots[index].exists?(ledgerSnapshots[index].data().createdAt||createdAt):createdAt,updatedAt:createdAt},{merge:true})});
       transaction.set(traderRef,{traderId,intakeId:intake.id,displayName:clean(intake.identity.name,120),status:'ACTIVE',source:'PUBLIC_INTAKE',schemaVersion:2,createdAt});transaction.set(db().collection('trader_private').doc(traderRef.id),{traderId,nik:String(intake.identity.nik),birthPlace:clean(intake.identity.birthPlace,80),birthDate:clean(intake.identity.birthDate,20),religion:clean(intake.identity.religion,50),citizenship:clean(intake.identity.citizenship,60),phone:clean(intake.identity.phone,20),address:clean(intake.identity.address,300),accessClass:'RESTRICTED',schemaVersion:2,createdAt});transaction.set(nikRef,{traderId,traderDocumentId:traderRef.id,nikHash:normalizedNikHash,createdAt,schemaVersion:2});directoryMarkets.forEach(marketId=>transaction.set(db().collection('market_trader_directory').doc(marketDirectoryId(marketId,traderId)),{marketId,traderId,displayName:clean(intake.identity.name,120),status:'ACTIVE',source:'PUBLIC_INTAKE',schemaVersion:1,createdAt,updatedAt:createdAt}));
       businesses.forEach((b,bi)=>{transaction.set(businessRefs[bi],{businessId:businessRefs[bi].id,traderId,name:clean(b.name,120),type:clean(b.type,80),group:clean(b.group,100),category:clean(b.category,120),monthlyRevenue:Number(b.monthlyRevenue||0),workerCount:Number(b.workerCount||0),expense:clean(b.expense,160),status:'CLAIMED',sourceDraftId:clean(b.draftId||b.id,80),schemaVersion:2,createdAt});transaction.set(classificationRefs[bi],{classificationId:classificationRefs[bi].id,traderId,businessId:businessRefs[bi].id,code:publicCategory(b.category||b.type),source:'PUBLIC_INTAKE',status:'CLAIMED',verifiedBy:null,verifiedAt:null,note:'Klasifikasi awal dari pendataan; menunggu pemeriksaan petugas.',schemaVersion:2,createdAt});(b.locations||[]).forEach((l,li)=>transaction.set(locationRefs[bi][li],{locationId:locationRefs[bi][li].id,businessId:businessRefs[bi].id,traderId,locationType:l.type==='MARKET'?'MARKET':'GENERAL',district:clean(l.district,60),village:clean(l.village,80),address:clean(l.address,300),sourceDraftId:clean(l.draftId||l.id,80),schemaVersion:2,createdAt}))});
-      caseRows.forEach(row=>{const p=row.place,businessId=businessRefs[row.businessIndex].id,locationId=locationRefs[row.businessIndex][row.locationIndex].id;transaction.set(row.claimRef,{traderId,traderDisplayName:clean(intake.identity.name,120),businessId,locationId,marketId:clean(p.marketId,100),marketName:clean(p.marketName,120),claimedUnitType:clean(p.unitType,20).toUpperCase(),claimedUnitNumber:clean(p.unitNumber,50),claimedBlock:clean(p.block,30),claimedFloor:clean(p.floor,20),claimedAreaM2:p.areaM2==null?null:Number(p.areaM2),locationHint:clean(p.locationHint),verificationStatus:'UNVERIFIED',applicationId:row.appRef?row.appRef.id:'',sourcePlaceDraftId:clean(p.draftId||p.id,80),schemaVersion:2,createdAt});if(row.appRef)transaction.set(row.appRef,{applicationId:row.appRef.id,traderId,businessId,locationId,claimId:row.claimRef.id,marketId:clean(p.marketId,100),status:'MARKET_VERIFICATION',validatorRoute:{type:'MARKET_ID',marketId:clean(p.marketId,100)},complianceReview:{sameMarketApplicationCount:sameMarketCounts[p.marketId],requiresLimitReview:sameMarketCounts[p.marketId]>2,legalReference:'PERDA_PINRANG_6_2024_PASAL_27'},statementAccepted:true,statementSnapshot:intake.statement||null,requirementsSnapshot:intake.requirementsAcceptance||null,applicantSnapshot:{displayName:clean(intake.identity.name,120),address:clean(intake.identity.address,300),businessType:clean(row.business.type||row.business.category,120),businessName:clean(row.business.name,120),marketName:clean(p.marketName,120),claimedUnitType:clean(p.unitType,20),claimedUnitNumber:clean(p.unitNumber,50),claimedAreaM2:p.areaM2==null?null:Number(p.areaM2)},sourceIntakeId:intake.id,publicToken:intake.publicToken,photoMediaToken,schemaVersion:2,submittedAt:createdAt})});
-      const applications=caseRows.filter(x=>x.appRef).map(x=>x.appRef.id),claims=caseRows.map(x=>x.claimRef.id),status=caseRows.length?'MARKET_VERIFICATION':'REGISTERED';transaction.update(db().collection('trader_intake').doc(intake.id),{status,traderId,workflow:{claimIds:claims,applicationIds:applications},processedBy:actor.uid,updatedAt:createdAt});transaction.set(db().collection('public_status').doc(intake.publicToken),{intakeId:intake.id,publicToken:intake.publicToken,registrationCode:intake.registrationCode,status,publicStatus:true,displayName:clean(intake.identity.name,120),traderId,businessType:businesses.length===1?clean(businesses[0].type||businesses[0].category,120):`${businesses.length} usaha`,marketName:places.length===1?clean(places[0].place.marketName,120):`${places.length} tempat pasar`,marketRoutes:caseRows.map(x=>({marketId:clean(x.place.marketId,100),claimId:x.claimRef.id,label:`${clean(x.place.marketName,80)} - ${clean(x.place.unitType,20)} ${clean(x.place.unitNumber,30)}`})),statementVersion:intake.statement?.version||'',statementAcceptedAt:intake.statement?.acceptedAt||new Date().toISOString(),photoMediaToken,reviewMessage:'',correctionSections:[],canResubmit:false,environment:'UAT',isDemo:true,schemaVersion:2,updatedAt:createdAt});
+      caseRows.forEach(row=>{const p=row.place,businessId=businessRefs[row.businessIndex].id,locationId=locationRefs[row.businessIndex][row.locationIndex].id;transaction.set(row.claimRef,{traderId,traderDisplayName:clean(intake.identity.name,120),businessId,locationId,marketId:clean(p.marketId,100),marketName:clean(p.marketName,120),claimedUnitType:clean(p.unitType,20).toUpperCase(),claimedUnitNumber:clean(p.unitNumber,50),claimedBlock:clean(p.block,30),claimedFloor:clean(p.floor,20),claimedAreaM2:p.areaM2==null?null:Number(p.areaM2),locationHint:clean(p.locationHint),verificationStatus:'UNVERIFIED',applicationId:row.appRef?row.appRef.id:'',sourcePlaceDraftId:clean(p.draftId||p.id,80),schemaVersion:2,createdAt});if(row.appRef)transaction.set(row.appRef,{applicationId:row.appRef.id,traderId,businessId,locationId,claimId:row.claimRef.id,marketId:clean(p.marketId,100),status:'MARKET_VERIFICATION',validatorRoute:{type:'MARKET_ID',marketId:clean(p.marketId,100)},complianceReview:{sameMarketApplicationCount:sameMarketCounts[p.marketId],limitValidated:true,maximumPlacesPerMarket:2,legalReference:'PERDA_PINRANG_6_2024_PASAL_27'},statementAccepted:true,statementSnapshot:intake.statement||null,requirementsSnapshot:intake.requirementsAcceptance||null,applicantSnapshot:{displayName:clean(intake.identity.name,120),address:clean(intake.identity.address,300),businessType:clean(row.business.type||row.business.category,120),businessName:clean(row.business.name,120),marketName:clean(p.marketName,120),claimedUnitType:clean(p.unitType,20),claimedUnitNumber:clean(p.unitNumber,50),claimedAreaM2:p.areaM2==null?null:Number(p.areaM2)},sourceIntakeId:intake.id,publicToken:intake.publicToken,photoMediaToken,schemaVersion:2,submittedAt:createdAt})});
+      const applications=caseRows.filter(x=>x.appRef).map(x=>x.appRef.id),claims=caseRows.map(x=>x.claimRef.id),status=caseRows.length?'MARKET_VERIFICATION':'REGISTERED';transaction.update(db().collection('trader_intake').doc(intake.id),{status,traderId,workflow:{claimIds:claims,applicationIds:applications},processedBy:actor.uid,updatedAt:createdAt});transaction.set(db().collection('public_status').doc(intake.publicToken),{intakeId:intake.id,publicToken:intake.publicToken,registrationCode:intake.registrationCode,status,publicStatus:true,displayName:clean(intake.identity.name,120),traderId,businessType:businesses.length===1?clean(businesses[0].type||businesses[0].category,120):`${businesses.length} usaha`,marketName:places.length===1?clean(places[0].place.marketName,120):`${places.length} tempat pasar`,marketRoutes:caseRows.map(x=>({marketId:clean(x.place.marketId,100),claimId:x.claimRef.id,label:`${clean(x.place.marketName,80)} - ${clean(x.place.unitType,20)} ${clean(x.place.unitNumber,30)}`})),statementVersion:intake.statement?.version||'',statementAcceptedAt:intake.statement?.acceptedAt||new Date().toISOString(),photoMediaToken,reviewMessage:'',correctionSections:[],canResubmit:false,environment:'PROD',isDemo:false,schemaVersion:2,updatedAt:createdAt});
       if(statsSnapshot.exists){const stats=statsSnapshot.data(),categoryCounts=new Map((stats.topCategories||[]).map(item=>[item.label,Number(item.count||0)]));businesses.forEach(b=>{const label=publicCategory(b.category||b.type);categoryCounts.set(label,(categoryCounts.get(label)||0)+1)});transaction.update(statsRef,{totalTraders:Number(stats.totalTraders||0)+1,totalBusinesses:Number(stats.totalBusinesses||0)+businesses.length,totalLocations:Number(stats.totalLocations||0)+locationRefs.reduce((sum,rows)=>sum+rows.length,0),totalCategories:categoryCounts.size,marketTraders:Number(stats.marketTraders||0)+(places.length?1:0),nonMarketTraders:Number(stats.nonMarketTraders||0)+(places.length?0:1),topCategories:[...categoryCounts.entries()].map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count).slice(0,5),updatedAt:stamp()});}
     });
     const cardMedia=publicMedia(profile,photoMediaToken,'PROFILE_PUBLIC');if(cardMedia)await db().collection('trader_media').doc(photoMediaToken).set(cardMedia);return{traderId,claimIds:caseRows.map(x=>x.claimRef.id),applicationIds:caseRows.filter(x=>x.appRef).map(x=>x.appRef.id),status:caseRows.length?'MARKET_VERIFICATION':'REGISTERED'};
@@ -133,7 +138,7 @@
       if(claimRef)transaction.set(claimRef,{traderId,traderDisplayName:clean(intake.identity?.name,120),marketId:clean(market.marketId||market.marketName,100),marketName:clean(market.marketName,120),claimedUnitType:clean(market.unitType,20).toUpperCase(),claimedUnitNumber:clean(market.unitNumber,50),claimedBlock:clean(market.block,30),claimedFloor:clean(market.floor,20),claimedAreaM2:market.areaM2?Number(market.areaM2):null,locationHint:clean(market.locationHint),verificationStatus:'UNVERIFIED',applicationId:appRef?appRef.id:'',schemaVersion:1,createdAt});
       if(appRef)transaction.set(appRef,{applicationId:appRef.id,traderId,claimId:claimRef.id,marketId:clean(market.marketId||market.marketName,100),status:'MARKET_VERIFICATION',statementAccepted:true,statementSnapshot:intake.statement||null,applicantSnapshot:{displayName:clean(intake.identity?.name,120),address:clean(intake.identity?.address,300),businessType:clean(draft.type||draft.category,120),businessName:clean(draft.name,120),marketName:clean(market.marketName,120),claimedUnitType:clean(market.unitType,20).toUpperCase(),claimedUnitNumber:clean(market.unitNumber,50),claimedAreaM2:market.areaM2?Number(market.areaM2):null},sourceIntakeId:intake.id,publicToken:intake.publicToken,photoMediaToken,schemaVersion:1,submittedAt:createdAt});
       transaction.update(db().collection('trader_intake').doc(intake.id),{status:nextStatus,traderId,workflow:{claimId:claimRef?claimRef.id:'',applicationId:appRef?appRef.id:''},processedBy:actor.uid,updatedAt:createdAt});
-      transaction.set(db().collection('public_status').doc(intake.publicToken),{intakeId:intake.id,publicToken:intake.publicToken,registrationCode:intake.registrationCode,status:nextStatus,publicStatus:true,displayName:clean(intake.identity?.name,120),traderId,businessType:clean(draft.type||draft.category,120),marketName:hasMarket?clean(market.marketName,120):'',marketRoutes:[],statementVersion:intake.statement?.version||'SKPT-STATEMENT-V3-PERDA6-2024',statementAcceptedAt:intake.statement?.acceptedAt||new Date().toISOString(),photoMediaToken,reviewMessage:'',correctionSections:[],canResubmit:false,environment:'UAT',isDemo:true,schemaVersion:1,updatedAt:createdAt});
+      transaction.set(db().collection('public_status').doc(intake.publicToken),{intakeId:intake.id,publicToken:intake.publicToken,registrationCode:intake.registrationCode,status:nextStatus,publicStatus:true,displayName:clean(intake.identity?.name,120),traderId,businessType:clean(draft.type||draft.category,120),marketName:hasMarket?clean(market.marketName,120):'',marketRoutes:[],statementVersion:intake.statement?.version||'SKPT-STATEMENT-V3-PERDA6-2024',statementAcceptedAt:intake.statement?.acceptedAt||new Date().toISOString(),photoMediaToken,reviewMessage:'',correctionSections:[],canResubmit:false,environment:'PROD',isDemo:false,schemaVersion:1,updatedAt:createdAt});
       if(cardMedia)transaction.set(db().collection('trader_media').doc(photoMediaToken),cardMedia);
       if (statsSnapshot.exists) {
         const stats = statsSnapshot.data();
@@ -257,31 +262,8 @@
       return { status: nextStatus };
     });
   }
-  async function approveForTte(application,input,actor){
-    if(actor.role !== 'KADIS')throw new Error('Persetujuan dan reservasi nomor hanya dapat dilakukan Kadis.');
-    if(application.status!=='KADIS_REVIEW')throw new Error('Berkas tidak berada pada tahap review Kadis.');
-    const note=clean(input?.note,500);if(!note)throw new Error('Catatan keputusan Kadis wajib diisi.');
-    const applicationRef=db().collection('skpt_applications').doc(application.id);
-    return db().runTransaction(async transaction=>{
-      const snapshot=await transaction.get(applicationRef);
-      if(!snapshot.exists||snapshot.data().status!=='KADIS_REVIEW')throw new Error('Berkas sudah diproses petugas lain.');
-      const current=snapshot.data();
-      if(current.uptdApproval?.decision!=='APPROVED'||current.uptdApproval?.marketId!==current.marketId)throw new Error('Persetujuan Kepala UPTD belum sesuai.');
-      const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Makassar',year:'numeric',month:'numeric'}).formatToParts(new Date());
-      const year=Number(parts.find(value=>value.type==='year').value),month=Number(parts.find(value=>value.type==='month').value);
-      const counterRef=db().collection('skpt_number_counters').doc(String(year)),counter=await transaction.get(counterRef);
-      const serial=(counter.exists?Number(counter.data().nextSerial):0)+1;
-      const number=window.EPASAR.formatSkptNumber(serial,current.marketId,month,year),reservationId=`${year}-${String(serial).padStart(4,'0')}`;
-      const reservationRef=db().collection('skpt_number_reservations').doc(reservationId),verificationToken=crypto.randomUUID().replaceAll('-','');
-      transaction.set(counterRef,{year,nextSerial:serial,updatedAt:stamp()});
-      transaction.set(reservationRef,{reservationId,applicationId:application.id,marketId:current.marketId,number,year,serial,status:'RESERVED',reservedBy:actor.uid,createdAt:stamp()});
-      const history=Array.isArray(current.statusHistory)?current.statusHistory:[];
-      transaction.update(applicationRef,{status:'TTE_PENDING',draftNumber:number,numberReservationId:reservationId,verificationToken,storageStatus:'NOT_CONFIGURED',approval:{decision:'APPROVED',note,actorUid:actor.uid,actorRole:'KADIS',approvedAt:stamp()},statusHistory:[...history,{from:'KADIS_REVIEW',to:'TTE_PENDING',actorUid:actor.uid,actorRole:'KADIS',note,at:new Date().toISOString()}].slice(-50),updatedAt:stamp()});
-      return{status:'TTE_PENDING',number,verificationToken};
-    });
-  }
   async function rejectByKadis(application,input,actor){
-    if(!['KADIS','SUPER_ADMIN'].includes(actor.role))throw new Error('Penolakan final hanya dapat dilakukan Kadis.');
+    if(actor?.role !== 'KADIS')throw new Error('Penolakan final hanya dapat dilakukan Kadis.');
     if(application.status!=='KADIS_REVIEW')throw new Error('Berkas tidak berada pada tahap review Kadis.');
     const note=clean(input?.note,500);if(!note)throw new Error('Catatan alasan penolakan Kadis wajib diisi.');
     const now=new Date().toISOString(),history=Array.isArray(application.statusHistory)?application.statusHistory:[];
@@ -296,56 +278,9 @@
     return{status:'REJECTED'};
   }
   async function issue(application, input, actor) {
-    if (!['KADIS','SUPER_ADMIN'].includes(actor.role)) throw new Error('Penerbitan final hanya dapat dilakukan Kadis.');
-    if (application.status !== 'TTE_UPLOADED') throw new Error('Penerbitan ditolak: PDF hasil TTE belum diunggah dan diverifikasi pada penyimpanan permanen.');
-    if (!window.EPASAR_SKPT_STORAGE?.canIssue(application.activeStorage || {})) throw new Error('Penerbitan ditolak: arsip PDF belum berstatus VERIFIED.');
-    throw new Error('Penerbitan final belum diaktifkan sampai backend penyimpanan Google Drive atau server Pemkab dikonfigurasi dan lulus UAT.');
-    if (!clean(input.reference,300)) throw new Error('Referensi registrasi atau hasil pengesahan resmi wajib diisi.');
-    const verificationToken = crypto.randomUUID ? crypto.randomUUID().replaceAll('-','') : Math.random().toString(36).slice(2) + Date.now();
-    const number = clean(input.number, 80) || `SKPT-PIN-${new Date().getFullYear()}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
-    const issueDate = new Date(); const valid = new Date(issueDate); valid.setFullYear(valid.getFullYear()+2);
-    const claimSnap = await db().collection('market_claims').doc(application.claimId).get();
-    const claim = claimSnap.exists ? claimSnap.data() : {};
-    const verified = claim.verified || {};
-    const source = application.applicantSnapshot || {};
-    let signatory = { name: 'MUHAMMAD YUSUF NUR, S.STP', nip: '19800326 200003 1 001', rank: 'Pembina Tk. I', position: 'Kepala Dinas Perindustrian, Perdagangan, Energi dan Sumber Daya Mineral Kabupaten Pinrang', authority: 'a.n. BUPATI PINRANG' };
-    try {
-      const cfgSnap = await db().collection('app_settings').doc('general').get();
-      if (cfgSnap.exists && cfgSnap.data()?.signatory) {
-        const s = cfgSnap.data().signatory;
-        signatory = {
-          name: clean(s.name, 100) || signatory.name,
-          nip: clean(s.nip, 50) || signatory.nip,
-          rank: clean(s.rank, 80) || signatory.rank,
-          position: clean(s.position, 150) || signatory.position,
-          authority: clean(s.authority, 100) || signatory.authority
-        };
-      }
-    } catch (_) {}
-    const marketUnitId = clean(application.marketUnitId || verified.unitId || claim.marketUnitId,100);
-    if (!marketUnitId) throw new Error('Identitas unit pasar hasil verifikasi belum tersedia. Berkas harus dikembalikan ke tahap verifikasi pasar.');
-    const documentSnapshot = { displayName: clean(input.displayName || source.displayName,120), address: clean(source.address,300), businessType: clean(source.businessType || source.businessName,120), marketName: clean(source.marketName || application.marketId,120), marketId: clean(application.marketId,100), unitType: clean(verified.unitType || source.claimedUnitType || claim.claimedUnitType,20), unitNumber: clean(verified.unitNumber || source.claimedUnitNumber || claim.claimedUnitNumber,50), block: clean(verified.block || claim.claimedBlock,30), floor: clean(verified.floor || claim.claimedFloor,20), areaM2: Number(verified.areaM2 ?? source.claimedAreaM2 ?? claim.claimedAreaM2 ?? 0) || null };
-    const docRef = db().collection('skpt_documents').doc();
-    const profile = application.photoMediaToken ? null : await profileMedia(application.sourceIntakeId);
-    const photoMediaToken = application.photoMediaToken || (profile ? (crypto.randomUUID ? crypto.randomUUID().replaceAll('-','') : Math.random().toString(36).slice(2) + Date.now()) : '');
-    const environment = 'UAT', isDemo = true, tteStatus = 'UAT_SIMULATED';
-    const legalAppendixVersion = 'SKPT-LAMPIRAN-PERDA6-2024-V1';
-    const canonical = JSON.stringify({ number, traderId: application.traderId, claimId: application.claimId, applicationId: application.id, issueDate: issueDate.toISOString(), validUntil: valid.toISOString(), documentSnapshot, signatory, photoMediaToken, statementVersion: application.statementSnapshot?.version || 'SKPT-STATEMENT-V3-PERDA6-2024', legalAppendixVersion, environment, isDemo, tteStatus });
-    const hashSource = canonical;
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(hashSource));
-    const documentHash = [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2,'0')).join('');
-    const annualValidations = [{ year: issueDate.getFullYear(), status: 'INITIAL_ISSUE', validatedAt: issueDate.toISOString(), reference: clean(input.reference,100) }, { year: issueDate.getFullYear()+1, status: 'DUE', validatedAt: null, reference: '' }];
-    const history=Array.isArray(application.statusHistory)?application.statusHistory:[];
-    const skptMedia = publicMedia(profile, photoMediaToken, 'PROFILE_PUBLIC');
-    const publicationBatch = db().batch();
-    publicationBatch.set(docRef,{ skptId: docRef.id, applicationId: application.id, number, traderId: application.traderId, marketUnitId, issueDate: issueDate.toISOString(), validUntil: valid.toISOString(), status: 'ISSUED', tteStatus, documentHash, hashAlgorithm: 'SHA-256', hashScope: 'CANONICAL_DOCUMENT_SNAPSHOT', documentSnapshot, signatory, annualValidations, photoMediaToken, legalBasisVersion: 'PINRANG-SKPT-PERDA6-2024-V1', statementVersion: application.statementSnapshot?.version || 'SKPT-STATEMENT-V3-PERDA6-2024', legalAppendixVersion, officialReference: clean(input.reference,300), verificationToken, environment, isDemo, schemaVersion: 3, issuedBy: actor.uid, issuedAt: stamp() });
-    publicationBatch.update(db().collection('skpt_applications').doc(application.id),{ status: 'ISSUED', skptDocumentId: docRef.id, statusHistory:[...history,{from:'TTE_PENDING',to:'ISSUED',actorUid:actor.uid,actorRole:actor.role,at:new Date().toISOString()}], updatedAt: stamp() });
-    publicationBatch.set(db().collection('public_skpt_verification').doc(verificationToken),{ verificationToken, documentId: docRef.id, applicationId: application.id, number, displayName: documentSnapshot.displayName, status: 'ISSUED', traderId: application.traderId, marketUnitId, issueDate: issueDate.toISOString(), validUntil: valid.toISOString(), documentHash, hashAlgorithm: 'SHA-256', hashScope: 'CANONICAL_DOCUMENT_SNAPSHOT', tteStatus, officialReference: clean(input.reference,300), documentSnapshot, signatory, annualValidations, photoMediaToken, legalBasisVersion: 'PINRANG-SKPT-PERDA6-2024-V1', legalAppendixVersion, environment, isDemo, schemaVersion: 3 });
-    if (application.publicToken) publicationBatch.update(db().collection('public_status').doc(application.publicToken),{status:'ISSUED'});
-    if (skptMedia) publicationBatch.set(db().collection('trader_media').doc(photoMediaToken),skptMedia);
-    await publicationBatch.commit();
-    await incrementIssuedStatistic();
-    return { documentId: docRef.id, verificationToken, number, photoPublished: Boolean(photoMediaToken) };
-  }
-  window.EPASAR_WORKFLOW = { createCase, verifyClaim, decideUptd, approveForTte, rejectByKadis, issue, inspectNikRegistration };
+    if (actor?.role !== 'KADIS') throw new Error('Penerbitan final hanya dapat dilakukan Kepala Dinas melalui layanan backend resmi.');
+    if (application?.status !== 'TTE_UPLOADED') throw new Error('Penerbitan ditolak: PDF hasil TTE belum diunggah dan diverifikasi oleh backend penyimpanan.');
+    if (!window.EPASAR_SKPT_STORAGE?.canIssue(application.activeStorage || {})) throw new Error('Penerbitan ditolak: metadata arsip PDF belum berstatus VERIFIED atau hash belum valid.');
+    throw new Error('Penerbitan final harus dijalankan backend tepercaya Google Drive/server Pemkab menggunakan Admin SDK; browser tidak memiliki kewenangan menerbitkan SKPT.');
+  }  window.EPASAR_WORKFLOW = { createCase, verifyClaim, decideUptd, rejectByKadis, issue, inspectNikRegistration };
 }());

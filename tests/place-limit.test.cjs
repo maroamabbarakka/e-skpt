@@ -1,0 +1,12 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const context = { window: {} }; vm.createContext(context);
+vm.runInContext(fs.readFileSync('js/epasar/place-limit.js', 'utf8'), context);
+const limit = context.window.EPASAR_PLACE_LIMIT;
+test('first and second places in one market are accepted', () => { assert.equal(limit.assertProposalLimit([{ marketId:'MKT-001', unitType:'KIOS', unitNumber:'1' }, { marketId:'MKT-001', unitType:'LOS', unitNumber:'2' }])['MKT-001'].length, 2); });
+test('third distinct place in the same market is rejected', () => { assert.throws(() => limit.assertProposalLimit([1,2,3].map(number => ({ marketId:'MKT-001', unitType:'KIOS', unitNumber:String(number) }))), /Maksimal 2/); });
+test('places in different markets are counted separately', () => { assert.doesNotThrow(() => limit.assertProposalLimit([{ marketId:'MKT-001', unitNumber:'1' }, { marketId:'MKT-001', unitNumber:'2' }, { marketId:'MKT-002', unitNumber:'3' }])); });
+test('renewal of an existing place is not counted twice', () => { assert.deepEqual([...limit.mergeLedger(['UNIT-A'], ['UNIT-A','UNIT-B'])], ['UNIT-A','UNIT-B']); assert.throws(() => limit.mergeLedger(['UNIT-A','UNIT-B'], ['UNIT-C']), /melebihi batas 2/); });
