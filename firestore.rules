@@ -285,7 +285,8 @@ service cloud.firestore {
         && id == request.resource.data.marketId + '__' + request.resource.data.intakeId
         && request.resource.data.status in ['SUBMITTED','CORRECTION_REQUIRED']
         && request.resource.data.schemaVersion == 1
-        && request.resource.data.updatedAt == request.time
+        && request.resource.data.submittedAt is timestamp
+        && request.resource.data.updatedAt is timestamp
         && exists(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId))
         && get(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.registrationCode == request.resource.data.registrationCode
         && request.resource.data.marketId in get(/databases/$(database)/documents/trader_intake/$(request.resource.data.intakeId)).data.routingMarketIds;
