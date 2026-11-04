@@ -403,12 +403,14 @@ service cloud.firestore {
     }
     match /businesses/{id} {
       allow read: if centralAdmin() || kadis();
-      allow create, update: if centralAdmin();
+      allow create: if adminStaff();
+      allow update: if centralAdmin();
       allow delete: if false;
     }
     match /business_locations/{id} {
       allow read: if centralAdmin() || kadis();
-      allow create, update: if centralAdmin();
+      allow create: if adminStaff();
+      allow update: if centralAdmin();
       allow delete: if false;
     }
     match /business_classifications/{id} {

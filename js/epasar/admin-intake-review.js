@@ -148,7 +148,12 @@
         ['Total perkiraan omzet', `Rp ${businessRows.reduce((sum,row)=>sum+Number(row.monthlyRevenue||0),0).toLocaleString('id-ID')}`]
       ]);
       const invalidMarketCount = renderBusinessDetails(businessRows);
-      await renderCorrections();
+      await renderCorrections().catch(error => {
+        console.warn('[e-PASAR] Riwayat koreksi tidak dapat dimuat:', error);
+        const root = document.getElementById('correctionHistory');
+        root.hidden = false;
+        root.innerHTML = '<p class="review-empty">Riwayat koreksi belum dapat dimuat. Data utama tetap dapat diperiksa; muat ulang sebelum mengambil keputusan bila pendaftaran berstatus perlu perbaikan.</p>';
+      });
       await renderMedia(intake.id).catch(error => {
         console.error(error);
         document.getElementById('mediaGallery').innerHTML = '<p class="review-empty">Lampiran tidak dapat dimuat. Jangan proses sebelum akses lampiran diperiksa.</p>';

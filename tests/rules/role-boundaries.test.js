@@ -87,6 +87,11 @@ try {
     await setDoc(doc(db, 'trader_media', 'media-intake-market-1'), {
       ownerType: 'TRADER_INTAKE', ownerId: 'intake-market-1', mediaType: 'PROFILE', mime: 'image/webp', dataBase64: 'aaaa'
     });
+    await setDoc(doc(db, 'correction_requests', 'correction-market-1'), {
+      registrationCode: 'REG-MKT-001', marketId: 'MKT-001', status: 'PENDING_REVIEW'
+    });
+    await setDoc(doc(db, 'businesses', 'business-existing'), { businessId: 'business-existing', traderId: 'T1', name: 'Usaha Lama' });
+    await setDoc(doc(db, 'business_locations', 'location-existing'), { locationId: 'location-existing', businessId: 'business-existing', traderId: 'T1' });
   });
 
   const superDb = env.authenticatedContext('super').firestore();
@@ -154,6 +159,7 @@ try {
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('marketId', '==', 'MKT-001'), limit(40))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'notifications'), where('type', '==', 'TRADER_DECISION'), limit(40))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'trader_media'), where('ownerId', '==', 'intake-market-1'), limit(20))));
+  await assertSucceeds(getDocs(query(collection(marketAdminDb, 'correction_requests'), where('registrationCode', '==', 'REG-MKT-001'), limit(25))));
   await assertSucceeds(getDocs(query(collection(marketHeadDb, 'trader_media'), where('ownerId', '==', 'intake-market-1'), where('mediaType', '==', 'PROFILE'), limit(5))));
   await assertSucceeds(getDocs(query(collection(marketAdminDb, 'market_claims'), where('marketId', 'in', ['MKT-001']), limit(30))));
   await assertSucceeds(getDocs(query(collection(marketHeadDb, 'market_claims'), where('marketId', 'in', ['MKT-001']), limit(30))));
@@ -162,6 +168,10 @@ try {
   await assertSucceeds(getDocs(query(collection(marketHeadDb, 'skpt_annual_validations'), where('marketId', '==', 'MKT-001'), limit(100))));
   await assertSucceeds(setDoc(doc(superDb, 'app_settings', 'general'), { signatory: { tteMode: 'MANUAL_UPLOAD' } }));
   await assertFails(setDoc(doc(tradeAdminDb, 'app_settings', 'general'), { signatory: { tteMode: 'MANUAL_UPLOAD' } }));
+  await assertSucceeds(setDoc(doc(marketAdminDb, 'businesses', 'business-new'), { businessId: 'business-new', traderId: 'T3', name: 'Usaha Baru' }));
+  await assertSucceeds(setDoc(doc(marketAdminDb, 'business_locations', 'location-new'), { locationId: 'location-new', businessId: 'business-new', traderId: 'T3' }));
+  await assertFails(updateDoc(doc(marketAdminDb, 'businesses', 'business-existing'), { name: 'Perubahan tanpa otorisasi pusat' }));
+  await assertFails(updateDoc(doc(marketAdminDb, 'business_locations', 'location-existing'), { address: 'Perubahan tanpa otorisasi pusat' }));
   await assertSucceeds(setDoc(doc(tradeAdminDb, 'market_claims', 'central-claim'), {
     claimId: 'central-claim', marketId: 'MKT-003', traderId: 'T5', verificationStatus: 'UNVERIFIED'
   }));
